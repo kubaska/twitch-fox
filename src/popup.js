@@ -425,7 +425,8 @@ addCard = (content, type) => {
         tag.textContent = game.name;
         contentDiv.appendChild(tag);
         contentArea.appendChild(contentDiv);
-    } else if (type === 'stream') {
+    }
+    else if (type === 'stream') {
         const id = `STREAM!${content._id}`;
         if (document.getElementById(id) || (mode === 'followedStreams' &&
             bp.getStorage('favoritesMode') &&
@@ -702,7 +703,8 @@ addCard = (content, type) => {
             content.channel.name + content.channel.status;
         contentDiv.appendChild(tag);
         contentArea.appendChild(contentDiv);
-    } else if (type === 'video' || type === 'clip') {
+    }
+    else if (type === 'video' || type === 'clip') {
         let id = type === 'video' ? content._id : content.tracking_id;
         id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
         if (document.getElementById(id)) {
@@ -944,7 +946,8 @@ addCard = (content, type) => {
             thisChannel.name + content.title;
         contentDiv.appendChild(tag);
         contentArea.appendChild(contentDiv);
-    } else if (type === 'channel') {
+    }
+    else if (type === 'channel') {
         const channel = content.channel ? content.channel : content;
         const id = `CHANNEL!${channel._id}`;
         if (document.getElementById(id) || (mode === 'followedChannels' &&
@@ -1142,10 +1145,10 @@ const updateTab = (newMode) => {
         // Show the about page
         contentArea.classList.add('hide');
         searchBar.classList.add('hide');
-        aboutPage.classList.remove('hide');
+        // aboutPage.classList.remove('hide');
     } else {
         // Show the content area
-        aboutPage.classList.add('hide');
+        // aboutPage.classList.add('hide');
         contentArea.classList.remove('hide');
         searchBar.classList.remove('hide');
 
@@ -1281,54 +1284,54 @@ const initialize = () => {
     }
 
     // About tab
-    const versionSpan = document.getElementById('version');
-    versionSpan.textContent = browser.i18n.getMessage(versionSpan.id, version);
-    const aboutTextNewUser = document.getElementById('aboutTextNewUser');
-    const aboutTextWhatsNew = document.getElementById('aboutTextWhatsNew');
-    const aboutTextAbout = document.getElementById('aboutTextAbout');
-
-    if (showNewUser) {
-        aboutTextNewUser.classList.remove('hide');
-        aboutTextWhatsNew.classList.add('hide');
-        aboutTextAbout.classList.add('hide');
-    } else if (showWhatsNew) {
-        aboutTextNewUser.classList.add('hide');
-        aboutTextWhatsNew.classList.remove('hide');
-        aboutTextAbout.classList.add('hide');
-    } else {
-        aboutTextNewUser.classList.add('hide');
-        aboutTextWhatsNew.classList.add('hide');
-        aboutTextAbout.classList.remove('hide');
-    }
-
-    const aboutTexts = document.getElementsByClassName('aboutText');
-    for (let i = 0; i < aboutTexts.length; i += 1) {
-        const aboutText = aboutTexts[i];
-        aboutText.textContent = browser.i18n.getMessage(aboutText.id, version);
-        /* aboutText.textContent = aboutText.classList.contains("version") ?
-        aboutText.textContent = browser.i18n.getMessage(aboutText.id, version) :
-        browser.i18n.getMessage(aboutText.id); */
-    }
-
-    const aboutButtons = document.getElementsByClassName('aboutButton');
-    for (let i = 0; i < aboutButtons.length; i += 1) {
-        const aboutButton = aboutButtons[i];
-        if (aboutButton.id === 'aboutWhatsNewButton' && !showWhatsNew) {
-            // Special case where we jump straight from new user screen to general
-            // about screen
-            aboutButton.textContent = browser.i18n.getMessage('aboutTellMoreButton');
-        } else {
-            aboutButton.textContent = browser.i18n.getMessage(
-                aboutButton.id,
-                version,
-            );
-        }
-    }
-
-    // let email = document.getElementById("email");
-    const discord = document.getElementById('discord');
-    // email.textContent = browser.i18n.getMessage(email.id, "email@site.com");
-    discord.textContent = browser.i18n.getMessage(discord.id, 'Hunter#3581');
+    // const versionSpan = document.getElementById('version');
+    // versionSpan.textContent = browser.i18n.getMessage(versionSpan.id, version);
+    // const aboutTextNewUser = document.getElementById('aboutTextNewUser');
+    // const aboutTextWhatsNew = document.getElementById('aboutTextWhatsNew');
+    // const aboutTextAbout = document.getElementById('aboutTextAbout');
+    //
+    // if (showNewUser) {
+    //     aboutTextNewUser.classList.remove('hide');
+    //     aboutTextWhatsNew.classList.add('hide');
+    //     aboutTextAbout.classList.add('hide');
+    // } else if (showWhatsNew) {
+    //     aboutTextNewUser.classList.add('hide');
+    //     aboutTextWhatsNew.classList.remove('hide');
+    //     aboutTextAbout.classList.add('hide');
+    // } else {
+    //     aboutTextNewUser.classList.add('hide');
+    //     aboutTextWhatsNew.classList.add('hide');
+    //     aboutTextAbout.classList.remove('hide');
+    // }
+    //
+    // const aboutTexts = document.getElementsByClassName('aboutText');
+    // for (let i = 0; i < aboutTexts.length; i += 1) {
+    //     const aboutText = aboutTexts[i];
+    //     aboutText.textContent = browser.i18n.getMessage(aboutText.id, version);
+    //     /* aboutText.textContent = aboutText.classList.contains("version") ?
+    //     aboutText.textContent = browser.i18n.getMessage(aboutText.id, version) :
+    //     browser.i18n.getMessage(aboutText.id); */
+    // }
+    //
+    // const aboutButtons = document.getElementsByClassName('aboutButton');
+    // for (let i = 0; i < aboutButtons.length; i += 1) {
+    //     const aboutButton = aboutButtons[i];
+    //     if (aboutButton.id === 'aboutWhatsNewButton' && !showWhatsNew) {
+    //         // Special case where we jump straight from new user screen to general
+    //         // about screen
+    //         aboutButton.textContent = browser.i18n.getMessage('aboutTellMoreButton');
+    //     } else {
+    //         aboutButton.textContent = browser.i18n.getMessage(
+    //             aboutButton.id,
+    //             version,
+    //         );
+    //     }
+    // }
+    //
+    // // let email = document.getElementById("email");
+    // const discord = document.getElementById('discord');
+    // // email.textContent = browser.i18n.getMessage(email.id, "email@site.com");
+    // discord.textContent = browser.i18n.getMessage(discord.id, 'Hunter#3581');
 
     // Select current tab
     if (document.getElementById(mode).classList.contains('noAccess')) {
@@ -1455,38 +1458,38 @@ login.addEventListener('click', () => {
 });
 
 // About page buttons
-aboutWhatsNewButton.addEventListener('click', () => {
-    showNewUser = false;
-    bp.setStorage('showNewUser', showNewUser);
-    initialize();
-});
-
-aboutTellMoreButton.addEventListener('click', () => {
-    showWhatsNew = false;
-    bp.setStorage('showWhatsNew', showWhatsNew);
-    initialize();
-});
-
-addonPage.addEventListener('click', () => {
-    const url = 'https://addons.mozilla.org/en-US/firefox/addon/twitch-fox/';
-    browser.tabs.create({
-        url,
-    });
-});
-
-githubPage.addEventListener('click', () => {
-    const url = 'https://github.com/Hunter5000/twitch-fox';
-    browser.tabs.create({
-        url,
-    });
-});
-
-steamPage.addEventListener('click', () => {
-    const url = 'http://steamcommunity.com/id/hunter7500/';
-    browser.tabs.create({
-        url,
-    });
-});
+// aboutWhatsNewButton.addEventListener('click', () => {
+//     showNewUser = false;
+//     bp.setStorage('showNewUser', showNewUser);
+//     initialize();
+// });
+//
+// aboutTellMoreButton.addEventListener('click', () => {
+//     showWhatsNew = false;
+//     bp.setStorage('showWhatsNew', showWhatsNew);
+//     initialize();
+// });
+//
+// addonPage.addEventListener('click', () => {
+//     const url = 'https://addons.mozilla.org/en-US/firefox/addon/twitch-fox/';
+//     browser.tabs.create({
+//         url,
+//     });
+// });
+//
+// githubPage.addEventListener('click', () => {
+//     const url = 'https://github.com/Hunter5000/twitch-fox';
+//     browser.tabs.create({
+//         url,
+//     });
+// });
+//
+// steamPage.addEventListener('click', () => {
+//     const url = 'http://steamcommunity.com/id/hunter7500/';
+//     browser.tabs.create({
+//         url,
+//     });
+// });
 
 screenLock.addEventListener('click', () => {
     screenLock.classList.add('hidden');

@@ -27,7 +27,7 @@ const audio = new Audio();
 const defaults = {
     // Non-settings
     token: '',
-    mode: 'about',
+    mode: 'streams',
     favorites: [],
     follows: [],
     lastVersion: '',
@@ -38,8 +38,8 @@ const defaults = {
     nonTwitchFollows: false,
     darkMode: false,
     tooltips: true,
-    showNewUser: true,
-    showWhatsNew: true,
+    showNewUser: false,
+    showWhatsNew: false,
     showLogos: true,
     openTwitchPage: false,
     openPopout: false,

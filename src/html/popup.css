@@ -10,6 +10,42 @@ html, body {
     -moz-user-select: none;
 }
 
+/* New */
+
+.container {
+    display: grid;
+    grid-template-columns: 36px 564px;
+    grid-template-rows: 36px 564px;
+    grid-template-areas: "navbar navbar" "leftbar content";
+    justify-content: stretch;
+}
+
+.navbar {
+    grid-area: navbar;
+    background-color: #4B367C;
+}
+
+.menu {
+    grid-area: leftbar;
+    background-color: #17141F;
+    border-right: 1px solid #2C2541;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.contentArea {
+    grid-area: content;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    justify-content: flex-start;
+    overflow-x: hidden;
+}
+
+/* End New */
+
 .screenLock {
     position: fixed;
     width: 600px;
@@ -18,6 +54,8 @@ html, body {
     opacity: 1;
     visibility: visible;
     transition: visibility 0.3s linear, opacity 0.3s ease-in-out;
+    top: 0;
+    left: 0;
 }
 
 .screenLock.hidden {
@@ -337,16 +375,6 @@ html, body {
 
 .menuButton.about {
     background: url(../assets/images/about.png);
-}
-
-.contentArea {
-    display: block;
-    position: absolute;
-    top: 36px;
-    left: 36px;
-    width: 564px;
-    height: 564px;
-    overflow-x: hidden;
 }
 
 .noResults {

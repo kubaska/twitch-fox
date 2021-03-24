@@ -10,108 +10,84 @@
 </head>
 
 <body>
+
+<div class="container">
+    <div class="navbar">
+        <div class="menuButton settings" id="settings">
+            <span class="tooltip" id="settingsTip"></span>
+        </div>
+        <div class="searchBar" id="searchBar">
+            <div class="menuButton search back" id="back">
+                <span class="tooltip" id="backTip"></span>
+            </div>
+            <div class="menuButton search forward" id="forward">
+                <span class="tooltip" id="forwardTip"></span>
+            </div>
+            <div class="menuButton search" id="search">
+                <span class="tooltip" id="searchTip"></span>
+            </div>
+            <input type="text" id="searchBox" class="searchBox">
+            <div class="menuButton search refresh possible" id="refresh">
+                <span class="tooltip" id="refreshTip"></span>
+            </div>
+            <div class="menuButton search exitSearch" id="exitSearch">
+                <span class="tooltip" id="exitSearchTip"></span>
+            </div>
+        </div>
+        <div class="menuButton avatar" id="avatar">
+            <span class="tooltip" id="avatarTip"></span>
+        </div>
+        <div class="menuButton login" id="login">
+            <span class="loginText" id="loginText"></span>
+            <span class="tooltip" id="loginTip"></span>
+        </div>
+    </div>
+
+    <div class="menu">
+        <div class="menuButton tab games" id="games">
+            <span class="tooltip" id="gamesTip"></span>
+        </div>
+        <div class="menuButton tab streams" id="streams">
+            <span class="tooltip" id="streamsTip"></span>
+        </div>
+        <div class="menuButton tab videos" id="videos">
+            <span class="tooltip" id="videosTip"></span>
+        </div>
+        <div class="menuButton tab clips" id="clips">
+            <span class="tooltip" id="clipsTip"></span>
+        </div>
+        <div class="menuButton tab channels" id="channels">
+            <span class="tooltip" id="channelsTip"></span>
+        </div>
+        <div class="leftDivider"></div>
+        <div class="menuButton tab followedStreams" id="followedStreams">
+            <span class="tooltip" id="followedStreamsTip"></span>
+        </div>
+        <div class="menuButton tab followedVideos" id="followedVideos">
+            <span class="tooltip" id="followedVideosTip"></span>
+        </div>
+        <div class="menuButton tab followedClips" id="followedClips">
+            <span class="tooltip" id="followedClipsTip"></span>
+        </div>
+        <div class="menuButton tab followedChannels" id="followedChannels">
+            <span class="tooltip" id="followedChannelsTip"></span>
+        </div>
+        <div class="leftDivider"></div>
+        <div class="menuButton tab about" id="about">
+            <span class="tooltip" id="aboutTip"></span>
+        </div>
+    </div>
+
+    <div class="contentArea contentAreaCss" id="contentArea">
+
+    </div>
+</div>
+
 <div class="screenLock hidden" id="screenLock">
     <div class="lockBackground"></div>
     <div class="enlargedPreview" id="enlargedPreview"></div>
 </div>
-<div class="topBar">
-    <div class="menuButton settings" id="settings">
-        <span class="tooltip" id="settingsTip"></span>
-    </div>
-    <div class="searchBar" id="searchBar">
-        <div class="menuButton search back" id="back">
-            <span class="tooltip" id="backTip"></span>
-        </div>
-        <div class="menuButton search forward" id="forward">
-            <span class="tooltip" id="forwardTip"></span>
-        </div>
-        <div class="menuButton search" id="search">
-            <span class="tooltip" id="searchTip"></span>
-        </div>
-        <input type="text" id="searchBox" class="searchBox">
-        <div class="menuButton search refresh possible" id="refresh">
-            <span class="tooltip" id="refreshTip"></span>
-        </div>
-        <div class="menuButton search exitSearch" id="exitSearch">
-            <span class="tooltip" id="exitSearchTip"></span>
-        </div>
-    </div>
-    <div class="menuButton avatar" id="avatar">
-        <span class="tooltip" id="avatarTip"></span>
-    </div>
-    <div class="menuButton login" id="login">
-        <span class="loginText" id="loginText"></span>
-        <span class="tooltip" id="loginTip"></span>
-    </div>
-</div>
-<div class="leftBarBack"></div>
-<div class="leftBar">
-    <div class="menuButton tab games" id="games">
-        <span class="tooltip" id="gamesTip"></span>
-    </div>
-    <div class="menuButton tab streams" id="streams">
-        <span class="tooltip" id="streamsTip"></span>
-    </div>
-    <div class="menuButton tab videos" id="videos">
-        <span class="tooltip" id="videosTip"></span>
-    </div>
-    <div class="menuButton tab clips" id="clips">
-        <span class="tooltip" id="clipsTip"></span>
-    </div>
-    <div class="menuButton tab channels" id="channels">
-        <span class="tooltip" id="channelsTip"></span>
-    </div>
-    <div class="leftDivider"></div>
-    <div class="menuButton tab followedStreams" id="followedStreams">
-        <span class="tooltip" id="followedStreamsTip"></span>
-    </div>
-    <div class="menuButton tab followedVideos" id="followedVideos">
-        <span class="tooltip" id="followedVideosTip"></span>
-    </div>
-    <div class="menuButton tab followedClips" id="followedClips">
-        <span class="tooltip" id="followedClipsTip"></span>
-    </div>
-    <div class="menuButton tab followedChannels" id="followedChannels">
-        <span class="tooltip" id="followedChannelsTip"></span>
-    </div>
-    <div class="leftDivider"></div>
-    <div class="menuButton tab about" id="about">
-        <span class="tooltip" id="aboutTip"></span>
-    </div>
-</div>
-<div class="contentArea" id="contentArea">
-    <div class="noResults">Twitch Fox currently doesn't work with Private Browsing! Sorry!</div>
-    <br>
-    <div class="noResults">If you're seeing this and you're not using Private Browsing,</div>
-    <div class="noResults">please let me know with the details of how this happened!</div>
-    <div class="noResults">-Hunter</div>
-</div>
-<div class="contentArea hide" id="aboutPage">
-    <div class="bigTwitchFox"></div>
-    <span class="versionText" id="version"></span>
-    <div id="aboutTextNewUser" class="hide">
-        <div class="aboutText bold" id="aboutTextNewUser1"></div>
-        <div class="aboutText" id="aboutTextNewUser2"></div>
-        <div class="aboutText" id="aboutTextNewUser3"></div>
-        <div class="aboutText italic" id="aboutDeveloperName"></div>
-        <div class="aboutButton version" id="aboutWhatsNewButton"></div>
-    </div>
-    <div id="aboutTextWhatsNew" class="hide">
-        <div class="aboutText bold version" id="aboutTextWhatsNew1"></div>
-        <div class="aboutText" id="aboutTextWhatsNew2"></div>
-        <div class="aboutButton" id="aboutTellMoreButton"></div>
-    </div>
-    <div id="aboutTextAbout" class="hide">
-        <div class="aboutText" id="aboutTextAbout1"></div>
-        <div class="aboutText" id="aboutTextAbout2"></div>
-        <div class="aboutText italic" id="aboutDeveloperName"></div>
-        <div class="aboutButton small" id="addonPage"></div>
-        <div class="aboutButton small" id="githubPage"></div>
-        <div class="aboutButton small" id="steamPage"></div>
-        <div class="contactInfo" id="discord"></div>
-    </div>
-</div>
+
 <script src="../popup.js"></script>
 </body>
-
 </html>
