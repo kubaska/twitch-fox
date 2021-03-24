@@ -82,7 +82,7 @@ html, body {
 
 .settings {
     position: absolute;
-    background: url(images/settings.png);
+    background: url(../assets/images/settings.png);
     opacity: 0.9;
 }
 
@@ -108,7 +108,7 @@ html, body {
     position: relative;
     top: 4px;
     left: 4px;
-    background: url(images/search.png);
+    background: url(../assets/images/search.png);
     opacity: 0.5;
 }
 
@@ -117,11 +117,11 @@ html, body {
 }
 
 .menuButton.search.back {
-    background: url(images/back.png);
+    background: url(../assets/images/back.png);
 }
 
 .menuButton.search.forward {
-    background: url(images/forward.png);
+    background: url(../assets/images/forward.png);
 }
 
 .menuButton.search.possible {
@@ -138,13 +138,13 @@ html, body {
 }
 
 .menuButton.search.refresh {
-    background: url(images/refresh.png);
+    background: url(../assets/images/refresh.png);
     position: absolute;
     left: 390px;
 }
 
 .menuButton.search.favorites {
-    background: url(images/favorites.png);
+    background: url(../assets/images/favorites.png);
     position: absolute;
     left: 390px;
     cursor: pointer;
@@ -162,7 +162,7 @@ html, body {
 }
 
 .menuButton.search.exitSearch {
-    background: url(images/exit.png);
+    background: url(../assets/images/exit.png);
     position: absolute;
     left: 410px;
 }
@@ -294,23 +294,23 @@ html, body {
 }
 
 .menuButton.games {
-    background: url(images/games.png);
+    background: url(../assets/images/games.png);
 }
 
 .menuButton.streams {
-    background: url(images/streams.png);
+    background: url(../assets/images/streams.png);
 }
 
 .menuButton.videos {
-    background: url(images/videos.png);
+    background: url(../assets/images/videos.png);
 }
 
 .menuButton.clips {
-    background: url(images/clips.png);
+    background: url(../assets/images/clips.png);
 }
 
 .menuButton.channels {
-    background: url(images/channels.png);
+    background: url(../assets/images/channels.png);
 }
 
 .leftDivider {
@@ -320,23 +320,23 @@ html, body {
 }
 
 .menuButton.followedStreams {
-    background: url(images/followedStreams.png);
+    background: url(../assets/images/followedStreams.png);
 }
 
 .menuButton.followedVideos {
-    background: url(images/followedVideos.png);
+    background: url(../assets/images/followedVideos.png);
 }
 
 .menuButton.followedClips {
-    background: url(images/followedClips.png);
+    background: url(../assets/images/followedClips.png);
 }
 
 .menuButton.followedChannels {
-    background: url(images/followedChannels.png);
+    background: url(../assets/images/followedChannels.png);
 }
 
 .menuButton.about {
-    background: url(images/about.png);
+    background: url(../assets/images/about.png);
 }
 
 .contentArea {
@@ -363,7 +363,7 @@ html, body {
     left: 222px;
     width: 120px;
     height: 120px;
-    background-image: url(../icons/twitch-fox.svg);
+    background-image: url(../assets/twitch-fox.svg);
     background-size: 120px 120px;
 }
 
@@ -608,7 +608,7 @@ html, body {
     margin-right: 4px;
     width: 16px;
     height: 16px;
-    background-image: url(images/uptime.png);
+    background-image: url(../assets/images/uptime.png);
     opacity: 0.9;
     float: left;
 }
@@ -882,59 +882,59 @@ html, body {
 }
 
 .contentButton.twitch {
-    background-image: url(images/glitch.png);
+    background-image: url(../assets/images/glitch.png);
 }
 
 .contentButton.popout {
-    background-image: url(images/popout.png);
+    background-image: url(../assets/images/popout.png);
 }
 
 .contentButton.chat {
-    background-image: url(images/chat.png);
+    background-image: url(../assets/images/chat.png);
 }
 
 .contentButton.enlarge {
-    background-image: url(images/enlarge.png);
+    background-image: url(../assets/images/enlarge.png);
 }
 
 .contentButton.favorite {
-    background-image: url(images/favorite.png);
+    background-image: url(../assets/images/favorite.png);
 }
 
 .contentButton.unfavorite {
-    background-image: url(images/favorite.png);
+    background-image: url(../assets/images/favorite.png);
     background-color: goldenrod;
 }
 
 .contentButton.unfavorite:hover {
-    background-image: url(images/unfavorite.png);
+    background-image: url(../assets/images/unfavorite.png);
     background-color: #E20303;
 }
 
 .contentButton.follow {
-    background-image: url(images/follow.png);
+    background-image: url(../assets/images/follow.png);
 }
 
 .contentButton.unfollow {
-    background-image: url(images/follow.png);
+    background-image: url(../assets/images/follow.png);
     background-color: #14B866;
 }
 
 .contentButton.unfollow:hover {
-    background-image: url(images/unfollow.png);
+    background-image: url(../assets/images/unfollow.png);
     background-color: #E20303;
 }
 
 .contentButton.smallStreams {
-    background-image: url(images/smallStreams.png);
+    background-image: url(../assets/images/smallStreams.png);
 }
 
 .contentButton.smallVideos {
-    background-image: url(images/smallVideos.png);
+    background-image: url(../assets/images/smallVideos.png);
 }
 
 .contentButton.smallClips {
-    background-image: url(images/smallClips.png);
+    background-image: url(../assets/images/smallClips.png);
 }
 
 .contentButton.hidden {

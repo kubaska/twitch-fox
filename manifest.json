@@ -1,5 +1,4 @@
 {
-
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
@@ -13,8 +12,8 @@
   },
 
   "icons": {
-    "48": "icons/twitch-fox.svg",
-    "96": "icons/twitch-fox.svg"
+    "48": "assets/twitch-fox.svg",
+    "96": "assets/twitch-fox.svg"
   },
 
   "permissions": [
@@ -33,13 +32,13 @@
 
   "browser_action": {
     "browser_style": false,
-    "default_icon": "icons/twitch-fox.svg",
+    "default_icon": "assets/twitch-fox.svg",
     "default_title": "Twitch Fox",
-    "default_popup": "popup/popup.html"
+    "default_popup": "html/popup.html"
   },
 
   "options_ui": {
-    "page": "options/options.html",
+    "page": "html/options.html",
     "browser_style": true
   },
 
