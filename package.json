@@ -1,0 +1,25 @@
+{
+  "name": "twitch-fox",
+  "description": "Twitch content browser",
+  "scripts": {
+    "build": "webpack",
+    "prepack": "web-ext build --overwrite-dest",
+    "lint": "web-ext lint",
+    "start": "webpack -w",
+    "make": "webpack --mode=production --devtool=false && web-ext build --overwrite-dest"
+  },
+  "author": "Hunter5000, kubaska",
+  "private": true,
+  "dependencies": {
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^6.1.0",
+    "web-ext-webpack-plugin": "github:birtles/web-ext-webpack-plugin",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  },
+  "webExt": {
+    "sourceDir": "dist"
+  }
+}
