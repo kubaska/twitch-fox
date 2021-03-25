@@ -44,6 +44,26 @@ html, body {
     overflow-x: hidden;
 }
 
+.uptime::before {
+    width: 16px;
+    height: 16px;
+    background: url(../assets/images/uptime.png) no-repeat;
+    display: inline-block;
+    content: "";
+    padding-left: 3px;
+}
+
+.uptime:hover .tooltip {
+    visibility: visible;
+}
+.uptime .tooltip {
+    top: 20px;
+    left: 90px;
+}
+.uptime-time {
+    float: right;
+}
+
 /* End New */
 
 .screenLock {

@@ -88,6 +88,129 @@
     <div class="enlargedPreview" id="enlargedPreview"></div>
 </div>
 
+<div id="stubs" style="display: none">
+    <div class="content game" id="stub-game">
+        <div class="contentBack game lazy">
+            <div class="hoverBack game"></div>
+            <div class="hideUntilHover">
+                <div class="clickBack game" data-trigger="browseGame">
+                    <span class="tooltip">
+                        <span>View the top live streams playing</span>&nbsp;<span class="game-name"></span>
+                    </span>
+                </div>
+                <div class="contentButton bottom game twitch" data-trigger="openGame">
+                    <span class="tooltip">Open Twitch page</span>
+                </div>
+                <div class="contentButton side game smallVideos" data-trigger="browseChannelsByGame">
+                    <span class="tooltip">
+                        <span>View the top videos from channels playing</span>&nbsp;<span class="game-name"></span>
+                    </span>
+                </div>
+                <div class="contentButton side game smallClips" data-trigger="browseClipsByGame">
+                    <span class="tooltip">
+                        <span>View the top clips from streams playing</span>&nbsp;<span class="game-name"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <span class="gameTitle">
+            <span class="bottomText gameTop game-name"></span>
+            <span class="tooltip noDisable game-name"></span>
+        </span>
+        <div class="bottomText gameBottom">
+            <span class="viewer-count"></span>&nbsp;<span>viewers</span>
+        </div>
+        <span class="tag"></span>
+    </div>
+
+    <div class="content stream" id="stub-stream">
+        <div class="contentBack stream lazy">
+            <div class="hoverBack stream"></div>
+            <div class="status stream">Stream Title</div>
+            <div class="hideUntilHover">
+                <div class="contentButton bottom stream twitch" data-trigger="openStream">
+                    <span class="tooltip">Open Twitch page</span>
+                </div>
+                <div class="contentButton bottom stream popout" data-trigger="openStreamPopout">
+                    <span class="tooltip">Open stream in a popout window</span>
+                </div>
+                <div class="contentButton bottom stream chat" data-trigger="openChat">
+                    <span class="tooltip">Open chat in a popout window</span>
+                </div>
+                <div class="contentButton bottom stream enlarge" data-trigger="enlarge">
+                    <span class="tooltip">Enlarge the preview</span>
+                </div>
+                <div class="contentButton bottom stream favorite noAccess" data-trigger="favorite">
+                    <span class="tooltip">You can't favorite xQcOW because you're not following them!</span>
+                </div>
+                <div class="contentButton bottom stream follow noAccess" data-trigger="follow">
+                    <span class="tooltip">Twitch Fox cannot access followed content without Twitch authorization unless this is enabled in the settings</span>
+                </div>
+                <div class="contentButton side stream smallVideos" data-trigger="browseVideosByChannel">
+                    <span class="tooltip">View videos from this channel</span>
+                </div>
+                <div class="contentButton side stream smallClips" data-trigger="browseClipsByChannel">
+                    <span class="tooltip">View clips from this channel</span>
+                </div>
+            </div>
+            <div class="uptime">
+                <span class="uptime-time"></span>
+                <span class="tooltip noDisable">
+                    <span>Stream started at</span>
+                    <span class="uptime-started"></span>
+                </span>
+            </div>
+        </div>
+        <div class="cornerGame lazy" data-trigger="browseGame">
+            <span class="tooltip noDisable">
+                <span>View the top live streams playing</span>&nbsp;<span class="game-name"></span>
+            </span>
+        </div>
+        <div class="cornerLogo lazy">
+            <span class="tooltip"><span class="streamer-name"></span><span>'s logo</span></span>
+        </div>
+        <div class="bottomText stream">
+            <span class="viewer-number"></span>&nbsp;<span>viewers on</span>&nbsp;<span class="streamer-name"></span>
+        </div>
+        <span class="tag"></span>
+    </div>
+
+    <div class="content channel" id="stub-channel">
+        <div class="contentBack channel">
+            <div class="hoverBack channel"></div>
+            <div class="topName">
+                <span class="streamer-name"></span>
+                <span class="tooltip noDisable streamer-name"></span>
+            </div>
+            <div class="status channel"></div>
+            <div class="hideUntilHover">
+                <div class="contentButton bottom channel twitch" data-trigger="openStream">
+                    <span class="tooltip">Open Twitch page</span>
+                </div>
+                <div class="contentButton bottom channel chat" data-trigger="openChat">
+                    <span class="tooltip">Open chat in a popout window</span>
+                </div>
+                <div class="contentButton bottom channel favorite noAccess" data-trigger="favorite">
+                    <span class="tooltip">You can't favorite xxxxx because you're not following them!</span>
+                </div>
+                <div class="contentButton bottom channel follow noAccess" data-trigger="follow">
+                    <span class="tooltip">Twitch Fox cannot access followed content without Twitch authorization unless this is enabled in the settings</span>
+                </div>
+                <div class="contentButton side channel smallVideos" data-trigger="browseVideosByChannel">
+                    <span class="tooltip">View videos from this channel</span>
+                </div>
+                <div class="contentButton side channel smallClips" data-trigger="browseClipsByChannel">
+                    <span class="tooltip">View clips from this channel</span>
+                </div>
+            </div>
+        </div>
+        <div class="cornerGame channel" data-trigger="browseGame">
+            <span>View the top live streams playing</span>&nbsp;<span class="game-name"></span>
+        </div>
+        <span class="tag"></span>
+    </div>
+</div>
+
 <script src="../popup.js"></script>
 </body>
 </html>

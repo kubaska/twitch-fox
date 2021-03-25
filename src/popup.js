@@ -9,6 +9,9 @@
 // if (!bp) browser.browserAction.disable();
 // Just kidding this also disables it on non-private windows
 
+import utils from "./utils";
+import LazyLoad from "vanilla-lazyload";
+
 const bp = browser.extension.getBackgroundPage();
 
 const {
@@ -33,6 +36,9 @@ const addonPage = document.getElementById('addonPage');
 const githubPage = document.getElementById('githubPage');
 const steamPage = document.getElementById('steamPage');
 const screenLock = document.getElementById('screenLock');
+const lazyload = new LazyLoad({
+    container: contentArea
+});
 
 let enlargedPreview = document.getElementById('enlargedPreview');
 let enlargedContent = '';
@@ -82,6 +88,24 @@ const enlarge = (contentDiv, contentBack, img) => {
     enlargedPreview.style.top = `${rect.top}px`;
     enlargedPreview.style.transform =
         `translate(${-rect.left}px,${131 - rect.top}px)`;
+    enlargedPreview.classList.add('enlarged');
+    screenLock.classList.remove('hidden');
+};
+
+const enlarge2 = (element) => {
+    if (oldEnlarged && oldEnlarged.id !== enlargedPreview.id) {
+        screenLock.removeChild(oldEnlarged);
+    }
+    const contentBack = element.querySelector('.contentBack');
+    const rect = contentBack.getBoundingClientRect();
+    newEnlarged = enlargedPreview.cloneNode();
+    newEnlarged.id = 'newEnlarged';
+    element.classList.add('hidden');
+    enlargedContent = element.id;
+    enlargedPreview.style.backgroundImage = contentBack.style.backgroundImage;
+    enlargedPreview.style.left = `${rect.left}px`;
+    enlargedPreview.style.top = `${rect.top}px`;
+    enlargedPreview.style.transform = `translate(${-rect.left}px,${131 - rect.top}px)`;
     enlargedPreview.classList.add('enlarged');
     screenLock.classList.remove('hidden');
 };
@@ -207,6 +231,7 @@ const updatePage = (noScroll) => {
     if (!noScroll) searchBox.value = results[index].filter;
 
     filterContent(noScroll);
+    lazyload.update();
 };
 
 const getApiResults = (endpoint, theOpts = {}, newIndex, reset) => {
@@ -309,814 +334,279 @@ const followApi = (endpoint, channel) => {
     }
 };
 
+const UI = {
+    insertBackgroundUrl: (element, url, useLazyloader = true) => {
+        if (useLazyloader) {
+            element.dataset['bg'] = url;
+        } else {
+            element.style.backgroundImage = `url("${url}")`;
+        }
+    },
+
+    getParentElement: (element, klass) => {
+        while (element && ! element.classList.contains(klass)) {
+            element = element.parentElement;
+        }
+        return element;
+    }
+}
+
 addCard = (content, type) => {
     if (type === 'game') {
+        let card = document.getElementById('stub-game').cloneNode(true);
+
         const game = content.game ? content.game : content;
-        const id = `GAME!${game._id}`;
-        if (document.getElementById(id)) {
-            return;
-        }
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content', 'game');
-        contentDiv.id = id;
 
-        const contentBack = document.createElement('div');
-        contentBack.classList.add('contentBack', 'game');
-        contentBack.style.backgroundImage = `url("${game.box.medium}")`;
-        contentDiv.appendChild(contentBack);
+        card.id = `GAME!${game._id}`;
+        card.dataset['game'] = game.name;
 
-        const hoverBack = document.createElement('div');
-        hoverBack.classList.add('hoverBack', 'game');
-        contentBack.appendChild(hoverBack);
-
-        const hideUntilHover = document.createElement('div');
-        hideUntilHover.classList.add('hideUntilHover');
-        contentBack.appendChild(hideUntilHover);
-
-        const clickBack = document.createElement('div');
-        clickBack.classList.add('clickBack', 'game');
-
-        addTooltip(clickBack).textContent =
-            browser.i18n.getMessage('gameStreamsTip', game.name);
-
-        hideUntilHover.appendChild(clickBack);
-
-        contentBack.addEventListener('click', (e) => {
-            if (e.target.classList.contains('clickBack') ||
-                e.target.parentElement.classList.contains('clickBack')) {
-                // Get Live Streams
-                getApiResults('Get Live Streams', {
-                    game: game.name,
-                }, true);
-            }
-        });
-
-        const twitchButton = document.createElement('div');
-        twitchButton.classList.add('contentButton', 'bottom', 'game', 'twitch');
-        twitchButton.addEventListener('click', () => {
-            const url = `https://www.twitch.tv/directory/game/${game.name}`;
-            browser.tabs.create({
-                url,
-            });
-        });
-        addTooltip(twitchButton).textContent =
-            browser.i18n.getMessage('openTwitchPageTip');
-        hideUntilHover.appendChild(twitchButton);
-
-        /* let streamsButton = document.createElement("div");
-        streamsButton.classList.add(
-          "contentButton", "side", "game", "smallStreams");
-        streamsButton.addEventListener("click", () => {
-          //Get Live Streams
-          getApiResults("Get Live Streams", {
-            game: game.name
-          }, true);
+        card.querySelectorAll('.game-name').forEach(element => {
+            element.textContent = game.name;
         })
-        addTooltip(streamsButton).textContent = browser.i18n.getMessage(
-          "gameStreamsTip", game.name);
-        hideUntilHover.appendChild(streamsButton); */
 
-        const videosButton = document.createElement('div');
-        videosButton.classList.add('contentButton', 'side', 'game', 'smallVideos');
-        videosButton.addEventListener('click', () => {
-            // Get Top Videos
-            getApiResults('Get Top Videos', {
-                game: game.name,
-            }, true);
-        });
-        addTooltip(videosButton).textContent =
-            browser.i18n.getMessage('gameVideosTip', game.name);
-        hideUntilHover.appendChild(videosButton);
-
-        const clipsButton = document.createElement('div');
-        clipsButton.classList.add('contentButton', 'side', 'game', 'smallClips');
-        clipsButton.addEventListener('click', () => {
-            // Get Top Clips
-            getApiResults('Get Top Clips', {
-                game: game.name,
-            }, true);
-        });
-        addTooltip(clipsButton).textContent =
-            browser.i18n.getMessage('gameClipsTip', game.name);
-        hideUntilHover.appendChild(clipsButton);
-
-        const gameTitle = document.createElement('span');
-        gameTitle.classList.add('gameTitle');
-        contentDiv.appendChild(gameTitle);
-
-        const bottomTextTop = document.createElement('div');
-        bottomTextTop.classList.add('bottomText', 'gameTop');
-        bottomTextTop.textContent = game.name;
-        gameTitle.appendChild(bottomTextTop);
-        addTooltip(gameTitle, true).textContent = game.name;
+        card.querySelector('.contentBack').dataset['bg'] = game.box.medium;
 
         if (content.viewers) {
-            const bottomTextBottom = document.createElement('div');
-            bottomTextBottom.classList.add('bottomText', 'gameBottom');
-            bottomTextBottom.textContent = browser.i18n.getMessage(
-                'viewersOnGame',
-                delimitNumber(content.viewers),
-            );
-            contentDiv.appendChild(bottomTextBottom);
+            card.querySelector('.viewer-count').textContent = delimitNumber(content.viewers);
+        } else {
+            // Searching for game does not return the viewer count, hide it
+            card.querySelector('.viewer-count').classList.add('hide');
         }
 
-        const tag = document.createElement('span');
-        tag.classList.add('tag');
-        tag.textContent = game.name;
-        contentDiv.appendChild(tag);
-        contentArea.appendChild(contentDiv);
+        card.querySelector('.tag').textContent = game.name;
+
+        card.addEventListener('click', cardClickHandler);
+
+        contentArea.appendChild(card);
     }
     else if (type === 'stream') {
-        const id = `STREAM!${content._id}`;
-        if (document.getElementById(id) || (mode === 'followedStreams' &&
-            bp.getStorage('favoritesMode') &&
-            bp.getStorage('favorites').indexOf(String(content.channel._id)) <
-            0)) {
-            return;
-        }
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content', 'stream');
-        contentDiv.id = id;
+        let card = document.getElementById('stub-stream').cloneNode(true);
 
-        const contentBack = document.createElement('div');
-        contentBack.classList.add('contentBack', 'stream');
-        contentBack.style.backgroundImage =
-            `url("${content.preview.large}")`;
-        contentDiv.appendChild(contentBack);
+        card.id = `STREAM!${content._id}`;
+        card.dataset['id'] = content._id;
+        card.dataset['streamerId'] = content.channel._id;
+        card.dataset['name'] = content.channel.name;
+        card.dataset['game'] = content.game;
 
-        const hoverBack = document.createElement('div');
-        hoverBack.classList.add('hoverBack', 'stream');
-        contentBack.appendChild(hoverBack);
+        card.querySelector('.status.stream').textContent = content.channel.status;
 
-        const status = document.createElement('div');
-        status.classList.add('status', 'stream');
-        status.textContent = content.channel.status;
-        contentBack.appendChild(status);
-
-        const hideUntilHover = document.createElement('div');
-        hideUntilHover.classList.add('hideUntilHover');
-        contentBack.appendChild(hideUntilHover);
-
-        if (bp.getStorage('openTwitchPage') ||
-            bp.getStorage('openPopout') || bp.getStorage('openChat')) {
-            const clickBack = document.createElement('div');
-            clickBack.classList.add('clickBack', 'stream');
-
-            addTooltip(clickBack).textContent =
-                browser.i18n.getMessage('performActions');
-
-            hideUntilHover.appendChild(clickBack);
-
-            contentBack.addEventListener('click', (e) => {
-                if (e.target.classList.contains('clickBack')) {
-                    // Do the stuff
-                    if (bp.getStorage('openTwitchPage')) {
-                        bp.openTwitchPage(content.channel.url);
-                    }
-                    if (bp.getStorage('openPopout')) {
-                        bp.openPopout(content.channel.name);
-                    }
-                    if (bp.getStorage('openChat')) {
-                        bp.openChat(content.channel.name);
-                    }
-                }
-            });
-        }
-
-        const createdAt = new Date(content.created_at);
-
-        const uptimeMs = Date.now() - createdAt;
-        let uptimeHr = Math.floor(uptimeMs / 3600000);
-        let uptimeMin = Math.floor((uptimeMs - (uptimeHr * 3600000)) / 60000);
-        let uptimeS = Math.floor((uptimeMs - (uptimeHr * 3600000) -
-            (uptimeMin * 60000)) / 1000);
-        uptimeMin = uptimeMin < 10 && uptimeHr > 0 ?
-            `0${uptimeMin}` : uptimeMin;
-        uptimeHr = uptimeHr > 0 ? `${uptimeHr}:` : uptimeHr;
-        uptimeS = uptimeS < 10 ? `:0${uptimeS}` : `:${uptimeS}`;
-
-        const uptime = document.createElement('div');
-        uptime.classList.add('uptime');
-        uptime.textContent = uptimeHr + uptimeMin + uptimeS;
-
-        let hours = createdAt.getHours();
-        let ampm = 'AM';
-        if (hours > 12) {
-            hours -= 12;
-            ampm = 'PM';
-        }
-        let minutes = createdAt.getMinutes();
-        minutes = minutes < 10 ? `0${minutes}` : minutes;
-        let seconds = createdAt.getSeconds();
-        seconds = seconds < 10 ? `0${seconds}` : seconds;
-
-        const uptimeIcon = document.createElement('div');
-        uptimeIcon.classList.add('uptimeIcon');
-        addTooltip(uptimeIcon, true).textContent =
-            browser.i18n.getMessage('streamUptimeTip', [
-                createdAt.getMonth() + 1, createdAt.getDate(),
-                createdAt.getFullYear(), hours, minutes, seconds, ampm,
-            ]);
-
-        uptime.appendChild(uptimeIcon);
-        contentBack.appendChild(uptime);
-
-        const twitchButton = document.createElement('div');
-        twitchButton.classList.add('contentButton', 'bottom', 'stream', 'twitch');
-        twitchButton.addEventListener('click', () => {
-            const {
-                url,
-            } = content.channel;
-            browser.tabs.create({
-                url,
-            });
-        });
-        addTooltip(twitchButton).textContent =
-            browser.i18n.getMessage('openTwitchPageTip');
-        hideUntilHover.appendChild(twitchButton);
-
-        const popoutButton = document.createElement('div');
-        popoutButton.classList.add('contentButton', 'bottom', 'stream', 'popout');
-        popoutButton.addEventListener('click', () => {
-            browser.windows.create({
-                url: `http://player.twitch.tv/?channel=${content.channel.name}`,
-                height: 500,
-                width: 850,
-                type: 'popup',
-            });
-        });
-
-        addTooltip(popoutButton).textContent =
-            browser.i18n.getMessage('openPopooutTip');
-        hideUntilHover.appendChild(popoutButton);
-
-        const chatButton = document.createElement('div');
-        chatButton.classList.add('contentButton', 'bottom', 'stream', 'chat');
-        chatButton.addEventListener('click', () => {
-            browser.windows.create({
-                url: `http:/twitch.tv/${content.channel.name}/chat?popout`,
-                height: 600,
-                width: 340,
-                type: 'popup',
-            });
-        });
-        addTooltip(chatButton).textContent =
-            browser.i18n.getMessage('openChatTip', content.channel.display_name);
-        hideUntilHover.appendChild(chatButton);
-
-        const enlargeButton = document.createElement('div');
-        enlargeButton.classList.add('contentButton', 'bottom', 'stream', 'enlarge');
-        enlargeButton.addEventListener(
-            'click',
-            () => enlarge(contentDiv, contentBack, content.preview.large),
-        );
-        addTooltip(enlargeButton).textContent =
-            browser.i18n.getMessage('enlargeTip');
-        hideUntilHover.appendChild(enlargeButton);
-
-        const followed =
-            bp.getUserFollowIDs().indexOf(String(content.channel._id)) > -1;
-
-        const favoriteButton = document.createElement('div');
-        const favorited =
-            bp.getStorage('favorites').indexOf(String(content.channel._id)) >
-            -1;
-        favoriteButton.classList.add(
-            'contentButton', 'bottom', 'stream',
-            favorited ? 'unfavorite' : 'favorite',
-        );
-        if (!followed) favoriteButton.classList.add('noAccess');
-        else {
-            favoriteButton.addEventListener('click', () => {
-                if (favorited) {
-                    bp.unfavorite(String(content.channel._id), updatePage);
-                } else {
-                    bp.favorite(String(content.channel._id), updatePage);
-                }
-            });
-        }
-        const favoriteTip = favorited ? 'unfavoriteTip' : 'favoriteTip';
-        addTooltip(favoriteButton).textContent = browser.i18n.getMessage(followed ?
-            favoriteTip : 'cantFavoriteTip', content.channel.display_name);
-        hideUntilHover.appendChild(favoriteButton);
-
-        const followButton = document.createElement('div');
-        followButton.classList.add(
-            'contentButton', 'bottom', 'stream',
-            followed ? 'unfollow' : 'follow',
-        );
-        if (!bp.getAuthorizedUser() &&
-            !bp.getStorage('nonTwitchFollows')) {
-            followButton.classList.add('noAccess');
-        } else {
-            followButton.addEventListener('click', () => {
-                if (followed) followApi('Unfollow Channel', content.channel);
-                else followApi('Follow Channel', content.channel);
-            });
-        }
-        const followTip = followed ? 'unfollowTip' : 'followTip';
-        addTooltip(followButton).textContent =
-            browser.i18n.getMessage(followButton.classList.contains('noAccess') ?
-                'noAccessTip' : followTip, content.channel.display_name);
-
-        hideUntilHover.appendChild(followButton);
-
-        const videosButton = document.createElement('div');
-        videosButton.classList.add(
-            'contentButton', 'side',
-            'stream', 'smallVideos',
-        );
-        videosButton.addEventListener('click', () => {
-            // Get Channel Videos
-            getApiResults('Get Channel Videos', {
-                _id: content.channel._id,
-            }, true);
-        });
-        addTooltip(videosButton).textContent =
-            browser.i18n.getMessage('channelVideosTip', content.channel.display_name);
-        hideUntilHover.appendChild(videosButton);
-
-        const clipsButton = document.createElement('div');
-        clipsButton.classList.add('contentButton', 'side', 'stream', 'smallClips');
-        clipsButton.addEventListener('click', () => {
-            // Get Top Clips in channel
-            getApiResults('Get Top Clips', {
-                channel: content.channel.name,
-            }, true);
-        });
-        addTooltip(clipsButton).textContent =
-            browser.i18n.getMessage('channelClipsTip', content.channel.display_name);
-        hideUntilHover.appendChild(clipsButton);
+        UI.insertBackgroundUrl(card.querySelector('.contentBack'), content.preview.large);
 
         if (content.game) {
-            const cornerGame = document.createElement('div');
-            cornerGame.classList.add('cornerGame');
-            cornerGame.style.backgroundImage =
-                `url("https://static-cdn.jtvnw.net/ttv-boxart/${content.game
-                }-52x72.jpg")`;
-
-            addTooltip(cornerGame, true).textContent =
-                bp.getStorage('tooltips') ?
-                    browser.i18n.getMessage('gameStreamsTip', content.game) :
-                    content.game;
-            cornerGame.addEventListener('click', () => {
-                // Get Live Streams
-                getApiResults('Get Live Streams', {
-                    game: content.game,
-                }, true);
-            });
-
-            contentDiv.appendChild(cornerGame);
+            card.querySelector('.game-name').textContent = content.game;
+            UI.insertBackgroundUrl(
+                card.querySelector('.cornerGame'),
+                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
+            );
+        } else {
+            card.querySelector('.cornerGame').classList.add('hide');
         }
 
-        if (bp.getStorage('showLogos')) {
-            const cornerLogo = document.createElement('div');
-            cornerLogo.classList.add('cornerLogo');
-            cornerLogo.style.backgroundImage =
-                `url("${content.channel.logo}")`;
-            addTooltip(cornerLogo).textContent =
-                browser.i18n.getMessage('channelLogo', content.channel.display_name);
-            contentDiv.appendChild(cornerLogo);
-        }
+        const startDate = new Date(content.created_at);
+        const now = Date.now();
 
-        const displayName = document.createElement('span');
-        displayName.classList.add('displayName');
-        contentDiv.appendChild(displayName);
+        card.querySelector('.uptime-time').textContent = utils.timeSince(startDate, now);
+        card.querySelector('.uptime-started').textContent = startDate.toLocaleString();
+        card.querySelector('.viewer-number').textContent = delimitNumber(content.viewers);
 
-        const bottomText = document.createElement('div');
-        bottomText.classList.add('bottomText', 'stream');
-        bottomText.textContent =
-            browser.i18n.getMessage('viewersOn', [
-                delimitNumber(content.viewers), content.channel.display_name,
-            ]);
-        displayName.appendChild(bottomText);
+        card.querySelectorAll('.streamer-name').forEach(element => {
+            element.textContent = content.channel.display_name;
+        });
 
-        const name = content.channel.name ===
-        content.channel.display_name.toLowerCase() ? '' :
-            ` (${content.channel.name})`;
-        addTooltip(displayName, true).textContent = content.channel.display_name +
-            name;
+        // tooltip stuff
+        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
+            'channelVideosTip', content.channel.display_name
+        );
+        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
+            'channelClipsTip', content.channel.display_name
+        );
 
-        const tag = document.createElement('span');
-        tag.classList.add('tag');
-        tag.textContent = content.game + content.channel.display_name +
-            content.channel.name + content.channel.status;
-        contentDiv.appendChild(tag);
-        contentArea.appendChild(contentDiv);
+        UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
+
+        card.querySelector('.tag').textContent =
+            content.game+content.channel.name+content.channel.display_name+content.channel.status;
+
+        card.addEventListener('click', cardClickHandler);
+
+        contentArea.appendChild(card);
     }
     else if (type === 'video' || type === 'clip') {
-        let id = type === 'video' ? content._id : content.tracking_id;
-        id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
-        if (document.getElementById(id)) {
-            return;
-        }
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content', 'stream');
-        contentDiv.id = id;
 
-        const contentBack = document.createElement('div');
-        contentBack.classList.add('contentBack', 'stream');
-        const backImage = type === 'video' ? content.preview.large :
-            content.thumbnails.medium;
-        contentBack.style.backgroundImage =
-            `url("${backImage}")`;
-        contentDiv.appendChild(contentBack);
+        let card = document.getElementById('stub-stream').cloneNode(true);
+        const id = type === 'video' ? content._id : content.tracking_id;
+        const channel = type === 'video' ? content.channel : content.broadcaster;
 
-        const hoverBack = document.createElement('div');
-        hoverBack.classList.add('hoverBack', 'stream');
-        contentBack.appendChild(hoverBack);
+        card.id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
+        card.dataset['id'] = id;
+        card.dataset['streamerId'] = channel._id;
+        card.dataset['name'] = channel.name;
+        card.dataset['game'] = content.game;
 
-        const title = document.createElement('div');
-        title.classList.add('status', 'stream');
-        title.textContent = content.title;
-        contentBack.appendChild(title);
+        card.querySelector('.status.stream').textContent = content.title;
 
-        const hideUntilHover = document.createElement('div');
-        hideUntilHover.classList.add('hideUntilHover');
-        contentBack.appendChild(hideUntilHover);
-
-        let seconds = type === 'video' ? content.length : content.duration;
-        let hours = Math.floor(seconds / 3600);
-        let minutes = Math.floor((seconds % 3600) / 60);
-        seconds = Math.floor(seconds % 3600 % 60);
-
-        minutes = minutes < 10 && hours > 0 ? `0${minutes}` : minutes;
-        seconds = seconds < 10 ? `0${seconds}` : seconds;
-
-        hours = hours < 1 ? '' : `${hours}:`;
-
-        const uptime = document.createElement('div');
-        uptime.classList.add('uptime');
-        uptime.textContent = `${hours + minutes}:${seconds}`;
-
-        const createdAt = new Date(content.created_at);
-
-        hours = createdAt.getHours();
-        let ampm = 'AM';
-        if (hours > 12) {
-            hours -= 12;
-            ampm = 'PM';
-        }
-        minutes = createdAt.getMinutes();
-        minutes = minutes < 10 ? `0${minutes}` : minutes;
-        seconds = createdAt.getSeconds();
-        seconds = seconds < 10 ? `0${seconds}` : seconds;
-
-        const uptimeIcon = document.createElement('div');
-        uptimeIcon.classList.add('uptimeIcon');
-        addTooltip(uptimeIcon, true).textContent =
-            browser.i18n.getMessage('durationTip', [createdAt.getMonth() + 1,
-                createdAt.getDate(), createdAt.getFullYear(), hours, minutes, seconds,
-                ampm,
-            ]);
-        uptime.appendChild(uptimeIcon);
-
-        contentBack.appendChild(uptime);
-
-        const chatButton = document.createElement('div');
-        chatButton.classList.add(
-            'contentButton', 'bottom', 'stream',
-            'chat', 'hidden',
+        UI.insertBackgroundUrl(
+            card.querySelector('.contentBack'),
+            type === 'video' ? content.preview.large : content.thumbnails.medium
         );
-        hideUntilHover.appendChild(chatButton);
-
-        const twitchButton = document.createElement('div');
-        twitchButton.classList.add('contentButton', 'bottom', 'stream', 'twitch');
-        twitchButton.addEventListener('click', () => {
-            const {
-                url,
-            } = content;
-            browser.tabs.create({
-                url,
-            });
-        });
-        addTooltip(twitchButton).textContent =
-            browser.i18n.getMessage('openTwitchPageTip');
-        hideUntilHover.appendChild(twitchButton);
-
-        const popoutButton = document.createElement('div');
-        popoutButton.classList.add('contentButton', 'bottom', 'stream', 'popout');
-        popoutButton.addEventListener('click', () => {
-            browser.windows.create({
-                url: type === 'video' ?
-                    `http://player.twitch.tv/?video=${content._id}` : content.embed_url,
-                height: 500,
-                width: 850,
-                type: 'popup',
-            });
-        });
-
-        addTooltip(popoutButton).textContent =
-            browser.i18n.getMessage('openPopooutTip');
-        hideUntilHover.appendChild(popoutButton);
-
-        const enlargeButton = document.createElement('div');
-        enlargeButton.classList.add('contentButton', 'bottom', 'stream', 'enlarge');
-        enlargeButton.addEventListener(
-            'click',
-            () => enlarge(contentDiv, contentBack, backImage),
-        );
-        addTooltip(enlargeButton).textContent =
-            browser.i18n.getMessage('enlargeTip');
-        hideUntilHover.appendChild(enlargeButton);
-
-        const thisChannel =
-            type === 'video' ? content.channel : content.broadcaster;
-
-        const followed =
-            bp.getUserFollowIDs().indexOf(String(thisChannel._id)) > -1;
-
-        const favoriteButton = document.createElement('div');
-        const favorited =
-            bp.getStorage('favorites').indexOf(String(thisChannel._id)) > -1;
-        favoriteButton.classList.add(
-            'contentButton', 'bottom', 'stream',
-            favorited ? 'unfavorite' : 'favorite',
-        );
-        if (!followed) favoriteButton.classList.add('noAccess');
-        else {
-            favoriteButton.addEventListener('click', () => {
-                if (favorited) {
-                    bp.unfavorite(String(thisChannel._id), updatePage);
-                } else bp.favorite(String(thisChannel._id), updatePage);
-            });
-        }
-        const favoriteTip = favorited ? 'unfavoriteTip' : 'favoriteTip';
-        addTooltip(favoriteButton).textContent =
-            browser.i18n.getMessage(
-                followed ? favoriteTip : 'cantFavoriteTip',
-                thisChannel.display_name,
-            );
-        hideUntilHover.appendChild(favoriteButton);
-
-        const followButton = document.createElement('div');
-        followButton.classList.add(
-            'contentButton', 'bottom', 'stream',
-            followed ? 'unfollow' : 'follow',
-        );
-        if (!bp.getAuthorizedUser() &&
-            !bp.getStorage('nonTwitchFollows')) {
-            followButton.classList.add('noAccess');
-        } else {
-            followButton.addEventListener('click', () => {
-                if (followed) followApi('Unfollow Channel', thisChannel);
-                else followApi('Follow Channel', thisChannel);
-            });
-        }
-        const followTip = followed ? 'unfollowTip' : 'followTip';
-        addTooltip(followButton).textContent =
-            browser.i18n.getMessage(followButton.classList.contains('noAccess') ?
-                'noAccessTip' : followTip, thisChannel.display_name);
-        hideUntilHover.appendChild(followButton);
-
-        const videosButton = document.createElement('div');
-        videosButton.classList.add(
-            'contentButton', 'side',
-            'stream', 'smallVideos',
-        );
-        videosButton.addEventListener('click', () => {
-            // Get Channel Videos
-            getApiResults('Get Channel Videos', {
-                _id: type === 'video' ? thisChannel._id : thisChannel.id,
-            }, true);
-        });
-        addTooltip(videosButton).textContent =
-            browser.i18n.getMessage('channelVideosTip', thisChannel.display_name);
-        hideUntilHover.appendChild(videosButton);
-
-        const clipsButton = document.createElement('div');
-        clipsButton.classList.add('contentButton', 'side', 'stream', 'smallClips');
-        clipsButton.addEventListener('click', () => {
-            // Get Top Clips in channel
-            getApiResults('Get Top Clips', {
-                channel: thisChannel.name,
-            }, true);
-        });
-        addTooltip(clipsButton).textContent =
-            browser.i18n.getMessage('channelClipsTip', thisChannel.display_name);
-        hideUntilHover.appendChild(clipsButton);
 
         if (content.game) {
-            const cornerGame = document.createElement('div');
-            cornerGame.classList.add('cornerGame');
-            cornerGame.style.backgroundImage =
-                `url("https://static-cdn.jtvnw.net/ttv-boxart/${content.game
-                }-52x72.jpg")`;
-            addTooltip(cornerGame, true).textContent =
-                bp.getStorage('tooltips') ?
-                    browser.i18n.getMessage('gameStreamsTip', content.game) :
-                    content.game;
-            cornerGame.addEventListener('click', () => {
-                // Get Live Streams
-                getApiResults('Get Live Streams', {
-                    game: content.game,
-                }, true);
-            });
-            contentDiv.appendChild(cornerGame);
+            card.querySelector('.game-name').textContent = content.game;
+            UI.insertBackgroundUrl(
+                card.querySelector('.cornerGame'),
+                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
+            );
+        } else {
+            card.querySelector('.cornerGame').classList.add('hide');
         }
 
-        if (bp.getStorage('showLogos')) {
-            const cornerLogo = document.createElement('div');
-            cornerLogo.classList.add('cornerLogo');
-            cornerLogo.style.backgroundImage =
-                `url("${thisChannel.logo}")`;
-            addTooltip(cornerLogo).textContent =
-                browser.i18n.getMessage('channelLogo', thisChannel.display_name);
-            contentDiv.appendChild(cornerLogo);
-        }
+        let seconds = type === 'video' ? content.length : content.duration;
+        const createdAt = new Date(content.created_at);
 
-        const displayName = document.createElement('span');
-        displayName.classList.add('displayName');
-        contentDiv.appendChild(displayName);
+        card.querySelector('.uptime-time').textContent = utils.secondsToHHMMSS(parseInt(seconds));
+        card.querySelector('.uptime-started').textContent = createdAt.toLocaleString();
+        card.querySelector('.viewer-number').textContent = delimitNumber(content.views);
 
-        const bottomText = document.createElement('div');
-        bottomText.classList.add('bottomText', 'stream');
-        bottomText.textContent = browser.i18n.getMessage('viewsOn', [
-            delimitNumber(content.views), thisChannel.display_name,
-        ]);
-        displayName.appendChild(bottomText);
-        const name = thisChannel.name === thisChannel.display_name.toLowerCase() ?
-            '' : ` (${thisChannel.name})`;
-        addTooltip(displayName, true).textContent = thisChannel.display_name +
-            name;
+        // Hide chat button
+        card.querySelector('.contentButton.chat').classList.add('hidden');
 
-        const tag = document.createElement('span');
-        tag.classList.add('tag');
-        tag.textContent = content.game + thisChannel.display_name +
-            thisChannel.name + content.title;
-        contentDiv.appendChild(tag);
-        contentArea.appendChild(contentDiv);
+        // todo isFollowed
+
+        card.querySelectorAll('.streamer-name').forEach(element => {
+            element.textContent = channel.display_name;
+        });
+
+        // tooltip stuff
+        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
+            'channelVideosTip', channel.display_name
+        );
+        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
+            'channelClipsTip', channel.display_name
+        );
+
+        UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
+
+        card.querySelector('.tag').textContent =
+            content.game+channel.name+channel.display_name+channel.status;
+
+        card.addEventListener('click', cardClickHandler);
+
+        contentArea.appendChild(card);
+
+        // if (document.getElementById(id)) {
+        //     return;
+        // }
+
     }
     else if (type === 'channel') {
         const channel = content.channel ? content.channel : content;
-        const id = `CHANNEL!${channel._id}`;
-        if (document.getElementById(id) || (mode === 'followedChannels' &&
-            bp.getStorage('favoritesMode') &&
-            bp.getStorage('favorites').indexOf(String(channel._id)) < 0)) {
-            return;
-        }
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content', 'channel');
-        contentDiv.id = id;
 
-        const contentBack = document.createElement('div');
-        contentBack.classList.add('contentBack', 'channel');
-        const logo = channel.logo != null ? channel.logo : 'https://' +
-            'static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
-        contentBack.style.backgroundImage =
-            `url("${logo}")`;
-        contentDiv.appendChild(contentBack);
+        let card = document.getElementById('stub-channel').cloneNode(true);
+        card.id = `CHANNEL!${channel._id}`;
+        card.dataset['id'] = channel._id;
+        card.dataset['streamerId'] = channel._id;
+        card.dataset['name'] = channel.name;
 
-        const hoverBack = document.createElement('div');
-        hoverBack.classList.add('hoverBack', 'channel');
-        contentBack.appendChild(hoverBack);
-
-        const topName = document.createElement('div');
-        topName.classList.add('topName');
-        topName.textContent = channel.display_name;
-        contentBack.appendChild(topName);
-
-        const name = channel.name === channel.display_name.toLowerCase() ? '' :
-            ` (${channel.name})`;
-        addTooltip(topName, true).textContent = channel.display_name + name;
-
-        const status = document.createElement('div');
-        status.classList.add('status', 'channel');
-        status.textContent = channel.description;
-        contentBack.appendChild(status);
-
-        const hideUntilHover = document.createElement('div');
-        hideUntilHover.classList.add('hideUntilHover');
-        contentBack.appendChild(hideUntilHover);
-
-        const twitchButton = document.createElement('div');
-        twitchButton.classList.add(
-            'contentButton', 'bottom', 'channel',
-            'twitch',
-        );
-        twitchButton.addEventListener('click', () => {
-            const {
-                url,
-            } = channel;
-            browser.tabs.create({
-                url,
-            });
+        card.querySelectorAll('.streamer-name').forEach(element => {
+            element.textContent = channel.display_name;
         });
-        addTooltip(twitchButton).textContent =
-            browser.i18n.getMessage('openTwitchPageTip');
-        hideUntilHover.appendChild(twitchButton);
 
-        const chatButton = document.createElement('div');
-        chatButton.classList.add('contentButton', 'bottom', 'channel', 'chat');
-        chatButton.addEventListener('click', () => {
+        card.querySelector('.status.channel').textContent = channel.description;
+
+        UI.insertBackgroundUrl(
+            card.querySelector('.contentBack'),
+            channel.logo
+                ? channel.logo
+                : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png',
+            false
+        );
+
+        if (content.game) {
+            card.dataset['game'] = content.game;
+            card.querySelector('.game-name').textContent = content.game;
+            UI.insertBackgroundUrl(
+                card.querySelector('.cornerGame'),
+                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`,
+                false
+            );
+        } else {
+            card.querySelector('.cornerGame').classList.add('hide');
+        }
+
+        // tooltip stuff
+        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
+            'channelVideosTip', channel.display_name
+        );
+        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
+            'channelClipsTip', channel.display_name
+        );
+
+        card.querySelector('.tag').textContent = channel.name+channel.display_name;
+
+        card.addEventListener('click', cardClickHandler);
+
+        contentArea.appendChild(card);
+    }
+};
+
+const cardClickHandler = (e) => {
+    const trigger = e.target.dataset['trigger'];
+
+    if (! trigger) return;
+
+    const topElem = UI.getParentElement(e.target, 'content');
+
+    switch (trigger) {
+        case 'openStream':
+            browser.tabs.create({
+                url: 'https://twitch.tv/'+topElem.dataset['name'],
+            });
+            break;
+        case 'openGame':
+            browser.tabs.create({
+                url: 'https://www.twitch.tv/directory/game/'+topElem.dataset['game']
+            });
+            break;
+        case 'openStreamPopout':
             browser.windows.create({
-                url: `http:/twitch.tv/${channel.name}/chat?popout`,
+                url: 'http://player.twitch.tv/?parent=localhost&channel='+topElem.dataset['name'],
+                height: 500,
+                width: 850,
+                type: 'popup',
+            });
+            break;
+        case 'openChat':
+            browser.windows.create({
+                url: `http:/twitch.tv/${topElem.dataset['name']}/chat?popout`,
                 height: 600,
                 width: 340,
                 type: 'popup',
             });
-        });
-        addTooltip(chatButton).textContent =
-            browser.i18n.getMessage('openChatTip', channel.display_name);
-        hideUntilHover.appendChild(chatButton);
-
-        const followed = bp.getUserFollowIDs().indexOf(String(channel._id)) > -1;
-
-        const favoriteButton = document.createElement('div');
-        const favorited =
-            bp.getStorage('favorites').indexOf(String(channel._id)) > -1;
-        favoriteButton.classList.add(
-            'contentButton', 'bottom', 'channel',
-            favorited ? 'unfavorite' : 'favorite',
-        );
-        if (!followed) favoriteButton.classList.add('noAccess');
-        else {
-            favoriteButton.addEventListener('click', () => {
-                if (favorited) {
-                    bp.unfavorite(String(channel._id), updatePage);
-                } else bp.favorite(String(channel._id), updatePage);
-            });
-        }
-        const favoriteTip = favorited ? 'unfavoriteTip' : 'favoriteTip';
-        addTooltip(favoriteButton).textContent =
-            browser.i18n.getMessage(followed ? favoriteTip :
-                'cantFavoriteTip', channel.display_name);
-        hideUntilHover.appendChild(favoriteButton);
-
-        const followButton = document.createElement('div');
-        followButton.classList.add(
-            'contentButton', 'bottom', 'channel',
-            followed ? 'unfollow' : 'follow',
-        );
-        if (!bp.getAuthorizedUser() &&
-            !bp.getStorage('nonTwitchFollows')) {
-            followButton.classList.add('noAccess');
-        } else {
-            followButton.addEventListener('click', () => {
-                if (followed) followApi('Unfollow Channel', channel);
-                else followApi('Follow Channel', channel);
-            });
-        }
-        const followTip = followed ? 'unfollowTip' : 'followTip';
-        addTooltip(followButton).textContent =
-            browser.i18n.getMessage(followButton.classList.contains('noAccess') ?
-                'noAccessTip' : followTip, channel.display_name);
-        hideUntilHover.appendChild(followButton);
-
-        const videosButton = document.createElement('div');
-        videosButton.classList.add(
-            'contentButton', 'side',
-            'channel', 'smallVideos',
-        );
-        videosButton.addEventListener('click', () => {
-            // Get Channel Videos
-            getApiResults('Get Channel Videos', {
-                _id: channel._id,
-            }, true);
-        });
-        addTooltip(videosButton).textContent =
-            browser.i18n.getMessage('channelVideosTip', channel.display_name);
-        hideUntilHover.appendChild(videosButton);
-
-        const clipsButton = document.createElement('div');
-        clipsButton.classList.add('contentButton', 'side', 'channel', 'smallClips');
-        clipsButton.addEventListener('click', () => {
-            // Get Top Clips in channel
-            getApiResults('Get Top Clips', {
-                channel: channel.name,
-            }, true);
-        });
-        addTooltip(clipsButton).textContent =
-            browser.i18n.getMessage('channelClipsTip', channel.display_name);
-        hideUntilHover.appendChild(clipsButton);
-
-        if (channel.game) {
-            const cornerGame = document.createElement('div');
-            cornerGame.classList.add('cornerGame', 'channel');
-            cornerGame.style.backgroundImage =
-                `url("https://static-cdn.jtvnw.net/ttv-boxart/${channel.game
-                }-52x72.jpg")`;
-            addTooltip(cornerGame, true).textContent =
-                bp.getStorage('tooltips') ?
-                    browser.i18n.getMessage('gameStreamsTip', channel.game) :
-                    channel.game;
-            cornerGame.addEventListener('click', () => {
-                // Get Live Streams
-                getApiResults('Get Live Streams', {
-                    game: channel.game,
-                }, true);
-            });
-            contentDiv.appendChild(cornerGame);
-        }
-
-        const tag = document.createElement('span');
-        tag.classList.add('tag');
-        tag.textContent = channel.game + channel.display_name +
-            channel.name + channel.status;
-        contentDiv.appendChild(tag);
-        contentArea.appendChild(contentDiv);
+            break;
+        case 'enlarge':
+            enlarge2(topElem);
+            break;
+        case 'favorite':
+            // reserved
+            break;
+        case 'follow':
+            break;
+        case 'browseVideosByChannel':
+            getApiResults('Get Channel Videos', { _id: topElem.dataset['streamerId'], }, true);
+            break;
+        case 'browseClipsByChannel':
+            getApiResults('Get Top Clips', { channel: topElem.dataset['name'] }, true);
+            break;
+        case 'browseGame':
+            getApiResults('Get Live Streams', { game: topElem.dataset['game'] }, true);
+            break;
+        case 'browseChannelsByGame':
+            getApiResults('Get Top Videos', { game: topElem.dataset['game'] }, true);
+            break;
+        case 'browseClipsByGame':
+            getApiResults('Get Top Clips', { game: topElem.dataset['game'] }, true);
+            break;
     }
-};
+}
 
 const updateTab = (newMode) => {
     /*

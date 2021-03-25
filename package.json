@@ -11,7 +11,8 @@
   "author": "Hunter5000, kubaska",
   "private": true,
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^0.21.1",
+    "vanilla-lazyload": "^17.3.1"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^6.1.0",
