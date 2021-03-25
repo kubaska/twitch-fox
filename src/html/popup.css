@@ -516,7 +516,7 @@ html, body {
     top: 5px;
     width: 265px;
     height: 149px;
-    background-size: 256px 144px;
+    background-size: contain;
 }
 
 .contentBack.game {
