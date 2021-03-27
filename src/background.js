@@ -1,3 +1,5 @@
+import axios from "axios";
+
 // Variable declarations
 
 let alarmInterval;
@@ -58,6 +60,28 @@ const defaults = {
 };
 const storage = {};
 
+// axios
+const _axios = axios.create({
+    baseURL: 'https://api.twitch.tv/kraken/',
+    headers: {
+        Accept: accept,
+        'Client-ID': clientID
+    }
+});
+_axios.interceptors.request.use(function (request) {
+    const token = getStorage('token');
+
+    if (token) {
+        request.headers.Authorization = `OAuth ${token}`
+    } else {
+        // todo check if request belongs to auth routes
+        // and fail immediately?
+        // contains: follow, user
+    }
+
+    return request;
+})
+
 // Function declarations
 
 let onFollowAlarmTrigger;
@@ -108,69 +132,60 @@ const twitchAPI = (endpoint, theOpts, callback) => {
       "callback" expects the function to be called after the request is finished
     */
     // console.log(endpoint + JSON.stringify(opts));
-    const init = {
-        method: 'GET',
-        headers: {
-            Accept: accept,
-            'Client-ID': clientID,
-            Authorization: `OAuth ${getStorage('token')}`,
-        },
-    };
+
+    let method = 'GET';
+
     let url;
     const opts = theOpts;
     if (endpoint === 'Get User') {
-        url = 'https://api.twitch.tv/kraken/user?';
+        url = 'user';
     } else if (endpoint === 'Get Top Games') {
-        url = 'https://api.twitch.tv/kraken/games/top?';
+        url = 'games/top';
     } else if (endpoint === 'Get Live Streams') {
-        url = 'https://api.twitch.tv/kraken/streams/?';
+        url = 'streams';
     } else if (endpoint === 'Get Top Videos') {
-        url = 'https://api.twitch.tv/kraken/videos/top?';
+        url = 'videos/top';
     } else if (endpoint === 'Get Top Clips') {
-        url = 'https://api.twitch.tv/kraken/clips/top?';
+        url = 'clips/top';
     } else if (endpoint === 'Get Followed Streams') {
-        url = 'https://api.twitch.tv/kraken/streams/followed?';
+        url = 'streams/followed';
     } else if (endpoint === 'Get Followed Videos') {
-        url = 'https://api.twitch.tv/kraken/videos/followed?';
+        url = 'videos/followed';
     } else if (endpoint === 'Get Followed Clips') {
-        url = 'https://api.twitch.tv/kraken/clips/followed?';
+        url = 'clips/followed';
     } else if (endpoint === 'Get User Follows') {
-        url = `https://api.twitch.tv/kraken/users/${opts._id}/follows/channels?`;
+        url = `users/${opts._id}/follows/channels`;
         delete opts._id;
     } else if (endpoint === 'Get Channel Videos') {
-        url = `https://api.twitch.tv/kraken/channels/${opts._id}/videos?`;
+        url = `channels/${opts._id}/videos`;
         delete opts._id;
     } else if (endpoint === 'Search Channels') {
-        url = 'https://api.twitch.tv/kraken/search/channels?';
+        url = 'search/channels';
     } else if (endpoint === 'Search Games') {
-        url = 'https://api.twitch.tv/kraken/search/games?';
+        url = 'search/games';
     } else if (endpoint === 'Search Streams') {
-        url = 'https://api.twitch.tv/kraken/search/streams?';
+        url = 'search/streams';
     } else if (endpoint === 'Get Channel by ID') {
-        url = `https://api.twitch.tv/kraken/channels/${opts._id}?`;
+        url = `channels/${opts._id}`;
         delete opts._id;
     } else if (endpoint === 'Follow Channel') {
-        url = `https://api.twitch.tv/kraken/users/${
-            authorizedUser._id}/follows/channels/${opts._id}?`;
+        url = `users/${authorizedUser._id}/follows/channels/${opts._id}`;
         delete opts._id;
-        init.method = 'PUT';
+        method = 'PUT';
     } else if (endpoint === 'Unfollow Channel') {
-        url = `https://api.twitch.tv/kraken/users/${authorizedUser._id
-        }/follows/channels/${opts._id}?`;
+        url = `users/${authorizedUser._id}/follows/channels/${opts._id}`;
         delete opts._id;
-        init.method = 'DELETE';
+        method = 'DELETE';
     }
-    const params =
-        Object.entries(opts).map(([key, val]) => `${key}=${val}`).join('&');
-    url += params;
-    fetch(url, init).then((response) => {
-        if (response.status === 200) {
-            response.json().then((data) => {
-                callback(data);
-            });
-        } else if (response.status === 204) callback(true);
-        else callback();
-    });
+
+    _axios.request({ url, method, params: opts })
+        .then(response => {
+            console.log(endpoint, response);
+            if (response.status === 200) {
+                callback(response.data);
+            } else if (response.status === 204) callback(true);
+            else callback();
+        });
 };
 
 const updateBadge = () => {

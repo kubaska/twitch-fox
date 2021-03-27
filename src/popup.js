@@ -438,7 +438,9 @@ addCard = (content, type) => {
 
         card.id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
         card.dataset['id'] = id;
-        card.dataset['streamerId'] = channel._id;
+        // for some reason, Twitch returns id prop with an underscore
+        // for videos and without for clips...
+        card.dataset['streamerId'] = type === 'video' ? channel._id : channel.id;
         card.dataset['name'] = channel.name;
         card.dataset['game'] = content.game;
 
