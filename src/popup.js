@@ -845,20 +845,25 @@ const initialize = () => {
     }
 };
 
-/*
-  Click events
-*/
-
-// Big click event for non-specific elements
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('noAccess')) {
-        // Do nothing I guess?
-    } else if (e.target.classList.contains('tab') && e.target.id !== mode) {
+const selectTab = (e) => {
+    if (e.target.classList.contains('tab') &&
+        ! e.target.classList.contains('noAccess') &&
+        e.target.id !== mode
+    ) {
         bp.setResults(bp.defaultResults());
         bp.setIndex(0);
         updateTab(e.target.id);
     }
-});
+}
+
+/*
+  Click events
+*/
+
+document.querySelectorAll('#menu > .tab')
+    .forEach(tab => {
+        document.addEventListener('click', selectTab);
+    });
 
 // Settings page
 settings.addEventListener('click', () => browser.runtime.openOptionsPage());
