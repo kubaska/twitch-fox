@@ -189,42 +189,27 @@ const twitchAPI = (endpoint, theOpts, callback) => {
 };
 
 const updateBadge = () => {
-    const text = getStorage('favoritesMode') ?
-        userFollowedStreams.map(stream => ((
-            getStorage('favorites').indexOf(String(stream.channel._id)) > -1) ?
-            'i' : '')).join('').length : userFollowedStreams.length;
-    let title;
-    // If the alarm is going, show the stream that triggered the alarm
-    if (alarmTarget) {
-        title = `${browser.i18n.getMessage('justStartedStreaming', [
-            alarmTarget.channel.display_name, alarmTarget.channel.game,
-        ])}\n${browser.i18n.getMessage('clickToEndAlarm')}`;
-    } else {
-        // Otherwise, show all followed stuff
-        title = userFollowedStreams.map(stream =>
-            (getStorage('favorites').indexOf(String(stream.channel._id)) > -1 ?
-                `\n${browser.i18n.getMessage('streaming', [stream.channel.display_name,
-                    stream.channel.game])}` : '')).join('');
-        // If it's favorites mode, only show favorited streams
-        if (getStorage('favoritesMode')) {
-            title += `\n${browser.i18n.getMessage(
-                'nonFavoritesLive',
-                userFollowedStreams.length - text,
-            )}`;
-        } else {
-            title += userFollowedStreams.map(stream =>
-                (getStorage('favorites').indexOf(String(stream.channel._id)) <
-                0 ? `\n${browser.i18n.getMessage('streaming', [
-                    stream.channel.display_name, stream.channel.game,
-                ])}` : '')).join('');
-        }
+    const streamNo = userFollowedStreams.length;
+
+    // set description (hover on badge)
+    let streams = take(userFollowedStreams, 20).map(stream => {
+        return browser.i18n.getMessage('streaming', [
+            stream.channel.display_name, stream.channel.game
+        ]);
+    }).join('\n')
+
+    if (streamNo > 20) {
+        // todo i18n
+        streams += `\n...and ${streamNo - 20} more`;
     }
-    title = title.length ? `Twitch Fox\n${title}` : 'Twitch Fox';
+
+    // set number of streams
     browser.browserAction.setBadgeText({
-        text: text ? String(text) : '',
+        text: streamNo ? streamNo.toString() : '',
     });
+
     browser.browserAction.setTitle({
-        title,
+        title: streams ? `Twitch Fox\n\n${streams}` : 'Twitch Fox',
     });
 };
 
