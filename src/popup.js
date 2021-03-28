@@ -834,15 +834,7 @@ const initialize = () => {
     }
     document.getElementById(mode).classList.add('selected');
 
-    // End alarm if it's on
-    if (bp.getAlarmStatus()) {
-        bp.endAlarm();
-        // And switch to the followed streams tab
-        updateTab('followedStreams');
-    } else {
-        // Show about page if it is the tab, hide otherwise
-        updateTab();
-    }
+    updateTab();
 };
 
 const selectTab = (e) => {
@@ -1014,10 +1006,6 @@ browser.runtime.onMessage.addListener((request) => {
         (request.content === mode.substr(0, 8)) ||
         (request.content === mode)) initialize();
     else if (request.content !== 'options') updatePage(true);
-});
-
-window.addEventListener('unload', () => {
-    bp.endAlarm();
 });
 
 initialize();

@@ -2,12 +2,7 @@ import axios from "axios";
 
 // Variable declarations
 
-let alarmInterval;
 let alarmOn = false;
-let alarmPeriod = 1000;
-let alarmLength = 10000;
-let alarmOngoing = 0;
-let alarmLimit = false;
 let alarmTarget = null;
 let authorizedUser; // An object containing the data of the authorized user
 let userFollows = []; // Array with followed channels of authorized user
@@ -92,7 +87,6 @@ const getUserFollowIDs = () => userFollowIDs;
 const getUserFollowedStreams = () => userFollowedStreams;
 const getResults = () => results;
 const getIndex = () => resultsIndex;
-const getAlarmStatus = () => alarmOn;
 
 const defaultContent = () => [];
 
@@ -219,64 +213,33 @@ const updateBadge = () => {
     });
 };
 
-const endAlarm = () => {
-    clearInterval(alarmInterval);
-    audio.pause();
-    alarmOn = false;
-    alarmTarget = null;
-    updateBadge();
+const Alarm = {
+    initialize: () => {
+        audio.src = 'assets/alarm.ogg';
+        audio.volume = getStorage('alarmVolume') / 100;
+    },
+    play: () => {
+        // if (! alarmOn) return;
+
+        audio.pause();
+        audio.load();
+        audio.play()
+            .catch(() => {});
+    },
+    end: () => {
+        audio.pause();
+    },
 };
 
 const playAlarm = (override) => {
-    if (!alarmOn && !override) return;
-    audio.play();
-    // Also flash the badge
-    browser.browserAction.setBadgeBackgroundColor({
-        color: '#FF0000',
-    });
-    setTimeout(() => browser.browserAction.setBadgeBackgroundColor({
-        color: '#6641A5',
-    }), 250);
-    if (alarmLimit && !override) {
-        alarmOngoing += alarmPeriod;
-        if (alarmLimit && alarmOngoing >= alarmLength) endAlarm();
-    }
-};
-
-const setAlarm = (target) => {
-    // console.log("setAlarm");
-    audio.load();
-    clearInterval(alarmInterval);
-    alarmInterval = setInterval(playAlarm, alarmPeriod);
-    playAlarm();
-    alarmOn = true;
-    alarmTarget = target;
-    alarmOngoing = 0;
-    updateBadge();
-    /* browser.runtime.sendMessage({
-      content: "endAlarm"
-    }); */
-};
-
-const updateAlarm = () => {
-    audio.volume = getStorage('alarmVolume') / 100;
-    audio.src = 'alarm.ogg';
-    alarmPeriod = getStorage('alarmInterval') * 1000;
-    alarmLength = getStorage('alarmLength') * 1000;
-    alarmLimit = getStorage('limitAlarm');
-    if (alarmOn) {
-        clearInterval(alarmInterval);
-        audio.pause();
-        alarmInterval = setInterval(playAlarm, alarmPeriod);
-        playAlarm();
-    }
+    Alarm.play();
 };
 
 const setStorage = (key, value, callback) => {
     const obj = {};
     obj[key] = value;
     browser.storage.sync.set(obj).then(() => {
-        updateAlarm();
+        Alarm.initialize();
         browser.runtime.sendMessage({
             content: 'options',
         });
@@ -527,7 +490,6 @@ const deauthorize = () => {
     setStorage('token', '');
     authorizedUser = null;
     initFollows();
-    endAlarm();
     updateBadge();
     browser.runtime.sendMessage({
         content: 'followed',
@@ -779,13 +741,11 @@ browser.notifications.onClicked.addListener(() => {
     if (getStorage('openChat')) openChat(lastName);
     lastName = '';
     lastURL = '';
-    endAlarm();
 });
 
 browser.notifications.onClosed.addListener((notificationId, byUser) => {
     lastName = '';
     lastURL = '';
-    if (byUser) endAlarm();
 });
 
 browser.alarms.onAlarm.addListener((alarmInfo) => {
@@ -801,10 +761,8 @@ browser.browserAction.setBadgeBackgroundColor({
 window.authorize = authorize;
 window.defaultContent = defaultContent;
 window.defaultResults = defaultResults;
-window.endAlarm = endAlarm;
 window.favorite = favorite;
 window.follow = follow;
-window.getAlarmStatus = getAlarmStatus;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
 window.getResults = getResults;
