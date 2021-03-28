@@ -178,13 +178,19 @@ const twitchAPI = (endpoint, theOpts, callback) => {
         method = 'DELETE';
     }
 
-    _axios.request({ url, method, params: opts })
+    return _axios.request({ url, method, params: opts })
         .then(response => {
             console.log(endpoint, response);
-            if (response.status === 200) {
-                callback(response.data);
-            } else if (response.status === 204) callback(true);
-            else callback();
+
+            if (callback) {
+                if (response.status === 200) {
+                    callback(response.data);
+                } else if (response.status === 204) callback(true);
+                else callback();
+            }
+            else {
+                return response.data;
+            }
         });
 };
 
