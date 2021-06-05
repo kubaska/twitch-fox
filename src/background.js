@@ -1,4 +1,7 @@
+/* global browser */
+
 import axios from "axios";
+import {chunk, differenceBy, findIndex, isEmpty, map, orderBy, remove, take} from "lodash";
 
 // Variable declarations
 
@@ -8,6 +11,11 @@ let authorizedUser; // An object containing the data of the authorized user
 let userFollows = []; // Array with followed channels of authorized user
 let userFollowIDs = []; // Array with IDs of followed channels
 let userFollowedStreams = []; // Array with followed stream objects
+let userFollowedLocalStreams = [
+    { id: 28579002, name: 'cellbit' },
+    { id: 71092938, name: 'xqcow' },
+];
+let userFollowedStreamsCache = new Set();
 let lastURL = '';
 let lastName = '';
 let results;
@@ -78,8 +86,6 @@ _axios.interceptors.request.use(function (request) {
 })
 
 // Function declarations
-
-let onFollowAlarmTrigger;
 
 const getAuthorizedUser = () => authorizedUser;
 const getUserFollows = () => userFollows;
@@ -267,47 +273,7 @@ const startFollowAlarm = () => {
         delayInMinutes: 1,
         periodInMinutes: getStorage('minutesBetweenCheck'),
     });
-    onFollowAlarmTrigger();
-};
-
-const getUserFollowedChannels = (offset = 0) => {
-    /*
-      Get all of a user's followed channels
-    */
-    const limit = 100; // Special result limit used for this function only
-    if (!offset) {
-        userFollowIDs = [];
-        userFollows = [];
-    }
-    twitchAPI('Get User Follows', {
-        _id: authorizedUser._id,
-        offset,
-        limit,
-    }, (data) => {
-        if (!data) {
-            // Try again later?
-            setTimeout(() => getUserFollowedChannels(), 60000);
-            return;
-        }
-        let j = 0;
-        for (let i = 0; i < data.follows.length; i += 1) {
-            if (userFollowIDs.indexOf(data.follows[i].channel._id) < 0) {
-                userFollowIDs.push(data.follows[i].channel._id);
-                userFollows.push(data.follows[i]);
-                j += 1;
-            }
-        }
-        j = j || limit;
-        if (data._total > offset) {
-            getUserFollowedChannels(offset + j);
-        } else {
-            browser.runtime.sendMessage({
-                content: 'followed',
-            });
-            // Now get the user's followed streams
-            startFollowAlarm();
-        }
-    });
+    // onFollowAlarmTrigger();
 };
 
 const getFollow = (_id, callback) => {
@@ -368,8 +334,9 @@ const desktopNotification = (stream) => {
     const title = browser.i18n.getMessage('streaming', [
         stream.channel.display_name, stream.channel.game,
     ]);
-    const logo = stream.channel.logo != null ? stream.channel.logo : 'https://' +
-        'static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
+    const logo = stream.channel.logo != null
+        ? stream.channel.logo
+        : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
 
     browser.notifications.create('follow-notification', {
         type: 'basic',
@@ -383,91 +350,12 @@ const desktopNotification = (stream) => {
 };
 
 const notify = (stream) => {
-    // We assume that the channel is followed and the stream is new
-    if (getStorage('favorites').indexOf(String(stream.channel._id)) > -1) {
-        // Favorited channel
-        if (getStorage('favoritesDesktopNotifications')) {
-            desktopNotification(stream);
-        }
-        if (getStorage('favoritesAudioNotifications')) {
-            setAlarm(stream);
-        }
-    } else {
-        // Regular followed channel
-        if (getStorage('nonfavoritesDesktopNotifications')) {
-            desktopNotification(stream);
-        }
-        if (getStorage('nonfavoritesAudioNotifications')) {
-            setAlarm(stream);
-        }
+    // Regular followed channel
+    if (getStorage('nonfavoritesDesktopNotifications')) {
+        desktopNotification(stream);
     }
-};
-
-const getFollowedStreams = (offset = 0) => {
-    /*
-      Get all of a user's followed streams
-    */
-    const limit = 100; // Special result limit used for this function only
-    let j = 0;
-    if (!offset) {
-        userFollowedStreams = [];
-    }
-    const twitchCallback = (data) => {
-        if (!data) setTimeout(() => getFollowedStreams(), 60000);
-        for (let i = 0; i < data.streams.length; i += 1) {
-            const stream = data.streams[i];
-            if (userFollowIDs.indexOf(String(stream.channel._id)) < 0) {
-                // For some reason, we don't have this channel marked as followed,
-                // but we were still notified that it came online!
-                if (authorizedUser) {
-                    // Assume that Twitch is right, and update our follows!
-                    getUserFollowedChannels(() => {
-                        browser.runtime.sendMessage({
-                            content: 'followedStreams',
-                        });
-                    });
-                } else if (getStorage('nonTwitchFollows')) getFollows();
-            }
-            if (userFollowedStreams.map(s => s._id).indexOf(stream._id) < 0) {
-                userFollowedStreams.push(stream);
-                const notifiedStreams = getStorage('notifiedStreams');
-                if (notifiedStreams.indexOf(stream._id) < 0) {
-                    // We have not notified the user about this stream yet
-                    notifiedStreams.push(stream._id);
-                    setStorage('notifiedStreams', notifiedStreams);
-                    notify(stream);
-                }
-                j += 1;
-            }
-        }
-        j = j || limit;
-        if (data._total > offset) {
-            getFollowedStreams(offset + j);
-        } else {
-            // Done
-            updateBadge();
-            browser.runtime.sendMessage({
-                content: 'followed',
-            });
-        }
-    };
-    if (authorizedUser) {
-        twitchAPI('Get Followed Streams', {
-            offset,
-            limit,
-        }, data => twitchCallback(data));
-    } else if (getStorage('nonTwitchFollows')) {
-        twitchAPI('Get Live Streams', {
-            channel: getStorage('follows').join(','),
-            offset,
-            limit,
-        }, data => twitchCallback(data));
-    } else {
-        // We've got no streams to get
-        userFollowedStreams = [];
-        browser.runtime.sendMessage({
-            content: 'followed',
-        });
+    if (getStorage('nonfavoritesAudioNotifications')) {
+        Alarm.play();
     }
 };
 
@@ -512,7 +400,7 @@ const getUser = () => {
             content: 'initialize',
         });
         // Now get the user's follows
-        getUserFollowedChannels();
+        getUserFollowedStreams();
     });
 };
 
@@ -674,13 +562,117 @@ const resetStorage = (settings, overwrite) => {
             }
         }
         // All settings accounted for
-        browser.storage.sync.get('token').then((newRes) => {
-            cleanFollows();
-            if (newRes.token) getUser();
-            else initFollows();
-        });
+        // browser.storage.sync.get('token').then((newRes) => {
+        //     cleanFollows();
+        //     if (newRes.token) getUser();
+        //     else initFollows();
+        // });
     });
 };
+
+/**
+ * Fetch entire resource.
+ *
+ * @param endpoint    API Endpoint
+ * @param responseKey Block in which Twitch returns all data we are interested in.
+ *                    Should be moved to twitchAPI eventually.
+ * @param limit       1-100
+ * @return {Promise<[]|*[]>}
+ */
+const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
+    let result = [];
+    let keepGoing = true;
+
+    while (keepGoing) {
+        let response;
+
+        try {
+            response = await twitchAPI(
+                endpoint,
+                { limit, offset: result.length }
+            );
+        } catch (e) {
+            // we are unauthorized or connection issue
+            // just resolve with empty result
+            return [];
+        }
+
+        result.push(...response[responseKey]);
+        if (response[responseKey].length < limit) keepGoing = false;
+    }
+
+    return result;
+}
+
+/**
+ * Fetch follows of logged in user.
+ *
+ * @return {Promise<*[]|*[]>}
+ */
+const fetchUserFollows = async () => {
+    return await fetchPaginatedResource(
+        'Get User Follows', 'follows', 100
+    );
+}
+
+/**
+ * Fetch currently online streams of logged in user.
+ *
+ * @return {Promise<*[]|*[]>}
+ */
+const fetchTwitchFollowedStreams = async () => {
+    return await fetchPaginatedResource(
+        'Get Followed Streams', 'streams', 100
+    )
+}
+
+/**
+ * Fetch locally followed online streams.
+ *
+ * @return {Promise<[]>}
+ */
+const fetchLocalFollowedStreams = async () => {
+    const follows = chunk(userFollowedLocalStreams, 100);
+    let result = [];
+
+    for (const chunk of follows) {
+        const res = await twitchAPI(
+            'Get Live Streams',
+            { limit: 100, channel: map(chunk, 'id').join(',') }
+        )
+        result.push(...res.streams);
+    }
+
+    return result;
+}
+
+/**
+ * Fetch and update online streams.
+ */
+const fetchFollowedStreams = () => {
+    Promise.all([
+        fetchTwitchFollowedStreams(),
+        fetchLocalFollowedStreams()
+    ]).then(result => {
+        const total = orderBy(result[0].concat(result[1]), 'viewers', 'desc');
+
+        // compute difference with current followed
+        const diff = differenceBy(total, userFollowedStreams, '_id');
+
+        if (! isEmpty(diff)) {
+            // play alarm
+            Alarm.play();
+
+            // and display a notification if we have new stream
+            notify(diff[0]);
+        }
+
+        userFollowedStreams = total;
+
+        // also update badge
+        updateBadge();
+    });
+}
 
 const openTwitchPage = (url) => {
     browser.tabs.create({
@@ -708,9 +700,6 @@ const openChat = (name) => {
 
 // Assignments
 
-onFollowAlarmTrigger = () => {
-    getFollowedStreams();
-};
 results = defaultResults();
 
 // Other statements
@@ -749,7 +738,9 @@ browser.notifications.onClosed.addListener((notificationId, byUser) => {
 });
 
 browser.alarms.onAlarm.addListener((alarmInfo) => {
-    if (alarmInfo.name === 'getFollowedStreams') onFollowAlarmTrigger();
+    if (alarmInfo.name === 'getFollowedStreams') {
+        fetchFollowedStreams();
+    }
 });
 
 browser.browserAction.setBadgeBackgroundColor({
