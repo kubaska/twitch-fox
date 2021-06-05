@@ -5,6 +5,8 @@
   "version": "4.2.3",
   "default_locale": "en",
 
+  "incognito": "not_allowed",
+
   "applications": {
     "gecko": {
       "id": "jid1-PmBVeuWLfYr73g@jetpack"
@@ -45,5 +47,4 @@
   "content_scripts": [
 
   ]
-
 }
