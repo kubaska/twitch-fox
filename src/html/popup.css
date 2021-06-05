@@ -481,9 +481,9 @@ html, body {
 }
 
 .content {
-    display: inline-block;
+    /*display: inline-block;*/
     position: relative;
-    float: left;
+    /*float: left;*/
 }
 
 .content.hidden {
