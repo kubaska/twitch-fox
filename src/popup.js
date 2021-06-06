@@ -852,7 +852,7 @@ const selectTab = (e) => {
   Click events
 */
 
-document.querySelectorAll('#menu > .tab')
+document.querySelectorAll('#menu .tab')
     .forEach(tab => {
         document.addEventListener('click', selectTab);
     });
