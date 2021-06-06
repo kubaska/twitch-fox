@@ -1,0 +1,13 @@
+{
+    "presets": [
+        [
+            "@babel/preset-env",
+            {
+                "debug": true,
+                "targets": {
+                    "firefox": "68"
+                }
+            }
+        ]
+    ]
+}

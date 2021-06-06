@@ -16,6 +16,9 @@
     "vanilla-lazyload": "^17.3.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.4",
+    "babel-loader": "^8.2.2",
     "copy-webpack-plugin": "^6.1.0",
     "web-ext-webpack-plugin": "github:birtles/web-ext-webpack-plugin",
     "webpack": "^4.44.1",
