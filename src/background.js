@@ -1,12 +1,11 @@
 /* global browser */
 
 import axios from "axios";
+import _storage from './storage';
 import {chunk, differenceBy, findIndex, isEmpty, map, orderBy, remove, take} from "lodash";
 
 // Variable declarations
 
-let alarmOn = false;
-let alarmTarget = null;
 let authorizedUser; // An object containing the data of the authorized user
 let userFollows = []; // Array with followed channels of authorized user
 let userFollowIDs = []; // Array with IDs of followed channels
@@ -26,8 +25,6 @@ const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
 const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
 const scope = 'user_follows_edit user_read';
 const responseType = 'token';
-const injection = 'browser.runtime.sendMessage' +
-    '({content: location.href, type: "OAuth"});';
 const audio = new Audio();
 const defaults = {
     // Non-settings
@@ -62,6 +59,9 @@ const defaults = {
     languageCodes: '',
 };
 const storage = {};
+const BROWSER_ALARM_TYPE = {
+    FETCH_FOLLOWED_STREAMS: 'fetchFollowedStreams'
+}
 
 // axios
 const _axios = axios.create({
@@ -72,7 +72,7 @@ const _axios = axios.create({
     }
 });
 _axios.interceptors.request.use(function (request) {
-    const token = getStorage('token');
+    const token = _storage.get('token')
 
     if (token) {
         request.headers.Authorization = `OAuth ${token}`
@@ -222,7 +222,7 @@ const updateBadge = () => {
 const Alarm = {
     initialize: () => {
         audio.src = 'assets/alarm.ogg';
-        audio.volume = getStorage('alarmVolume') / 100;
+        audio.volume = _storage.get('alarmVolume') / 100;
     },
     play: () => {
         // if (! alarmOn) return;
@@ -257,23 +257,6 @@ const setStorage = (key, value, callback) => {
     });
     storage[key] = value;
     if (callback) callback();
-};
-
-const parseToken = (url) => {
-    const error = url.match(/[&]error=([^&]+)/);
-    if (error) {
-        // console.log('Error getting access token: ' + error[1]);
-        return null;
-    }
-    return url.match(/[&#]access_token=([\w]+)/)[1];
-};
-
-const startFollowAlarm = () => {
-    browser.alarms.create('getFollowedStreams', {
-        delayInMinutes: 1,
-        periodInMinutes: getStorage('minutesBetweenCheck'),
-    });
-    // onFollowAlarmTrigger();
 };
 
 const getFollow = (_id, callback) => {
@@ -321,7 +304,7 @@ const getFollows = () => {
             browser.runtime.sendMessage({
                 content: 'followed',
             });
-            startFollowAlarm();
+            // startFollowAlarm();
         }
     };
     for (let i = 0; i < follows.length; i += 1) {
@@ -351,10 +334,10 @@ const desktopNotification = (stream) => {
 
 const notify = (stream) => {
     // Regular followed channel
-    if (getStorage('nonfavoritesDesktopNotifications')) {
+    if (_storage.get('nonfavoritesDesktopNotifications')) {
         desktopNotification(stream);
     }
-    if (getStorage('nonfavoritesAudioNotifications')) {
+    if (_storage.get('nonfavoritesAudioNotifications')) {
         Alarm.play();
     }
 };
@@ -371,52 +354,27 @@ const initFollows = () => {
     }
 };
 
-const deauthorize = () => {
-    /*
-      Deletes the token from storage
-    */
-    setStorage('token', '');
-    authorizedUser = null;
-    initFollows();
-    updateBadge();
-    browser.runtime.sendMessage({
-        content: 'followed',
-    });
-};
-
-const getUser = () => {
-    /*
-      When called, attempts to use the Twitch API to get the data of the current
-      authorized user
-    */
-    twitchAPI('Get User', {}, (data) => {
-        if (!data) {
-            // Perhaps we have made a mistake.
-            deauthorize();
-            return;
-        }
-        authorizedUser = data;
-        browser.runtime.sendMessage({
-            content: 'initialize',
-        });
-        // Now get the user's follows
-        getUserFollowedStreams();
-    });
-};
-
-// And a listener for receiving a message from the injected code
-
+/**
+ * Send the user to the authorization page
+ */
 const authorize = () => {
-    /*
-      Sends the user to the authorization page
-    */
-    // The URL we must send the user to for authentication
     const url = `https://api.twitch.tv/kraken/oauth2/authorize?client_id=${
         clientID}&redirect_uri=${redirectURI}&response_type=${
         responseType}&scope=${scope}`;
     browser.tabs.create({
         url,
     });
+};
+
+/**
+ * Clean up after user
+ */
+const deauthorize = () => {
+    _storage.set('token', null);
+    authorizedUser = null;
+    userFollowedStreams = [];
+
+    // todo refresh follow cache
 };
 
 const unfollowAll = () => {
@@ -547,28 +505,18 @@ const unfavoriteAll = () => {
     });
 };
 
-const resetStorage = (settings, overwrite) => {
-    // Either sets null values of storage to 'settings' or overwrites all values
-    const keys = Object.keys(settings);
+/**
+ * Fetch current user from Twitch API
+ *
+ * @return {Promise<{}>}
+ */
+const fetchCurrentUser = async () => {
+    const user = await twitchAPI('Get User', {});
 
-    browser.storage.sync.get(null).then((res) => {
-        for (let i = 0; i < keys.length; i += 1) {
-            const prop = keys[i];
-            if (res[prop] === undefined || overwrite) {
-                const val = settings[prop];
-                setStorage(prop, val);
-            } else {
-                storage[prop] = res[prop];
-            }
-        }
-        // All settings accounted for
-        // browser.storage.sync.get('token').then((newRes) => {
-        //     cleanFollows();
-        //     if (newRes.token) getUser();
-        //     else initFollows();
-        // });
-    });
-};
+    authorizedUser = user;
+
+    return user;
+}
 
 /**
  * Fetch entire resource.
@@ -621,6 +569,8 @@ const fetchUserFollows = async () => {
  * @return {Promise<*[]|*[]>}
  */
 const fetchTwitchFollowedStreams = async () => {
+    if (! authorizedUser) return Promise.resolve([]);
+
     return await fetchPaginatedResource(
         'Get Followed Streams', 'streams', 100
     )
@@ -674,6 +624,31 @@ const fetchFollowedStreams = () => {
     });
 }
 
+/**
+ * Initialize user and associated follows.
+ * Called when auth state changes
+ *
+ * @return {Promise<void>}
+ */
+const initializeFollows = async () => {
+    if (_storage.get('token')) {
+        await fetchCurrentUser();
+        await fetchUserFollows();
+    }
+
+    browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
+        delayInMinutes: 0.02, // ~ 1-2 sec
+        periodInMinutes: _storage.get('minutesBetweenCheck'),
+    });
+}
+
+_storage.load().then(() => {
+    Alarm.initialize();
+
+    initializeFollows();
+    // toggleFollow(71092938, 'xqcow');
+})
+
 const openTwitchPage = (url) => {
     browser.tabs.create({
         url,
@@ -704,23 +679,31 @@ results = defaultResults();
 
 // Other statements
 
-resetStorage(defaults);
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
+    console.log(tabId, changeInfo, tabInfo);
 
-browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.url && changeInfo.url.indexOf(redirectURI) !== -1) {
-        // console.log("Executing script");
-        browser.tabs.executeScript(tabId, {
-            code: injection,
-        });
-    }
-});
+    if (changeInfo.url) {
+        const match = changeInfo.url.match(/access_token=(\w+)/);
+        const token = match ? match[1] : null;
 
-browser.runtime.onMessage.addListener((request, sender) => {
-    if (request.type === 'OAuth') {
-        browser.tabs.remove(sender.tab.id);
-        setStorage('token', parseToken(request.content));
-        getUser();
+        console.log('parsing token', changeInfo.url, token);
+
+        if (! token) {
+            // here should be error handling if Twitch decides
+            // to return some kind of error instead of token,
+            // but with current state of extension i have no way of doing this
+            // (and it never even happened to me anyway...)
+            return;
+        }
+
+        _storage.set('token', token);
+        browser.tabs.remove(tabId);
+
+        initializeFollows();
     }
+}, {
+    // URL filter
+    urls: [redirectURI+'*']
 });
 
 browser.notifications.onClicked.addListener(() => {
@@ -737,8 +720,8 @@ browser.notifications.onClosed.addListener((notificationId, byUser) => {
     lastURL = '';
 });
 
-browser.alarms.onAlarm.addListener((alarmInfo) => {
-    if (alarmInfo.name === 'getFollowedStreams') {
+browser.alarms.onAlarm.addListener(alarmInfo => {
+    if (alarmInfo.name === BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS) {
         fetchFollowedStreams();
     }
 });
@@ -775,3 +758,4 @@ window.unfavorite = unfavorite;
 window.unfavoriteAll = unfavoriteAll;
 window.unfollow = unfollow;
 window.unfollowAll = unfollowAll;
+window._storage = () => _storage;
