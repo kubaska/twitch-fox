@@ -201,13 +201,6 @@ html, body {
     left: 390px;
 }
 
-.menuButton.search.favorites {
-    background: url(../assets/images/favorites.png);
-    position: absolute;
-    left: 390px;
-    cursor: pointer;
-}
-
 .menuButton.search.refresh.thinking {
     animation-name: rotate;
     animation-duration: 1s;
@@ -871,16 +864,8 @@ html, body {
     left: -10px;
 }
 
-.contentButton.bottom.favorite.channel .tooltip {
-    left: -40px;
-}
-
 .contentButton.bottom.follow.channel .tooltip {
     left: -70px;
-}
-
-.contentButton.bottom.unfavorite.channel .tooltip {
-    left: -40px;
 }
 
 .contentButton.bottom.unfollow.channel .tooltip {
@@ -943,20 +928,6 @@ html, body {
 
 .contentButton.enlarge {
     background-image: url(../assets/images/enlarge.png);
-}
-
-.contentButton.favorite {
-    background-image: url(../assets/images/favorite.png);
-}
-
-.contentButton.unfavorite {
-    background-image: url(../assets/images/favorite.png);
-    background-color: goldenrod;
-}
-
-.contentButton.unfavorite:hover {
-    background-image: url(../assets/images/unfavorite.png);
-    background-color: #E20303;
 }
 
 .contentButton.follow {

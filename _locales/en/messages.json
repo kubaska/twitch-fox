@@ -267,39 +267,6 @@
     "description": "Description of the button that enlarges the stream preview."
   },
 
-  "favoriteTip": {
-    "message": "Favorite $NAME$, allowing separate notification settings to be set for them",
-    "description": "Description of the 'favorite' button.",
-    "placeholders": {
-      "name": {
-        "content": "$1",
-        "example": "DansGaming"
-      }
-    }
-  },
-
-  "unfavoriteTip": {
-    "message": "Unfavorite $NAME$",
-    "description": "Description of the 'unfavorite' button.",
-    "placeholders": {
-      "name": {
-        "content": "$1",
-        "example": "DansGaming"
-      }
-    }
-  },
-
-  "cantFavoriteTip": {
-    "message": "You can't favorite $NAME$ because you're not following them!",
-    "description": "Message shown when hovering over the 'favorite' button of an unfollowed channel.",
-    "placeholders": {
-      "name": {
-        "content": "$1",
-        "example": "DansGaming"
-      }
-    }
-  },
-
   "followTip": {
     "message": "Follow $NAME$, adding them to your Twitch account's followed channels",
     "description": "Description of the 'follow' button.",
@@ -470,16 +437,6 @@
   "refreshTip": {
     "message": "Refresh the results",
     "description": "Description of the refresh button."
-  },
-
-  "favoritesTip": {
-    "message": "Show only favorites",
-    "description": "Description of the favorites filter button."
-  },
-
-  "allFollowsTip": {
-    "message": "Show all follows",
-    "description": "Description of disabling the favorites filter button."
   },
 
   "exitSearchTip": {

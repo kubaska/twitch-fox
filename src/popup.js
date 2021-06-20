@@ -213,19 +213,16 @@ const updatePage = (noScroll) => {
 
     if (mode === 'followedChannels' || mode === 'followedStreams') {
         // Refresh button becomes favorites filter
-        refresh.classList.remove('refresh');
-        refresh.classList.add('favorites');
-        refresh.classList[bp.getStorage('favoritesMode') ?
-            'add' : 'remove']('possible');
+        // refresh.classList.remove('refresh');
+        // refresh.classList.add('favorites');
+        // refresh.classList[bp.getStorage('favoritesMode') ? 'add' : 'remove']('possible');
         refresh.firstElementChild.textContent =
-            browser.i18n.getMessage(refresh.classList.contains('possible') ?
-                'allFollowsTip' : 'favoritesTip');
+            browser.i18n.getMessage(refresh.classList.contains('possible') ? 'allFollowsTip' : 'favoritesTip');
     } else {
-        refresh.classList.remove('favorites');
-        refresh.classList.add('refresh');
+        // refresh.classList.remove('favorites');
+        // refresh.classList.add('refresh');
         refresh.classList.add('possible');
-        refresh.firstElementChild.textContent =
-            browser.i18n.getMessage('refreshTip');
+        refresh.firstElementChild.textContent = browser.i18n.getMessage('refreshTip');
     }
 
     if (!noScroll) searchBox.value = results[index].filter;
@@ -587,9 +584,6 @@ const cardClickHandler = (e) => {
         case 'enlarge':
             enlarge2(topElem);
             break;
-        case 'favorite':
-            // reserved
-            break;
         case 'follow':
             break;
         case 'browseVideosByChannel':
@@ -905,18 +899,12 @@ searchBox.addEventListener('input', filterContent);
 
 // Refresh button
 refresh.addEventListener('click', () => {
-    if (refresh.classList.contains('refresh')) {
-        const results = bp.getResults();
-        const index = bp.getIndex();
-        getApiResults(
-            results[index].endpoint,
-            JSON.parse(results[index].opts), false, true,
-        );
-    } else if (refresh.classList.contains('favorites')) {
-        bp.setStorage('favoritesMode', !bp.getStorage('favoritesMode'));
-        bp.updateBadge();
-        updatePage();
-    }
+    const results = bp.getResults();
+    const index = bp.getIndex();
+    getApiResults(
+        results[index].endpoint,
+        JSON.parse(results[index].opts), false, true,
+    );
 });
 
 // Exit search button

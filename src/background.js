@@ -26,38 +26,7 @@ const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
 const scope = 'user_follows_edit user_read';
 const responseType = 'token';
 const audio = new Audio();
-const defaults = {
-    // Non-settings
-    token: '',
-    mode: 'streams',
-    favorites: [],
-    follows: [],
-    lastVersion: '',
-    notifiedStreams: [],
-    favoritesMode: false,
 
-    // Settings
-    nonTwitchFollows: false,
-    darkMode: false,
-    tooltips: true,
-    showNewUser: false,
-    showWhatsNew: false,
-    showLogos: true,
-    openTwitchPage: false,
-    openPopout: false,
-    openChat: false,
-    favoritesDesktopNotifications: true,
-    favoritesAudioNotifications: true,
-    nonfavoritesDesktopNotifications: true,
-    nonfavoritesAudioNotifications: false,
-    alarmInterval: 1,
-    limitAlarm: false,
-    alarmLength: 10,
-    alarmVolume: 20,
-    minutesBetweenCheck: 1,
-    resultLimit: 12,
-    languageCodes: '',
-};
 const storage = {};
 const BROWSER_ALARM_TYPE = {
     FETCH_FOLLOWED_STREAMS: 'fetchFollowedStreams'
@@ -334,10 +303,10 @@ const desktopNotification = (stream) => {
 
 const notify = (stream) => {
     // Regular followed channel
-    if (_storage.get('nonfavoritesDesktopNotifications')) {
+    if (_storage.get('desktopNotifications')) {
         desktopNotification(stream);
     }
-    if (_storage.get('nonfavoritesAudioNotifications')) {
+    if (_storage.get('audioNotifications')) {
         Alarm.play();
     }
 };
@@ -469,39 +438,6 @@ const unfollow = (channel) => {
     updateBadge();
     browser.runtime.sendMessage({
         content: 'followed',
-    });
-};
-
-const favorite = (_id) => {
-    const favorites = getStorage('favorites');
-    if (userFollowIDs.indexOf(_id) > -1 && favorites.indexOf(_id) < 0) {
-        favorites.unshift(_id);
-        setStorage('favorites', favorites);
-    }
-    updateBadge();
-    browser.runtime.sendMessage({
-        content: 'updatePage',
-    });
-};
-
-const unfavorite = (_id) => {
-    const favorites = getStorage('favorites');
-    const index = favorites.indexOf(_id);
-    if (index > -1) {
-        favorites.splice(index, 1);
-        setStorage('favorites', favorites);
-    }
-    updateBadge();
-    browser.runtime.sendMessage({
-        content: 'updatePage',
-    });
-};
-
-const unfavoriteAll = () => {
-    setStorage('favorites', []);
-    updateBadge();
-    browser.runtime.sendMessage({
-        content: 'updatePage',
     });
 };
 
@@ -735,7 +671,6 @@ browser.browserAction.setBadgeBackgroundColor({
 window.authorize = authorize;
 window.defaultContent = defaultContent;
 window.defaultResults = defaultResults;
-window.favorite = favorite;
 window.follow = follow;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
@@ -754,8 +689,6 @@ window.setIndex = setIndex;
 window.setResults = setResults;
 window.setStorage = setStorage;
 window.twitchAPI = twitchAPI;
-window.unfavorite = unfavorite;
-window.unfavoriteAll = unfavoriteAll;
 window.unfollow = unfollow;
 window.unfollowAll = unfollowAll;
 window._storage = () => _storage;

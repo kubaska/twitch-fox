@@ -5,7 +5,6 @@ const _VERSION = 1;
 const defaultState = {
     // Non-settings
     token: null,
-    favorites: [],
     localFollows: [],
     version: _VERSION,
 
@@ -19,10 +18,8 @@ const defaultState = {
     openPopout: false,
     openChat: false,
 
-    favoritesDesktopNotifications: true,
-    favoritesAudioNotifications: true,
-    nonfavoritesDesktopNotifications: true,
-    nonfavoritesAudioNotifications: false,
+    desktopNotifications: true,
+    audioNotifications: false,
 
     alarmVolume: 20,
 
