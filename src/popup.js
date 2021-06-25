@@ -314,23 +314,6 @@ const getApiResults = (endpoint, theOpts = {}, newIndex, reset) => {
     });
 };
 
-const followApi = (endpoint, channel) => {
-    if (bp.getAuthorizedUser()) {
-        refresh.classList.add('thinking');
-        bp.twitchAPI(endpoint, {
-            _id: String(channel._id),
-        }, () => {
-            // Temporarily follow/unfollow
-            refresh.classList.remove('thinking');
-            if (endpoint === 'Follow Channel') bp.follow(channel);
-            else if (endpoint === 'Unfollow Channel') bp.unfollow(channel);
-        });
-    } else if (bp.getStorage('nonTwitchFollows')) {
-        if (endpoint === 'Follow Channel') bp.follow(channel);
-        else if (endpoint === 'Unfollow Channel') bp.unfollow(channel);
-    }
-};
-
 const UI = {
     insertBackgroundUrl: (element, url, useLazyloader = true) => {
         if (useLazyloader) {
@@ -418,6 +401,10 @@ addCard = (content, type) => {
             'channelClipsTip', content.channel.display_name
         );
 
+        const following = bp.isFollowing(content.channel.name);
+        card.querySelector('.follow').style = following ? 'display:none' : '';
+        card.querySelector('.unfollow').style = following ? '' : 'display:none';
+
         UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
 
         card.querySelector('.tag').textContent =
@@ -428,7 +415,6 @@ addCard = (content, type) => {
         contentArea.appendChild(card);
     }
     else if (type === 'video' || type === 'clip') {
-
         let card = document.getElementById('stub-stream').cloneNode(true);
         const id = type === 'video' ? content._id : content.tracking_id;
         const channel = type === 'video' ? content.channel : content.broadcaster;
@@ -466,9 +452,11 @@ addCard = (content, type) => {
         card.querySelector('.viewer-number').textContent = delimitNumber(content.views);
 
         // Hide chat button
-        card.querySelector('.contentButton.chat').classList.add('hidden');
+        card.querySelector('.contentButton.chat').classList.add('hide');
 
-        // todo isFollowed
+        const following = bp.isFollowing(channel.name);
+        card.querySelector('.follow').style = following ? 'display:none' : '';
+        card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
         card.querySelectorAll('.streamer-name').forEach(element => {
             element.textContent = channel.display_name;
@@ -531,6 +519,10 @@ addCard = (content, type) => {
             card.querySelector('.cornerGame').classList.add('hide');
         }
 
+        const following = bp.isFollowing(channel.name);
+        card.querySelectorAll('.follow').forEach(btn => btn.style = following ? 'display:none' : '');
+        card.querySelector('.unfollow').style = following ? '' : 'display:none';
+
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
             'channelVideosTip', channel.display_name
@@ -552,22 +544,30 @@ const cardClickHandler = (e) => {
 
     if (! trigger) return;
 
+    if (e.target.classList.contains('noAccess')) return;
+
     const topElem = UI.getParentElement(e.target, 'content');
+
+    const meta = {
+        streamerId: parseInt(topElem.dataset['streamerId']),
+        name: topElem.dataset['name'],
+        game: topElem.dataset['game']
+    }
 
     switch (trigger) {
         case 'openStream':
             browser.tabs.create({
-                url: 'https://twitch.tv/'+topElem.dataset['name'],
+                url: 'https://twitch.tv/'+meta.name,
             });
             break;
         case 'openGame':
             browser.tabs.create({
-                url: 'https://www.twitch.tv/directory/game/'+topElem.dataset['game']
+                url: 'https://www.twitch.tv/directory/game/'+meta.game
             });
             break;
         case 'openStreamPopout':
             browser.windows.create({
-                url: 'http://player.twitch.tv/?parent=localhost&channel='+topElem.dataset['name'],
+                url: 'http://player.twitch.tv/?parent=localhost&channel='+meta.name,
                 height: 500,
                 width: 850,
                 type: 'popup',
@@ -575,7 +575,7 @@ const cardClickHandler = (e) => {
             break;
         case 'openChat':
             browser.windows.create({
-                url: `http:/twitch.tv/${topElem.dataset['name']}/chat?popout`,
+                url: `http:/twitch.tv/${meta.name}/chat?popout`,
                 height: 600,
                 width: 340,
                 type: 'popup',
@@ -585,21 +585,31 @@ const cardClickHandler = (e) => {
             enlarge2(topElem);
             break;
         case 'follow':
+            bp.follow(meta.streamerId, meta.name, false);
+            updatePage(true);
+            break;
+        case 'followLocal':
+            bp.follow(meta.streamerId, meta.name, true);
+            updatePage(true);
+            break;
+        case 'unfollow':
+            bp.unfollow(meta.streamerId, meta.name);
+            updatePage(true);
             break;
         case 'browseVideosByChannel':
-            getApiResults('Get Channel Videos', { _id: topElem.dataset['streamerId'], }, true);
+            getApiResults('Get Channel Videos', { _id: meta.streamerId, }, true);
             break;
         case 'browseClipsByChannel':
-            getApiResults('Get Top Clips', { channel: topElem.dataset['name'] }, true);
+            getApiResults('Get Top Clips', { channel: meta.name }, true);
             break;
         case 'browseGame':
-            getApiResults('Get Live Streams', { game: topElem.dataset['game'] }, true);
+            getApiResults('Get Live Streams', { game: meta.game }, true);
             break;
         case 'browseChannelsByGame':
-            getApiResults('Get Top Videos', { game: topElem.dataset['game'] }, true);
+            getApiResults('Get Top Videos', { game: meta.game }, true);
             break;
         case 'browseClipsByGame':
-            getApiResults('Get Top Clips', { game: topElem.dataset['game'] }, true);
+            getApiResults('Get Top Clips', { game: meta.game }, true);
             break;
     }
 }

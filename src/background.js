@@ -2,19 +2,18 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, differenceBy, findIndex, isEmpty, map, orderBy, remove, take} from "lodash";
+import {chunk, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 
 // Variable declarations
 
 let authorizedUser; // An object containing the data of the authorized user
+
 let userFollows = []; // Array with followed channels of authorized user
-let userFollowIDs = []; // Array with IDs of followed channels
+let userFollowIDs = []; // todo remove
+
+let userFollowsCache = new Set();
+
 let userFollowedStreams = []; // Array with followed stream objects
-let userFollowedLocalStreams = [
-    { id: 28579002, name: 'cellbit' },
-    { id: 71092938, name: 'xqcow' },
-];
-let userFollowedStreamsCache = new Set();
 let lastURL = '';
 let lastName = '';
 let results;
@@ -27,7 +26,6 @@ const scope = 'user_follows_edit user_read';
 const responseType = 'token';
 const audio = new Audio();
 
-const storage = {};
 const BROWSER_ALARM_TYPE = {
     FETCH_FOLLOWED_STREAMS: 'fetchFollowedStreams'
 }
@@ -45,10 +43,6 @@ _axios.interceptors.request.use(function (request) {
 
     if (token) {
         request.headers.Authorization = `OAuth ${token}`
-    } else {
-        // todo check if request belongs to auth routes
-        // and fail immediately?
-        // contains: follow, user
     }
 
     return request;
@@ -84,7 +78,11 @@ const setIndex = (newIndex) => {
     resultsIndex = newIndex;
 };
 
-const getStorage = key => storage[key];
+const getStorage = key => _storage.get(key);
+const setStorage = (key, value, callback) => {
+    _storage.set(key, value);
+    if (callback) callback();
+};
 
 const twitchAPI = (endpoint, theOpts, callback) => {
     /*
@@ -123,7 +121,7 @@ const twitchAPI = (endpoint, theOpts, callback) => {
     } else if (endpoint === 'Get Followed Clips') {
         url = 'clips/followed';
     } else if (endpoint === 'Get User Follows') {
-        url = `users/${opts._id}/follows/channels`;
+        url = `users/${authorizedUser._id}/follows/channels`;
         delete opts._id;
     } else if (endpoint === 'Get Channel Videos') {
         url = `channels/${opts._id}/videos`;
@@ -145,6 +143,13 @@ const twitchAPI = (endpoint, theOpts, callback) => {
         url = `users/${authorizedUser._id}/follows/channels/${opts._id}`;
         delete opts._id;
         method = 'DELETE';
+    }
+
+    if (! _storage.get('token') && (url.includes('follow') || url.includes('user'))) {
+        // return immediately if we're making request
+        // to endpoint that needs authorization
+        if (callback) return callback([]);
+        return [];
     }
 
     return _axios.request({ url, method, params: opts })
@@ -208,24 +213,6 @@ const Alarm = {
 
 const playAlarm = (override) => {
     Alarm.play();
-};
-
-const setStorage = (key, value, callback) => {
-    const obj = {};
-    obj[key] = value;
-    browser.storage.sync.set(obj).then(() => {
-        Alarm.initialize();
-        browser.runtime.sendMessage({
-            content: 'options',
-        });
-        if (key === 'tooltips' || key === 'nonTwitchFollows') {
-            browser.runtime.sendMessage({
-                content: 'initialize',
-            });
-        }
-    });
-    storage[key] = value;
-    if (callback) callback();
 };
 
 const getFollow = (_id, callback) => {
@@ -342,18 +329,7 @@ const deauthorize = () => {
     _storage.set('token', null);
     authorizedUser = null;
     userFollowedStreams = [];
-
-    // todo refresh follow cache
-};
-
-const unfollowAll = () => {
-    setStorage('follows', []);
-    getFollows(() => {
-        browser.runtime.sendMessage({
-            content: 'followed',
-        });
-    });
-    updateBadge();
+    rebuildFollowCache();
 };
 
 const importFollows = (followsJSON) => {
@@ -365,80 +341,83 @@ const importFollows = (followsJSON) => {
     }
 };
 
-const cleanFollows = () => {
-    const follows = getStorage('follows');
-    let changed = false;
-    for (let i = 0; i < follows.length; i += 1) {
-        const follow = follows[i];
-        if (Number.isNaN(follow)) {
-            follows.splice(i, 1);
-            changed = true;
-            i -= 1;
-        }
-    }
-    if (changed) setStorage('follows', follows, initFollows);
-    // console.log("Follows cleaned");
-};
+const isFollowing = (name) => {
+    return userFollowsCache.has(name);
+}
 
-const follow = (channel) => {
-    if (getStorage('nonTwitchFollows')) {
-        // Add to the followed list
-        const follows = getStorage('follows');
-        if (follows.indexOf(String(channel._id)) < 0) {
-            follows.unshift(String(channel._id));
-            setStorage('follows', follows);
-            getFollow(String(channel._id), () => {
-                startFollowAlarm();
-                browser.runtime.sendMessage({
-                    content: 'followed',
-                });
-            });
+const follow = async (id, name, forceLocal) => {
+    if (authorizedUser && ! forceLocal) {
+        const response = await twitchAPI('Follow Channel', { _id: id });
+
+        const successful = id === response?.channel?._id;
+
+        if (successful) {
+            userFollows.push(...response);
+            userFollowsCache.add(response.channel.name);
         }
-    } else {
-        // Only a provisional follow
-        if (userFollowIDs.indexOf(String(channel._id)) < 0) {
-            userFollowIDs.unshift(String(channel._id));
-            userFollows.unshift(channel);
+        console.log('follow online', response);
+
+        return successful;
+    }
+    else {
+        // save in storage
+        const allLocalFollows = _storage.get('localFollows');
+
+        const exists = find(allLocalFollows, { id, name });
+
+        if (exists) {
+            console.log(`!!! Follow [${id}, ${name}] already exists, skipping`);
+            return true;
         }
-        // Also have to check if there are any new followed streams
-        startFollowAlarm();
-        browser.runtime.sendMessage({
-            content: 'followed',
-        });
+
+        console.log('follow local');
+
+        allLocalFollows.push({ id, name });
+        userFollowsCache.add(name);
+        _storage.set('localFollows', allLocalFollows);
+
+        return true;
     }
 };
 
-const unfollow = (channel) => {
-    if (getStorage('nonTwitchFollows')) {
-        // Remove from the followed list
-        const follows = getStorage('follows');
-        const followsIndex = follows.indexOf(String(channel._id));
-        if (followsIndex > -1) {
-            follows.splice(followsIndex, 1);
-            setStorage('follows', followsIndex);
-        }
-        // Also have to remove from userFollows(IDs)
-        const userFollowsIndex = userFollowIDs.indexOf(String(channel._id));
-        if (userFollowsIndex > -1) {
-            userFollows.splice(userFollowsIndex, 1);
-            userFollowIDs.splice(userFollowsIndex, 1);
-        }
-    } else {
-        // Only a provisional unfollow
-        const index = userFollowIDs.indexOf(String(channel._id));
-        if (index > -1) {
-            userFollows.splice(index, 1);
-            userFollowIDs.splice(index, 1);
-        }
+const unfollow = (id, name) => {
+    const existsLocally = find(_storage.get('localFollows'), { id, name });
+
+    if (existsLocally) {
+        const allLocalFollows = _storage.get('localFollows');
+
+        pullAllBy(allLocalFollows, [{ id }], 'id');
+        console.log('unfollow local');
+
+        userFollowsCache.delete(name);
+        _storage.set('localFollows', allLocalFollows);
     }
-    // Also see if we have to remove a followed stream
-    const index = userFollowedStreams.map(stream =>
-        String(stream.channel._id)).indexOf(String(channel._id));
-    if (index > -1) userFollowedStreams.splice(index, 1);
-    updateBadge();
-    browser.runtime.sendMessage({
-        content: 'followed',
+    else {
+        if (! _storage.get('token')) {
+            console.log('!!! Tried to unfollow online follow without being logged, skipping');
+            return;
+        }
+
+        twitchAPI('Unfollow Channel', { _id: id });
+
+        // remove from userFollows
+        pullAllBy(userFollows, [{ id }], 'id');
+        console.log('unfollow online');
+        userFollowsCache.delete(name);
+    }
+}
+
+const rebuildFollowCache = () => {
+    const local = _storage.get('localFollows');
+    local.forEach(follow => {
+        userFollowsCache.add(follow.name);
     });
+
+    userFollows.forEach(follow => {
+        userFollowsCache.add(follow.channel.name);
+    });
+
+    console.log('followCache', userFollowsCache);
 };
 
 /**
@@ -494,7 +473,7 @@ const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
  * @return {Promise<*[]|*[]>}
  */
 const fetchUserFollows = async () => {
-    return await fetchPaginatedResource(
+    userFollows = await fetchPaginatedResource(
         'Get User Follows', 'follows', 100
     );
 }
@@ -518,7 +497,7 @@ const fetchTwitchFollowedStreams = async () => {
  * @return {Promise<[]>}
  */
 const fetchLocalFollowedStreams = async () => {
-    const follows = chunk(userFollowedLocalStreams, 100);
+    const follows = chunk(_storage.get('localFollows'), 100);
     let result = [];
 
     for (const chunk of follows) {
@@ -572,6 +551,8 @@ const initializeFollows = async () => {
         await fetchUserFollows();
     }
 
+    rebuildFollowCache();
+
     browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
         delayInMinutes: 0.02, // ~ 1-2 sec
         periodInMinutes: _storage.get('minutesBetweenCheck'),
@@ -582,7 +563,6 @@ _storage.load().then(() => {
     Alarm.initialize();
 
     initializeFollows();
-    // toggleFollow(71092938, 'xqcow');
 })
 
 const openTwitchPage = (url) => {
@@ -616,8 +596,6 @@ results = defaultResults();
 // Other statements
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
-    console.log(tabId, changeInfo, tabInfo);
-
     if (changeInfo.url) {
         const match = changeInfo.url.match(/access_token=(\w+)/);
         const token = match ? match[1] : null;
@@ -669,6 +647,7 @@ browser.browserAction.setBadgeBackgroundColor({
 // Exports
 
 window.authorize = authorize;
+window.deauthorize = deauthorize;
 window.defaultContent = defaultContent;
 window.defaultResults = defaultResults;
 window.follow = follow;
@@ -681,6 +660,7 @@ window.getUserFollows = getUserFollows;
 window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
 window.initFollows = initFollows;
+window.isFollowing = isFollowing;
 window.openChat = openChat;
 window.openPopout = openPopout;
 window.openTwitchPage = openTwitchPage;
@@ -690,5 +670,4 @@ window.setResults = setResults;
 window.setStorage = setStorage;
 window.twitchAPI = twitchAPI;
 window.unfollow = unfollow;
-window.unfollowAll = unfollowAll;
 window._storage = () => _storage;
