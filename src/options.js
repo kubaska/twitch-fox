@@ -1,126 +1,75 @@
+/* global browser */
+
 const bp = browser.extension.getBackgroundPage();
 
-const nonTwitch = document.getElementById('nonTwitch');
-const notification = document.getElementById('notification');
-const audioNotification = document.getElementById('audioNotification');
-const unfavoriteAll = document.getElementById('unfavoriteAll');
-const unfollowAll = document.getElementById('unfollowAll');
-const alarmLimit = document.getElementById('alarmLimit');
-const testAudioNotification = document.getElementById('testAudioNotification');
-const importButton = document.getElementById('importButton');
-const exportFollows = document.getElementById('exportFollows');
+function getInputType(element) {
+    return { tagName: element.tagName.toLowerCase(), type: element.type.toLowerCase() };
+}
 
-nonTwitch.style.display = bp.getStorage('nonTwitchFollows') &&
-!bp.getAuthorizedUser() ? 'inline' : 'none';
-notification.style.display = bp.getAuthorizedUser() ||
-bp.getStorage('nonTwitchFollows') ? 'inline' : 'none';
-audioNotification.style.display =
-    bp.getStorage('favoritesAudioNotifications') ||
-    bp.getStorage('nonfavoritesAudioNotifications') ? 'inline' : 'none';
-unfavoriteAll.style.display = bp.getStorage('favorites').length ? 'inline' :
-    'none';
-unfollowAll.style.display = bp.getStorage('follows').length ? 'inline' :
-    'none';
+function saveOption(event) {
+    const { tagName, type } = getInputType(event.target);
 
-alarmLimit.style.display = bp.getStorage('limitAlarm') ? 'inline' : 'none';
+    if (tagName === 'input') {
+        if (type === 'text') {
+            bp.setStorage(event.target.dataset['internal'], event.target.value);
+        }
+        else if (type === 'number') {
+            if (! event.target.checkValidity()) return;
 
-const i18ns = document.getElementsByClassName('i18n');
-for (let i = 0; i < i18ns.length; i += 1) {
-    const i18n = i18ns[i];
-    if (i18n.id === 'unfavoriteAll') {
-        i18n.value = browser.i18n.getMessage(
-            i18n.id,
-            bp.getStorage('favorites').length,
-        );
-    } else if (i18n.id === 'unfollowAll') {
-        i18n.value = browser.i18n.getMessage(
-            i18n.id,
-            bp.getStorage('follows').length,
-        );
-    } else if (i18n.classList.contains('button')) {
-        i18n.value = browser.i18n.getMessage(i18n.id);
-    } else {
-        i18n.textContent = browser.i18n.getMessage(i18n.id);
+            bp.setStorage(event.target.dataset['internal'], parseInt(event.target.value));
+        }
+        else if (type === 'checkbox') {
+            bp.setStorage(event.target.dataset['internal'], event.target.checked);
+        }
     }
 }
 
-const checkboxes = document.getElementsByClassName('checkbox');
-for (let i = 0; i < checkboxes.length; i += 1) {
-    let checkbox = checkboxes[i];
-    checkbox.checked = bp.getStorage(checkbox.id);
-    checkbox.addEventListener('change', (e) => {
-        checkbox = e.target;
-        bp.setStorage(checkbox.id, checkbox.checked);
-        if (checkbox.id === 'nonTwitchFollows') bp.initFollows();
-    });
-}
+// fill settings
+document.querySelectorAll('[data-internal]').forEach(control => {
+    const { tagName, type } = getInputType(control);
 
-const numbers = document.getElementsByClassName('number');
-for (let i = 0; i < numbers.length; i += 1) {
-    let number = numbers[i];
-    number.value = bp.getStorage(number.id);
-    number.addEventListener('change', (e) => {
-        number = e.target;
-        let val = Number(number.value);
-        const {
-            min,
-            max,
-        } = number;
-        val = Number.isNaN(val) ? bp.getStorage(number.id) : val;
-        if (min !== '') val = val < Number(min) ? Number(min) : val;
-        if (max !== '') val = val > Number(max) ? Number(max) : val;
-        number.value = val;
-        bp.setStorage(number.id, val);
-    });
-}
-
-const texts = document.getElementsByClassName('text');
-for (let i = 0; i < texts.length; i += 1) {
-    let text = texts[i];
-    text.value = bp.getStorage(text.id);
-    text.addEventListener('change', (e) => {
-        text = e.target;
-        bp.setStorage(text.id, text.value);
-    });
-}
-
-unfavoriteAll.addEventListener('click', () => {
-    if (unfavoriteAll.value === browser.i18n.getMessage('areYouSure')) {
-        bp.unfavoriteAll();
-    } else {
-        unfavoriteAll.value = browser.i18n.getMessage('areYouSure');
-        window.setTimeout(() => {
-            unfavoriteAll.value = browser.i18n.getMessage(
-                'unfavoriteAll',
-                bp.getStorage('favorites').length,
-            );
-        }, 2000);
+    if (tagName === 'input') {
+        if (type === 'text' || type === 'number') {
+            control.value = bp.getStorage(control.dataset['internal']);
+        }
+        else if (type === 'checkbox') {
+            control.checked = !!bp.getStorage(control.dataset['internal']);
+        }
     }
+
+    control.addEventListener('change', saveOption);
 });
 
-unfollowAll.addEventListener('click', () => {
-    if (unfollowAll.value === browser.i18n.getMessage('areYouSure')) {
-        bp.unfollowAll();
-    } else {
-        unfollowAll.value = browser.i18n.getMessage('areYouSure');
-        window.setTimeout(() => {
-            unfollowAll.value = browser.i18n.getMessage(
-                'unfollowAll',
-                bp.getStorage('follow').length,
-            );
-        }, 2000);
-    }
-});
+// fill follow list
+document.getElementById('localFollowsList').innerHTML = bp.getStorage('localFollows').map(follow => {
+    return `<div class="follow">
+<span>[${follow.id}] ${follow.name || '(name unknown)'}</span>
+<span class="follow-remove" data-follow-id="${follow.id}" data-stream-name="${follow.name}">remove</span>
+</div>`;
+}).join('');
 
-importButton.addEventListener('change', () => {
-    const file = importButton.files[0];
+document.querySelectorAll('.follow-remove').forEach(btn => {
+    btn.addEventListener('click', removeFollow);
+})
+
+function removeFollow(e) {
+    bp.unfollow(parseInt(e.target.dataset['followId']), e.target.dataset['streamName']);
+    document.removeEventListener(e.target, removeFollow);
+    e.target.parentElement.remove();
+}
+
+// import & export
+document.getElementById('importFollows').addEventListener('change', (e) => {
+    const file = e.target.files[0];
     const reader = new FileReader();
-    reader.onload = () => bp.importFollows(reader.result);
+    reader.onload = () => {
+        bp.importFollows(reader.result);
+    }
     reader.readAsText(file);
 });
 
-exportFollows.addEventListener('click', () => {
-    const textToWrite = JSON.stringify(bp.getStorage('follows'));
+document.getElementById('exportFollows').addEventListener('click', () => {
+    const textToWrite = JSON.stringify(bp.getStorage('localFollows'));
     const textFileAsBlob = new Blob([textToWrite], {
         type: 'text/plain',
     });
@@ -134,6 +83,6 @@ exportFollows.addEventListener('click', () => {
     downloadLink.click();
 });
 
-testAudioNotification.addEventListener('click', () => bp.playAlarm(true));
+document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));
 
-browser.runtime.onMessage.addListener(() => window.location.reload());
+// browser.runtime.onMessage.addListener(() => window.location.reload());

@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {chunk, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 
 // Variable declarations
 
@@ -196,13 +196,13 @@ const updateBadge = () => {
 const Alarm = {
     initialize: () => {
         audio.src = 'assets/alarm.ogg';
-        audio.volume = _storage.get('alarmVolume') / 100;
     },
     play: () => {
         // if (! alarmOn) return;
 
         audio.pause();
         audio.load();
+        audio.volume = _storage.get('notificationVolume') / 100;
         audio.play()
             .catch(() => {});
     },
@@ -328,18 +328,26 @@ const authorize = () => {
 const deauthorize = () => {
     _storage.set('token', null);
     authorizedUser = null;
+    userFollows = [];
     userFollowedStreams = [];
     rebuildFollowCache();
 };
 
-const importFollows = (followsJSON) => {
-    const follows = JSON.parse(followsJSON);
-    if (!follows.map(follow => (Number.isNaN(follow) ? 'i' : '')).join('')) {
-        // Only allow an array of numbers
-        setStorage('follows', follows);
-        initFollows();
-    }
-};
+const importFollows = (json) => {
+    const parsed = JSON.parse(json);
+
+    const follows = filter(parsed, follow => {
+        const { id, name } = follow;
+
+        if (id && name) return { id, name };
+        else if (id)    return { id };
+        else            return false;
+    });
+
+    setStorage('localFollows', follows);
+
+    rebuildFollowCache();
+}
 
 const isFollowing = (name) => {
     return userFollowsCache.has(name);
@@ -381,7 +389,7 @@ const follow = async (id, name, forceLocal) => {
 };
 
 const unfollow = (id, name) => {
-    const existsLocally = find(_storage.get('localFollows'), { id, name });
+    const existsLocally = find(_storage.get('localFollows'), { id });
 
     if (existsLocally) {
         const allLocalFollows = _storage.get('localFollows');
@@ -389,12 +397,11 @@ const unfollow = (id, name) => {
         pullAllBy(allLocalFollows, [{ id }], 'id');
         console.log('unfollow local');
 
-        userFollowsCache.delete(name);
         _storage.set('localFollows', allLocalFollows);
     }
     else {
         if (! _storage.get('token')) {
-            console.log('!!! Tried to unfollow online follow without being logged, skipping');
+            console.log('!!! Tried to unfollow online channel without being logged, skipping');
             return;
         }
 
@@ -403,6 +410,9 @@ const unfollow = (id, name) => {
         // remove from userFollows
         pullAllBy(userFollows, [{ id }], 'id');
         console.log('unfollow online');
+    }
+
+    if (name) {
         userFollowsCache.delete(name);
     }
 }
@@ -621,7 +631,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
 });
 
 browser.notifications.onClicked.addListener(() => {
-    // browser.browserAction.openPopup(); //Will work in Firefox 57
     if (getStorage('openTwitchPage')) openTwitchPage(lastURL);
     if (getStorage('openPopout')) openPopout(lastName);
     if (getStorage('openChat')) openChat(lastName);

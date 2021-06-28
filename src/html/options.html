@@ -4,153 +4,208 @@
 
 <head>
     <meta charset="utf-8">
+
+    <style>
+        h3 {
+            margin: 0.5em auto;
+        }
+
+        .row {
+            display: flex;
+            padding: 10px;
+        }
+        .row:hover {
+            background-color: rgba(0,0,0,.05);
+            /*background-color: rgba(0,0,0,.075);*/
+        }
+        .row > .description {
+            width: 75%;
+        }
+
+        .description > p {
+            font-weight: bold;
+            margin: 4px 0;
+        }
+        .description > span {
+            font-size: 0.8em;
+            color: #808080;
+            font-style: italic;
+        }
+
+        .row > .control {
+            width: 25%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 5px;
+        }
+        .control > :not(:only-child) {
+            margin-left: 5px;
+        }
+
+        .follow-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .follow {
+            min-width: 50%;
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .follow-remove {
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
-<form>
-    <strong class="i18n" id="userInterfaceSettings"></strong>
-    <br>
 
-    <label class="i18n" id="useDarkMode"></label>
-    <input class="checkbox" type="checkbox" id="darkMode">
-    <br>
+<form id="main-form">
+    <h3 data-i18n="userInterfaceSettings">User interface settings</h3>
+    <hr>
 
-    <label class="i18n" id="enableTooltips"></label>
-    <input class="checkbox" type="checkbox" id="tooltips">
-    <br>
+    <div class="row">
+        <div class="description">
+            <p data-i18n="useDarkMode">Dark mode</p>
+            <span>All cool kids use this.</span>
+        </div>
 
-    <label class="i18n" id="showNewUserMessage"></label>
-    <input class="checkbox" type="checkbox" id="showNewUser">
-    <br>
+        <div class="control">
+            <input type="checkbox" data-internal="darkMode">
+        </div>
+    </div>
 
-    <label class="i18n" id="showWhatsNewMessage"></label>
-    <input class="checkbox" type="checkbox" id="showWhatsNew">
-    <br>
+    <div class="row">
+        <div class="description">
+            <p data-i18n="enableTooltips">Tooltips</p>
+            <span>Shows help text when you hover on stuff. Disable if icons are enough for you.</span>
+        </div>
 
-    <label class="i18n" id="showChannelLogos"></label>
-    <input class="checkbox" type="checkbox" id="showLogos">
-    <br>
+        <div class="control">
+            <input type="checkbox" data-internal="tooltips">
+        </div>
+    </div>
 
-    <br>
-    <strong class="i18n" id="followsSettings"></strong>
-    <br>
+    <div class="row">
+        <div class="description">
+            <p>Stream check interval</p>
+            <span>How often do you want to check for online streams</span>
+        </div>
 
-    <label class="i18n" id="enableNonTwitchFollows"></label>
-    <input class="checkbox" type="checkbox" id="nonTwitchFollows">
-    <br>
+        <div class="control">
+            <input type="number" min="1" max="60" data-internal="minutesBetweenCheck" required>
+        </div>
+    </div>
 
-    <span id="nonTwitch">
+    <div class="row">
+        <div class="description">
+            <p>Language codes filter</p>
+            <span>The language codes to filter streams by (e.g. 'en' for English), comma separated.</span>
+        </div>
 
+        <div class="control">
+            <input type="text" data-internal="languageCodes">
+        </div>
+    </div>
 
-    <!--<input class="i18n button" type="button" id="importFollows">-->
-        <!--<<input type="text" id="importChannel">-->
+    <h3>Stream Notifications</h3>
+    <hr>
 
-    <label class="i18n" id="importFollows"></label>
-    <input type="file" id="importButton">
-    <br>
-    <input class="i18n button" type="button" id="exportFollows">
-    <br>
-    <input class="i18n button" type="button" id="unfollowAll">
+    <div class="row">
+        <div class="description">
+            <p>Enable notifications</p>
+        </div>
 
-    </span>
+        <div class="control">
+            <input type="checkbox" data-internal="desktopNotifications">
+        </div>
+    </div>
 
+    <div class="row">
+        <div class="description">
+            <p>Notification volume</p>
+            <span>Play a sound alarm when new stream comes online. 0 to disable</span>
+        </div>
 
-    <br>
-    <strong class="i18n" id="nameOrNotificationClicked"></strong>
-    <br>
+        <div class="control">
+            <input type="number" min="0" max="100" data-internal="notificationVolume" required>
+        </div>
+    </div>
 
-    <label class="i18n" id="openTwitchPageSetting"></label>
-    <input class="checkbox" type="checkbox" id="openTwitchPage">
-    <br>
+    <div class="row">
+        <div class="description">
+            <p>Open Twitch page when you click notification</p>
+            <span></span>
+        </div>
 
-    <label class="i18n" id="openPopoutSetting"></label>
-    <input class="checkbox" type="checkbox" id="openPopout">
-    <br>
+        <div class="control">
+            <input type="checkbox" data-internal="openTwitchPage">
+        </div>
+    </div>
 
-    <label class="i18n" id="openChatSetting"></label>
-    <input class="checkbox" type="checkbox" id="openChat">
-    <br>
+    <div class="row">
+        <div class="description">
+            <p>Open stream popout when you click notification</p>
+            <span></span>
+        </div>
 
-    <span id="notification">
+        <div class="control">
+            <input type="checkbox" data-internal="openPopout">
+        </div>
+    </div>
 
-        <br>
-        <strong class="i18n" id="favoriteNotificationSettings"></strong>
-        <br>
+    <div class="row">
+        <div class="description">
+            <p>Open stream chat when you click notification</p>
+            <span></span>
+        </div>
 
-        <label class="i18n" id="favoriteDesktopNotifications"></label>
-        <input class="checkbox" type="checkbox" id="favoritesDesktopNotifications">
-        <br>
+        <div class="control">
+            <input type="checkbox" data-internal="openChat">
+        </div>
+    </div>
 
-        <label class="i18n" id="favoriteAudioNotifications"></label>
-        <input class="checkbox" type="checkbox" id="favoritesAudioNotifications">
-        <br>
+    <div class="row">
+        <div class="description">
+            <p>Test audio notification</p>
+            <span></span>
+        </div>
 
-        <input class="i18n button" type="button" id="unfavoriteAll">
+        <div class="control">
+            <input type="button" id="testAudioNotification" value="Test audio">
+        </div>
+    </div>
 
-        <br>
-        <strong class="i18n" id="nonfavoriteNotificationSettings"></strong>
-        <br>
+    <h3 data-i18n="followsSettings">Follows Settings</h3>
+    <hr>
 
-        <label class="i18n" id="nonfavoriteDesktopNotifications"></label>
-        <input class="checkbox" type="checkbox" id="nonfavoritesDesktopNotifications">
-        <br>
+    <div class="row">
+        <div class="description">
+            <p>Import local follows</p>
+            <span>This will overwrite your current follows.</span>
+        </div>
 
-        <label class="i18n" id="nonfavoriteAudioNotifications"></label>
-        <input class="checkbox" type="checkbox" id="nonfavoritesAudioNotifications">
-        <br>
+        <div class="control">
+            <input type="file" id="importFollows" value="Import follows" accept="text/plain">
+        </div>
+    </div>
 
-        <span id="audioNotification">
+    <div class="row">
+        <div class="description">
+            <p>Export local follows</p>
+            <span>Exports follows to a text file, like a backup.</span>
+        </div>
 
-          <br>
-          <strong class="i18n" id="audioNotificationSettings"></strong>
-          <br>
+        <div class="control">
+            <input type="button" id="exportFollows" value="Export follows">
+        </div>
+    </div>
 
-          <label class="i18n" id="audioNotificationVolume"></label>
-          <input class="number" type="number" min="0" max="100" id="alarmVolume">
-          <br>
-
-          <label class="i18n" id="audioNotificationInterval"></label>
-          <input class="number" type="number" min="1" id="alarmInterval">
-          <br>
-
-          <label class="i18n" id="audioNotificationLimit"></label>
-          <input class="checkbox" type="checkbox" id="limitAlarm">
-          <br>
-
-          <span id="alarmLimit">
-            <label class="i18n" id="audioNotificationLength"></label>
-            <input class="number" type="number" min="1" id="alarmLength">
-            <br>
-          </span>
-
-    <input class="i18n button" type="button" id="testAudioNotification">
-    <br>
-
-    </span>
-
-    <br>
-    <strong class="i18n" id="otherNotificationSettings"></strong>
-    <br>
-
-    <label class="i18n" id="minutesBetweenStreamCheck"></label>
-    <input class="number" type="number" min="1" id="minutesBetweenCheck">
-    <br>
-
-    </span>
-
-    <br>
-    <strong class="i18n" id="browsingSettings"></strong>
-    <br>
-
-    <label class="i18n" id="browsingLanguageCode"></label>
-    <input class="text" type="text" id="languageCodes">
-    <br>
-
-    <label class="i18n" id="browsingNumberOfResults"></label>
-    <input class="number" type="number" min="10" max="100" id="resultLimit">
+    <div class="follow-list" id="localFollowsList"></div>
 </form>
 
 <script src="../options.js"></script>
-</body>
 
+</body>
 </html>
