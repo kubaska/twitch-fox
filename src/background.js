@@ -198,20 +198,21 @@ const Alarm = {
         audio.src = 'assets/alarm.ogg';
     },
     play: () => {
-        // if (! alarmOn) return;
+        const volumePercent = _storage.get('notificationVolume');
+
+        if (! volumePercent) return;
 
         audio.pause();
         audio.load();
-        audio.volume = _storage.get('notificationVolume') / 100;
-        audio.play()
-            .catch(() => {});
+        audio.volume = volumePercent / 100;
+        audio.play().catch(() => {});
     },
     end: () => {
         audio.pause();
     },
 };
 
-const playAlarm = (override) => {
+const playAlarm = () => {
     Alarm.play();
 };
 
@@ -286,16 +287,6 @@ const desktopNotification = (stream) => {
 
     lastURL = stream.channel.url;
     lastName = stream.channel.name;
-};
-
-const notify = (stream) => {
-    // Regular followed channel
-    if (_storage.get('desktopNotifications')) {
-        desktopNotification(stream);
-    }
-    if (_storage.get('audioNotifications')) {
-        Alarm.play();
-    }
 };
 
 const initFollows = () => {
@@ -535,11 +526,13 @@ const fetchFollowedStreams = () => {
         const diff = differenceBy(total, userFollowedStreams, '_id');
 
         if (! isEmpty(diff)) {
-            // play alarm
-            Alarm.play();
+            // display a notification if we have new stream
+            if (_storage.get('desktopNotifications')) {
+                desktopNotification(stream);
+            }
 
-            // and display a notification if we have new stream
-            notify(diff[0]);
+            // and play alarm
+            Alarm.play();
         }
 
         userFollowedStreams = total;

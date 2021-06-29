@@ -8,23 +8,18 @@ const defaultState = {
     localFollows: [],
     version: _VERSION,
 
-    // Settings
+    // global
     darkMode: false,
     tooltips: true,
-    showNewUser: false,
-    showWhatsNew: false,
-    showLogos: true,
+
+    // notifications
+    desktopNotifications: true,
+    notificationVolume: 20,
     openTwitchPage: false,
     openPopout: false,
     openChat: false,
 
-    desktopNotifications: true,
-    audioNotifications: false,
-
-    alarmVolume: 20,
-
     minutesBetweenCheck: 1,
-    resultLimit: 12,
     languageCodes: '',
 };
 
