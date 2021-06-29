@@ -14,9 +14,6 @@ import LazyLoad from "vanilla-lazyload";
 
 const bp = browser.extension.getBackgroundPage();
 
-const {
-    version,
-} = browser.runtime.getManifest();
 const settings = document.getElementById('settings');
 const back = document.getElementById('back');
 const forward = document.getElementById('forward');
@@ -29,12 +26,6 @@ const avatar = document.getElementById('avatar');
 const login = document.getElementById('login');
 const loginText = document.getElementById('loginText');
 const contentArea = document.getElementById('contentArea');
-const aboutPage = document.getElementById('aboutPage');
-const aboutWhatsNewButton = document.getElementById('aboutWhatsNewButton');
-const aboutTellMoreButton = document.getElementById('aboutTellMoreButton');
-const addonPage = document.getElementById('addonPage');
-const githubPage = document.getElementById('githubPage');
-const steamPage = document.getElementById('steamPage');
 const screenLock = document.getElementById('screenLock');
 const lazyload = new LazyLoad({
     container: contentArea
@@ -46,8 +37,6 @@ let newEnlarged;
 let oldEnlarged;
 
 let mode;
-let showNewUser;
-let showWhatsNew;
 
 const delimitNumber = (num = 0) => num.toString().replace(
     /\B(?=(\d{3})+(?!\d))/g,
@@ -637,9 +626,13 @@ const updateTab = (newMode) => {
     while (contentArea.hasChildNodes()) {
         contentArea.removeChild(contentArea.firstChild);
     }
+
     if (mode === 'about') {
         // Show the about page
-        contentArea.classList.add('hide');
+        // contentArea.classList.add('hide');
+        const about = document.getElementById('about-page').cloneNode(true);
+        about.id = '';
+        contentArea.appendChild(about);
         searchBar.classList.add('hide');
         // aboutPage.classList.remove('hide');
     } else {
@@ -706,20 +699,7 @@ const initialize = () => {
 
     // Get the storage data for a few popup-specific things
 
-    if (bp.getStorage('lastVersion') !== version) {
-        // New update
-        if (!version || bp.getStorage('lastVersion').split('.')[1] !==
-            version.split('.')[1]) {
-            // Significant update. Show what's new
-            setMode('about');
-            bp.setStorage('showWhatsNew', true);
-        }
-        bp.setStorage('lastVersion', version);
-    }
-
     mode = bp.getStorage('mode');
-    showNewUser = bp.getStorage('showNewUser');
-    showWhatsNew = bp.getStorage('showWhatsNew');
 
     // Login/logout
     if (bp.getAuthorizedUser()) {
@@ -778,56 +758,6 @@ const initialize = () => {
             tooltip.textContent = browser.i18n.getMessage(tooltip.id);
         }
     }
-
-    // About tab
-    // const versionSpan = document.getElementById('version');
-    // versionSpan.textContent = browser.i18n.getMessage(versionSpan.id, version);
-    // const aboutTextNewUser = document.getElementById('aboutTextNewUser');
-    // const aboutTextWhatsNew = document.getElementById('aboutTextWhatsNew');
-    // const aboutTextAbout = document.getElementById('aboutTextAbout');
-    //
-    // if (showNewUser) {
-    //     aboutTextNewUser.classList.remove('hide');
-    //     aboutTextWhatsNew.classList.add('hide');
-    //     aboutTextAbout.classList.add('hide');
-    // } else if (showWhatsNew) {
-    //     aboutTextNewUser.classList.add('hide');
-    //     aboutTextWhatsNew.classList.remove('hide');
-    //     aboutTextAbout.classList.add('hide');
-    // } else {
-    //     aboutTextNewUser.classList.add('hide');
-    //     aboutTextWhatsNew.classList.add('hide');
-    //     aboutTextAbout.classList.remove('hide');
-    // }
-    //
-    // const aboutTexts = document.getElementsByClassName('aboutText');
-    // for (let i = 0; i < aboutTexts.length; i += 1) {
-    //     const aboutText = aboutTexts[i];
-    //     aboutText.textContent = browser.i18n.getMessage(aboutText.id, version);
-    //     /* aboutText.textContent = aboutText.classList.contains("version") ?
-    //     aboutText.textContent = browser.i18n.getMessage(aboutText.id, version) :
-    //     browser.i18n.getMessage(aboutText.id); */
-    // }
-    //
-    // const aboutButtons = document.getElementsByClassName('aboutButton');
-    // for (let i = 0; i < aboutButtons.length; i += 1) {
-    //     const aboutButton = aboutButtons[i];
-    //     if (aboutButton.id === 'aboutWhatsNewButton' && !showWhatsNew) {
-    //         // Special case where we jump straight from new user screen to general
-    //         // about screen
-    //         aboutButton.textContent = browser.i18n.getMessage('aboutTellMoreButton');
-    //     } else {
-    //         aboutButton.textContent = browser.i18n.getMessage(
-    //             aboutButton.id,
-    //             version,
-    //         );
-    //     }
-    // }
-    //
-    // // let email = document.getElementById("email");
-    // const discord = document.getElementById('discord');
-    // // email.textContent = browser.i18n.getMessage(email.id, "email@site.com");
-    // discord.textContent = browser.i18n.getMessage(discord.id, 'Hunter#3581');
 
     // Select current tab
     if (document.getElementById(mode).classList.contains('noAccess')) {
@@ -943,40 +873,6 @@ login.addEventListener('click', () => {
         bp.authorize();
     }
 });
-
-// About page buttons
-// aboutWhatsNewButton.addEventListener('click', () => {
-//     showNewUser = false;
-//     bp.setStorage('showNewUser', showNewUser);
-//     initialize();
-// });
-//
-// aboutTellMoreButton.addEventListener('click', () => {
-//     showWhatsNew = false;
-//     bp.setStorage('showWhatsNew', showWhatsNew);
-//     initialize();
-// });
-//
-// addonPage.addEventListener('click', () => {
-//     const url = 'https://addons.mozilla.org/en-US/firefox/addon/twitch-fox/';
-//     browser.tabs.create({
-//         url,
-//     });
-// });
-//
-// githubPage.addEventListener('click', () => {
-//     const url = 'https://github.com/Hunter5000/twitch-fox';
-//     browser.tabs.create({
-//         url,
-//     });
-// });
-//
-// steamPage.addEventListener('click', () => {
-//     const url = 'http://steamcommunity.com/id/hunter7500/';
-//     browser.tabs.create({
-//         url,
-//     });
-// });
 
 screenLock.addEventListener('click', () => {
     screenLock.classList.add('hidden');
