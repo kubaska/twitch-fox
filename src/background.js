@@ -528,7 +528,7 @@ const fetchFollowedStreams = () => {
         if (! isEmpty(diff)) {
             // display a notification if we have new stream
             if (_storage.get('desktopNotifications')) {
-                desktopNotification(stream);
+                desktopNotification(diff[0]);
             }
 
             // and play alarm
