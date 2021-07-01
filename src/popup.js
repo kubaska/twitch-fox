@@ -104,7 +104,7 @@ const filterContent = (noScroll) => {
     const results = bp.getResults();
     const index = bp.getIndex();
 
-    const tags = document.getElementsByClassName('tag');
+    const tags = document.querySelectorAll('.contentArea .tag');
     let hidden = 0;
     for (let i = 0; i < tags.length; i += 1) {
         if (tags[i].textContent.toLowerCase().search(filter) > -1) {
@@ -114,14 +114,17 @@ const filterContent = (noScroll) => {
             hidden += 1;
         }
     }
+
     if (!filter && !noScroll) {
         contentArea.scrollTop = results[index].scroll;
     }
+
     let noResults = document.getElementById('noResults');
     if (tags.length - hidden === 0) {
         if (noResults) {
             noResults.classList.remove('hide');
-        } else {
+        }
+        else {
             noResults = document.createElement('div');
             noResults.id = 'noResults';
             noResults.classList.add('noResults');
@@ -136,7 +139,8 @@ const filterContent = (noScroll) => {
             }
             contentArea.append(noResults);
         }
-    } else if (noResults) {
+    }
+    else if (noResults) {
         noResults.classList.add('hide');
     }
 };
