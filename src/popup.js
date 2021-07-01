@@ -48,7 +48,7 @@ const setMode = (newMode) => {
       Set the mode in both the script and the storage
     */
     mode = newMode;
-    bp.setStorage('mode', newMode);
+    bp.setMode(newMode);
 };
 
 const addTooltip = (parent, noDisable) => {
@@ -609,6 +609,7 @@ const updateTab = (newMode) => {
     */
 
     // console.log("updateTab");
+    mode = bp.getMode();
 
     let results = bp.getResults();
     let index = bp.getIndex();
@@ -699,7 +700,7 @@ const initialize = () => {
 
     // Get the storage data for a few popup-specific things
 
-    mode = bp.getStorage('mode');
+    mode = bp.getMode();
 
     // Login/logout
     if (bp.getAuthorizedUser()) {

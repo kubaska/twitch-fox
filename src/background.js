@@ -18,6 +18,7 @@ let lastURL = '';
 let lastName = '';
 let results;
 let resultsIndex = 0;
+let popupMode = 'streams'; // default mode is streams
 
 const accept = 'application/vnd.twitchtv.v5+json';
 const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
@@ -56,6 +57,7 @@ const getUserFollowIDs = () => userFollowIDs;
 const getUserFollowedStreams = () => userFollowedStreams;
 const getResults = () => results;
 const getIndex = () => resultsIndex;
+const getMode = () => popupMode;
 
 const defaultContent = () => [];
 
@@ -77,6 +79,8 @@ const setResults = (newResults) => {
 const setIndex = (newIndex) => {
     resultsIndex = newIndex;
 };
+
+const setMode = newMode => { popupMode = newMode; }
 
 const getStorage = key => _storage.get(key);
 const setStorage = (key, value, callback) => {
@@ -655,6 +659,7 @@ window.defaultResults = defaultResults;
 window.follow = follow;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
+window.getMode = getMode;
 window.getResults = getResults;
 window.getStorage = getStorage;
 window.getUserFollowIDs = getUserFollowIDs;
@@ -668,6 +673,7 @@ window.openPopout = openPopout;
 window.openTwitchPage = openTwitchPage;
 window.playAlarm = playAlarm;
 window.setIndex = setIndex;
+window.setMode = setMode;
 window.setResults = setResults;
 window.setStorage = setStorage;
 window.twitchAPI = twitchAPI;
