@@ -846,10 +846,15 @@ searchBox.addEventListener('input', filterContent);
 refresh.addEventListener('click', () => {
     const results = bp.getResults();
     const index = bp.getIndex();
-    getApiResults(
-        results[index].endpoint,
-        JSON.parse(results[index].opts), false, true,
-    );
+
+    // for explanation of this check see below
+    // on contentArea scroll handler
+    if (results[index].endpoint) {
+        getApiResults(
+            results[index].endpoint,
+            JSON.parse(results[index].opts), false, true,
+        );
+    }
 });
 
 // Exit search button
@@ -896,7 +901,13 @@ contentArea.addEventListener('scroll', () => {
     if (contentArea.scrollHeight - contentArea.scrollTop === 564) {
         const results = bp.getResults();
         const index = bp.getIndex();
-        getApiResults(results[index].endpoint, JSON.parse(results[index].opts));
+
+        // this fires when we change popup mode and all content gets removed
+        // results is now reset to default values and endpoint is an empty string
+        // i cant do much here except adding this check...
+        if (results[index].endpoint) {
+            getApiResults(results[index].endpoint, JSON.parse(results[index].opts));
+        }
     }
 });
 
