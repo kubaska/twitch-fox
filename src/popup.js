@@ -827,6 +827,8 @@ avatar.addEventListener('click', () => {
 login.addEventListener('click', () => {
     if (bp.getAuthorizedUser()) {
         bp.deauthorize();
+        initialize();
+        updatePage(true);
     } else {
         bp.authorize();
     }
@@ -860,10 +862,9 @@ contentArea.addEventListener('scroll', () => {
 });
 
 browser.runtime.onMessage.addListener((request) => {
-    if (request.content === 'initialize' ||
-        (request.content === mode.substr(0, 8)) ||
-        (request.content === mode)) initialize();
-    else if (request.content !== 'options') updatePage(true);
+    if (request.content === 'INITIALIZE') {
+        initialize();
+    }
 });
 
 initialize();

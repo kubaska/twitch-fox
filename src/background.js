@@ -488,6 +488,8 @@ const initializeFollows = async () => {
 
     rebuildFollowCache();
 
+    browser.runtime.sendMessage({ content: 'INITIALIZE' });
+
     browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
         delayInMinutes: 0.02, // ~ 1-2 sec
         periodInMinutes: _storage.get('minutesBetweenCheck'),
