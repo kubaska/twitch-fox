@@ -515,6 +515,9 @@ addCard = (content, type) => {
         const following = bp.isFollowing(channel.name);
         card.querySelectorAll('.follow').forEach(btn => btn.style = following ? 'display:none' : '');
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
+        if (! bp.getAuthorizedUser()) {
+            card.querySelector('.followTwitch').classList.add('noAccess');
+        }
 
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
