@@ -171,15 +171,8 @@ const updatePage = (noScroll) => {
     back.classList.contains('possible') ? 'add' : 'remove']('possible');
 
     if (mode === 'followedChannels' || mode === 'followedStreams') {
-        // Refresh button becomes favorites filter
-        // refresh.classList.remove('refresh');
-        // refresh.classList.add('favorites');
-        // refresh.classList[bp.getStorage('favoritesMode') ? 'add' : 'remove']('possible');
-        refresh.firstElementChild.textContent =
-            browser.i18n.getMessage(refresh.classList.contains('possible') ? 'allFollowsTip' : 'favoritesTip');
+        refresh.classList.remove('possible');
     } else {
-        // refresh.classList.remove('favorites');
-        // refresh.classList.add('refresh');
         refresh.classList.add('possible');
         refresh.firstElementChild.textContent = browser.i18n.getMessage('refreshTip');
     }
@@ -692,27 +685,15 @@ const initialize = () => {
     }
 
     // Tooltips
-    const tooltips = document.getElementsByClassName('tooltip');
-    for (let i = 0; i < tooltips.length; i += 1) {
-        const tooltip = tooltips[i];
-        if (tooltip.id.substring(0, 8) === 'followed') {
-            if (bp.getAuthorizedUser() ||
-                (bp.getStorage('nonTwitchFollows') &&
-                    (tooltip.id === 'followedStreamsTip' || tooltip.id ===
-                        'followedChannelsTip'))) {
-                tooltip.textContent = browser.i18n.getMessage(tooltip.id);
-                tooltip.parentElement.classList.remove('noAccess');
-            } else {
-                tooltip.textContent = browser.i18n.getMessage('noAccessTip');
-                tooltip.parentElement.classList.add('noAccess');
-            }
-        } else if (tooltip.id === 'loginTip') {
+    document.querySelectorAll('.tooltip').forEach(tooltip => {
+        if (tooltip.id === 'loginTip') {
             if (bp.getAuthorizedUser()) {
                 tooltip.textContent = browser.i18n.getMessage('logoutTip');
             } else {
                 tooltip.textContent = browser.i18n.getMessage(tooltip.id);
             }
-        } else if (tooltip.id === 'avatarTip') {
+        }
+        else if (tooltip.id === 'avatarTip') {
             if (bp.getAuthorizedUser()) {
                 if (bp.getStorage('tooltips')) {
                     tooltip.textContent =
@@ -725,10 +706,11 @@ const initialize = () => {
                     tooltip.textContent = bp.getAuthorizedUser().display_name;
                 }
             }
-        } else if (tooltip.id) {
+        }
+        else if (tooltip.id) {
             tooltip.textContent = browser.i18n.getMessage(tooltip.id);
         }
-    }
+    });
 
     // Select current tab
     if (document.getElementById(mode).classList.contains('noAccess')) {
