@@ -1,13 +1,4 @@
-/*
-  Build the user interface, including streams, games, clips, videos, and their
-  followed equivalents.
-  Use the Twitch API to perform searches
-  Allow the user to authorize and deauthorize their account with Twitch
-*/
-
-// Disable if bp is non-existent
-// if (!bp) browser.browserAction.disable();
-// Just kidding this also disables it on non-private windows
+/* global browser */
 
 import utils from "./utils";
 import LazyLoad from "vanilla-lazyload";
@@ -43,45 +34,19 @@ const delimitNumber = (num = 0) => num.toString().replace(
     browser.i18n.getMessage('delimiter'),
 );
 
+/**
+ * Set the popup mode in both the script and the storage
+ *
+ * @param newMode
+ */
 const setMode = (newMode) => {
-    /*
-      Set the mode in both the script and the storage
-    */
     mode = newMode;
     bp.setMode(newMode);
 };
 
-const addTooltip = (parent, noDisable) => {
-    const tooltip = document.createElement('span');
-    tooltip.classList.add('tooltip');
-    if (noDisable) tooltip.classList.add('noDisable');
-    parent.appendChild(tooltip);
-    return tooltip;
-};
-
 let addCard;
 
-const enlarge = (contentDiv, contentBack, img) => {
-    if (oldEnlarged && oldEnlarged.id !==
-        enlargedPreview.id) {
-        screenLock.removeChild(oldEnlarged);
-    }
-    const rect = contentBack.getBoundingClientRect();
-    newEnlarged = enlargedPreview.cloneNode();
-    newEnlarged.id = 'newEnlarged';
-    contentDiv.classList.add('hidden');
-    enlargedContent = contentDiv.id;
-    enlargedPreview.style.backgroundImage =
-        `url("${img}")`;
-    enlargedPreview.style.left = `${rect.left}px`;
-    enlargedPreview.style.top = `${rect.top}px`;
-    enlargedPreview.style.transform =
-        `translate(${-rect.left}px,${131 - rect.top}px)`;
-    enlargedPreview.classList.add('enlarged');
-    screenLock.classList.remove('hidden');
-};
-
-const enlarge2 = (element) => {
+const enlarge = (element) => {
     if (oldEnlarged && oldEnlarged.id !== enlargedPreview.id) {
         screenLock.removeChild(oldEnlarged);
     }
@@ -145,11 +110,12 @@ const filterContent = (noScroll) => {
     }
 };
 
+/**
+ * Render Twitch content
+ *
+ * @param noScroll Keep scroll position in place
+ */
 const updatePage = (noScroll) => {
-    // console.log("updatePage");
-    /*
-      Create info cards from the info the Twitch API gathered
-    */
     const results = bp.getResults();
     const index = bp.getIndex();
 
@@ -273,28 +239,32 @@ const getApiResults = (endpoint, theOpts = {}, newIndex, reset) => {
             if (endpoint === 'Get Top Games') {
                 Array.prototype.push.apply(results[index].content, data.top);
                 results[index].type = 'game';
-            } else if (endpoint === 'Get Live Streams' ||
-                endpoint === 'Search Streams') {
+            }
+            else if (endpoint === 'Get Live Streams' || endpoint === 'Search Streams') {
                 Array.prototype.push.apply(results[index].content, data.streams);
                 results[index].type = 'stream';
-            } else if (endpoint === 'Search Games') {
+            }
+            else if (endpoint === 'Search Games') {
                 Array.prototype.push.apply(results[index].content, data.games);
                 results[index].type = 'game';
-            } else if (endpoint === 'Get Top Videos') {
+            }
+            else if (endpoint === 'Get Top Videos') {
                 Array.prototype.push.apply(results[index].content, data.vods);
                 results[index].type = 'video';
-            } else if (endpoint === 'Get Followed Videos' ||
-                endpoint === 'Get Channel Videos') {
+            }
+            else if (endpoint === 'Get Followed Videos' || endpoint === 'Get Channel Videos') {
                 Array.prototype.push.apply(results[index].content, data.videos);
                 results[index].type = 'video';
-            } else if (endpoint === 'Get Followed Clips' ||
-                endpoint === 'Get Top Clips') {
+            }
+            else if (endpoint === 'Get Followed Clips' || endpoint === 'Get Top Clips') {
                 Array.prototype.push.apply(results[index].content, data.clips);
                 results[index].type = 'clip';
-            } else if (endpoint === 'Search Channels') {
+            }
+            else if (endpoint === 'Search Channels') {
                 Array.prototype.push.apply(results[index].content, data.channels);
                 results[index].type = 'channel';
             }
+
             results[index].total = data._total;
             results[index].endpoint = endpoint;
             results[index].opts = JSON.stringify(opts);
@@ -563,7 +533,7 @@ const cardClickHandler = (e) => {
             break;
         case 'openStreamPopout':
             browser.windows.create({
-                url: 'http://player.twitch.tv/?parent=localhost&channel='+meta.name,
+                url: 'https://player.twitch.tv/?parent=localhost&channel='+meta.name,
                 height: 500,
                 width: 850,
                 type: 'popup',
@@ -571,14 +541,14 @@ const cardClickHandler = (e) => {
             break;
         case 'openChat':
             browser.windows.create({
-                url: `http:/twitch.tv/${meta.name}/chat?popout`,
+                url: `https:/twitch.tv/${meta.name}/chat?popout`,
                 height: 600,
                 width: 340,
                 type: 'popup',
             });
             break;
         case 'enlarge':
-            enlarge2(topElem);
+            enlarge(topElem);
             break;
         case 'follow':
             bp.follow(meta.streamerId, meta.name, false);
@@ -637,15 +607,12 @@ const updateTab = (newMode) => {
 
     if (mode === 'about') {
         // Show the about page
-        // contentArea.classList.add('hide');
         const about = document.getElementById('about-page').cloneNode(true);
         about.id = '';
         contentArea.appendChild(about);
         searchBar.classList.add('hide');
-        // aboutPage.classList.remove('hide');
     } else {
         // Show the content area
-        // aboutPage.classList.add('hide');
         contentArea.classList.remove('hide');
         searchBar.classList.remove('hide');
 
@@ -702,10 +669,6 @@ const initialize = () => {
       content (streams, games, etc.) is properly diplayed.
       Includes internationalization, proper tooltips, etc.
     */
-
-    // console.log("initalize()");
-
-    // Get the storage data for a few popup-specific things
 
     mode = bp.getMode();
 

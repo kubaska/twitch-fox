@@ -9,18 +9,14 @@ import {chunk, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, tak
 let authorizedUser; // An object containing the data of the authorized user
 
 let userFollows = []; // Array with followed channels of authorized user
-let userFollowIDs = []; // todo remove
-
 let userFollowsCache = new Set();
-
 let userFollowedStreams = []; // Array with followed stream objects
-let lastURL = '';
-let lastName = '';
+
+let lastNotificationStreamName = '';
 let results;
 let resultsIndex = 0;
 let popupMode = 'streams'; // default mode is streams
 
-const accept = 'application/vnd.twitchtv.v5+json';
 const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
 const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
 const scope = 'user_follows_edit user_read';
@@ -35,7 +31,7 @@ const BROWSER_ALARM_TYPE = {
 const _axios = axios.create({
     baseURL: 'https://api.twitch.tv/kraken/',
     headers: {
-        Accept: accept,
+        Accept: 'application/vnd.twitchtv.v5+json',
         'Client-ID': clientID
     }
 });
@@ -53,7 +49,6 @@ _axios.interceptors.request.use(function (request) {
 
 const getAuthorizedUser = () => authorizedUser;
 const getUserFollows = () => userFollows;
-const getUserFollowIDs = () => userFollowIDs;
 const getUserFollowedStreams = () => userFollowedStreams;
 const getResults = () => results;
 const getIndex = () => resultsIndex;
@@ -220,61 +215,7 @@ const playAlarm = () => {
     Alarm.play();
 };
 
-const getFollow = (_id, callback) => {
-    /*
-      Get a NON-user's followed channel
-    */
-    twitchAPI('Get Channel by ID', {
-        _id,
-    }, (data) => {
-        if (!data) {
-            if (callback) callback();
-            return;
-        }
-        const index = userFollowIDs.indexOf(String(_id));
-        if (index > -1) {
-            userFollows.splice(index, 1);
-            userFollowIDs.splice(index, 1);
-        }
-        userFollowIDs.push(data._id);
-        userFollows.push(data);
-        if (callback) callback();
-        else {
-            browser.runtime.sendMessage({
-                content: 'followed',
-            });
-        }
-    });
-};
-
-const getFollows = () => {
-    /*
-      Get all of a NON-user's followed channels
-      Note: This function is a *large* strain on the Twitch API
-    */
-    if (!getStorage('nonTwitchFollows')) return;
-    userFollowIDs = [];
-    userFollows = [];
-    userFollowedStreams = [];
-    const follows = getStorage('follows');
-    if (!follows.length) return;
-    let responded = 0;
-    const callback = () => {
-        responded += 1;
-        if (responded === follows.length) {
-            browser.runtime.sendMessage({
-                content: 'followed',
-            });
-            // startFollowAlarm();
-        }
-    };
-    for (let i = 0; i < follows.length; i += 1) {
-        getFollow(follows[i], callback);
-    }
-};
-
 const desktopNotification = (stream) => {
-    if (lastName) return;
     const title = browser.i18n.getMessage('streaming', [
         stream.channel.display_name, stream.channel.game,
     ]);
@@ -289,20 +230,7 @@ const desktopNotification = (stream) => {
         message: stream.channel.status,
     });
 
-    lastURL = stream.channel.url;
-    lastName = stream.channel.name;
-};
-
-const initFollows = () => {
-    if (getStorage('nonTwitchFollows')) getFollows();
-    else {
-        userFollowIDs = [];
-        userFollows = [];
-        userFollowedStreams = [];
-        browser.runtime.sendMessage({
-            content: 'followed',
-        });
-    }
+    lastNotificationStreamName = stream.channel.name;
 };
 
 /**
@@ -572,15 +500,15 @@ _storage.load().then(() => {
     initializeFollows();
 })
 
-const openTwitchPage = (url) => {
+const openTwitchPage = (name) => {
     browser.tabs.create({
-        url,
+        url: 'https://twitch.tv/'+name,
     });
 };
 
 const openPopout = (name) => {
     browser.windows.create({
-        url: `http://player.twitch.tv/?channel=${name}`,
+        url: `https://player.twitch.tv/?parent=localhost&channel=${name}`,
         height: 500,
         width: 850,
         type: 'popup',
@@ -589,7 +517,7 @@ const openPopout = (name) => {
 
 const openChat = (name) => {
     browser.windows.create({
-        url: `http:/twitch.tv/${name}/chat?popout`,
+        url: `https:/twitch.tv/${name}/chat?popout`,
         height: 600,
         width: 340,
         type: 'popup',
@@ -628,16 +556,17 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
 });
 
 browser.notifications.onClicked.addListener(() => {
-    if (getStorage('openTwitchPage')) openTwitchPage(lastURL);
-    if (getStorage('openPopout')) openPopout(lastName);
-    if (getStorage('openChat')) openChat(lastName);
-    lastName = '';
-    lastURL = '';
+    if (! lastNotificationStreamName) return;
+
+    if (getStorage('openTwitchPage')) openTwitchPage(lastNotificationStreamName);
+    if (getStorage('openPopout')) openPopout(lastNotificationStreamName);
+    if (getStorage('openChat')) openChat(lastNotificationStreamName);
+
+    lastNotificationStreamName = '';
 });
 
-browser.notifications.onClosed.addListener((notificationId, byUser) => {
-    lastName = '';
-    lastURL = '';
+browser.notifications.onClosed.addListener(notificationId => {
+    lastNotificationStreamName = '';
 });
 
 browser.alarms.onAlarm.addListener(alarmInfo => {
@@ -662,15 +591,10 @@ window.getIndex = getIndex;
 window.getMode = getMode;
 window.getResults = getResults;
 window.getStorage = getStorage;
-window.getUserFollowIDs = getUserFollowIDs;
 window.getUserFollows = getUserFollows;
 window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
-window.initFollows = initFollows;
 window.isFollowing = isFollowing;
-window.openChat = openChat;
-window.openPopout = openPopout;
-window.openTwitchPage = openTwitchPage;
 window.playAlarm = playAlarm;
 window.setIndex = setIndex;
 window.setMode = setMode;
