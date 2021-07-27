@@ -874,7 +874,7 @@ html, body {
 }
 
 .contentButton.bottom {
-    display: inline-block;
+    /*display: inline-block;*/
     float: left;
 }
 

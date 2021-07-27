@@ -318,6 +318,8 @@ addCard = (content, type) => {
     else if (type === 'stream') {
         let card = document.getElementById('stub-stream').cloneNode(true);
 
+        card.dataset['type'] = type;
+
         card.id = `STREAM!${content._id}`;
         card.dataset['id'] = content._id;
         card.dataset['streamerId'] = content.channel._id;
@@ -372,11 +374,16 @@ addCard = (content, type) => {
     }
     else if (type === 'video' || type === 'clip') {
         let card = document.getElementById('stub-stream').cloneNode(true);
-        const id = type === 'video' ? content._id : content.tracking_id;
+        const id = type === 'video'
+            ? content._id.replace('v', '') // ids come with v on start eg. v12345678
+            : content.tracking_id;
+        const urlId = type === 'video' ? id : content.slug;
         const channel = type === 'video' ? content.channel : content.broadcaster;
 
+        card.dataset['type'] = type;
+
         card.id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
-        card.dataset['id'] = id;
+        card.dataset['id'] = urlId;
         // for some reason, Twitch returns id prop with an underscore
         // for videos and without for clips...
         card.dataset['streamerId'] = type === 'video' ? channel._id : channel.id;
@@ -508,6 +515,8 @@ const cardClickHandler = (e) => {
     const topElem = UI.getParentElement(e.target, 'content');
 
     const meta = {
+        type: topElem.dataset['type'],
+        id: topElem.dataset['id'],
         streamerId: parseInt(topElem.dataset['streamerId']),
         name: topElem.dataset['name'],
         game: topElem.dataset['game']
@@ -515,9 +524,21 @@ const cardClickHandler = (e) => {
 
     switch (trigger) {
         case 'openStream':
-            browser.tabs.create({
-                url: 'https://twitch.tv/'+meta.name,
-            });
+            if (meta.type === 'video') {
+                browser.tabs.create({
+                    url: 'https://twitch.tv/videos/'+meta.id,
+                });
+            }
+            else if (meta.type === 'clip') {
+                browser.tabs.create({
+                    url: 'https://clips.twitch.tv/'+meta.id,
+                });
+            }
+            else {
+                browser.tabs.create({
+                    url: 'https://twitch.tv/'+meta.name,
+                });
+            }
             break;
         case 'openGame':
             browser.tabs.create({
