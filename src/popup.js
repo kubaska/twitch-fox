@@ -218,8 +218,8 @@ const getApiResults = (endpoint, theOpts = {}, newIndex, reset) => {
         delete opts.cursor;
     }
 
-    if (!Object.prototype.hasOwnProperty.call(opts, 'limit')) {
-        opts.limit = bp.getStorage('resultLimit');
+    if (! Object.prototype.hasOwnProperty.call(opts, 'limit')) {
+        opts.limit = 100;
     }
 
     if (bp.getStorage('languageCodes')) {
