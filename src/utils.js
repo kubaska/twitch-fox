@@ -9,6 +9,6 @@ export default {
     },
     secondsToHHMMSS: (seconds) => {
         const hr = Math.floor(seconds/3600);
-        return (hr?`${hr}:`:'')+('0'+Math.floor(seconds/60)%60).slice(-2)+':'+('0'+(seconds%60)).slice(-2)
+        return (hr?`${hr}:`:'')+('0'+Math.floor(seconds/60)%60).slice(-2)+':'+('0'+(seconds%60)).slice(-2);
     }
 }

@@ -6,6 +6,7 @@
     "prepack": "web-ext build --overwrite-dest",
     "lint": "web-ext lint",
     "start": "webpack -w",
+    "prod": "webpack --mode=production --devtool=false",
     "make": "webpack --mode=production --devtool=false && web-ext build --overwrite-dest"
   },
   "author": "Hunter5000, kubaska",

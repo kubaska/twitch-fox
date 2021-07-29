@@ -153,8 +153,6 @@ const twitchAPI = (endpoint, theOpts, callback) => {
 
     return _axios.request({ url, method, params: opts })
         .then(response => {
-            console.log(endpoint, response);
-
             if (callback) {
                 if (response.status === 200) {
                     callback(response.data);
@@ -286,7 +284,6 @@ const follow = async (id, name, forceLocal) => {
             userFollows.push(...response);
             userFollowsCache.add(response.channel.name);
         }
-        console.log('follow online', response);
 
         return successful;
     }
@@ -300,8 +297,6 @@ const follow = async (id, name, forceLocal) => {
             console.log(`!!! Follow [${id}, ${name}] already exists, skipping`);
             return true;
         }
-
-        console.log('follow local');
 
         allLocalFollows.push({ id, name });
         userFollowsCache.add(name);
@@ -318,7 +313,6 @@ const unfollow = (id, name) => {
         const allLocalFollows = _storage.get('localFollows');
 
         pullAllBy(allLocalFollows, [{ id }], 'id');
-        console.log('unfollow local');
 
         _storage.set('localFollows', allLocalFollows);
     }
@@ -332,7 +326,6 @@ const unfollow = (id, name) => {
 
         // remove from userFollows
         pullAllBy(userFollows, [{ id }], 'id');
-        console.log('unfollow online');
     }
 
     if (name) {
@@ -349,8 +342,6 @@ const rebuildFollowCache = () => {
     userFollows.forEach(follow => {
         userFollowsCache.add(follow.channel.name);
     });
-
-    console.log('followCache', userFollowsCache);
 };
 
 /**
@@ -536,8 +527,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
     if (changeInfo.url) {
         const match = changeInfo.url.match(/access_token=(\w+)/);
         const token = match ? match[1] : null;
-
-        console.log('parsing token', changeInfo.url, token);
 
         if (! token) {
             // here should be error handling if Twitch decides
