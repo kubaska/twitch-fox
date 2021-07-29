@@ -2,14 +2,14 @@
   "manifest_version": 2,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "4.2.3",
+  "version": "4.3.0",
   "default_locale": "en",
 
   "incognito": "not_allowed",
 
   "applications": {
     "gecko": {
-      "id": "jid1-PmBVeuWLfYr73g@jetpack"
+      "id": "{d4a70149-47b3-42dd-8849-19ac63a7047c}"
     }
   },
 
