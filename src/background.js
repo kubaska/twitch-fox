@@ -2,7 +2,8 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {chunk, clone, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {endpointList, endpoints, tabs} from "./contants";
 
 // Variable declarations
 
@@ -15,7 +16,7 @@ let userFollowedStreams = []; // Array with followed stream objects
 let lastNotificationStreamName = '';
 let results;
 let resultsIndex = 0;
-let popupMode = 'streams'; // default mode is streams
+let popupMode = tabs.STREAMS; // default mode is streams
 
 const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
 const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
@@ -83,75 +84,47 @@ const setStorage = (key, value, callback) => {
     if (callback) callback();
 };
 
-const twitchAPI = (endpoint, theOpts, callback) => {
-    /*
-      "endpoint" expects a string describing the endpoint
-      "opts" expects an object that may look like the example below:
-      {
+/**
+ * Calls Twitch API
+ *
+ * @param endpoint  expects a string describing the endpoint
+ * @param theOpts   expects an object that may look like the example below:
+ * {
         channel: 121059319,
         game: 'Overwatch',
         language: 'en',
         stream_type: 'live',
         limit: '25',
         offset: '0'
-      }
-      "callback" expects the function to be called after the request is finished
-    */
-    // console.log(endpoint + JSON.stringify(opts));
+    }
+ * @param callback  expects the function to be called after the request is finished
+ * @return {Promise<AxiosResponse<any>>|*[]|*}
+ */
+const twitchAPI = (endpoint, theOpts, callback) => {
+    const opts = clone(theOpts);
+    console.log(endpoint, theOpts);
 
-    let method = 'GET';
-
-    let url;
-    const opts = theOpts;
-    if (endpoint === 'Get User') {
-        url = 'user';
-    } else if (endpoint === 'Get Top Games') {
-        url = 'games/top';
-    } else if (endpoint === 'Get Live Streams') {
-        url = 'streams';
-    } else if (endpoint === 'Get Top Videos') {
-        url = 'videos/top';
-    } else if (endpoint === 'Get Top Clips') {
-        url = 'clips/top';
-    } else if (endpoint === 'Get Followed Streams') {
-        url = 'streams/followed';
-    } else if (endpoint === 'Get Followed Videos') {
-        url = 'videos/followed';
-    } else if (endpoint === 'Get Followed Clips') {
-        url = 'clips/followed';
-    } else if (endpoint === 'Get User Follows') {
-        url = `users/${authorizedUser._id}/follows/channels`;
-        delete opts._id;
-    } else if (endpoint === 'Get Channel Videos') {
-        url = `channels/${opts._id}/videos`;
-        delete opts._id;
-    } else if (endpoint === 'Search Channels') {
-        url = 'search/channels';
-    } else if (endpoint === 'Search Games') {
-        url = 'search/games';
-    } else if (endpoint === 'Search Streams') {
-        url = 'search/streams';
-    } else if (endpoint === 'Get Channel by ID') {
-        url = `channels/${opts._id}`;
-        delete opts._id;
-    } else if (endpoint === 'Follow Channel') {
-        url = `users/${authorizedUser._id}/follows/channels/${opts._id}`;
-        delete opts._id;
-        method = 'PUT';
-    } else if (endpoint === 'Unfollow Channel') {
-        url = `users/${authorizedUser._id}/follows/channels/${opts._id}`;
-        delete opts._id;
-        method = 'DELETE';
+    if (! endpointList[endpoint]) {
+        console.log('Invalid endpoint: ', endpoint);
+        return;
     }
 
-    if (! _storage.get('token') && (url.includes('follow') || url.includes('user'))) {
-        // return immediately if we're making request
-        // to endpoint that needs authorization
+    const { url, method, requireAuth } = endpointList[endpoint];
+
+    if (requireAuth && ! _storage.get('token')) {
+        console.log('Endpoint requires auth but we are not logged in');
         if (callback) return callback([]);
         return [];
     }
 
-    return _axios.request({ url, method, params: opts })
+    // Check if url function takes arguments and feed it ID if it does
+    const _url = url.length
+        ? url(opts._id)
+        : url();
+
+    delete opts._id;
+
+    return _axios.request({ url: _url, method, params: opts })
         .then(response => {
             if (callback) {
                 if (response.status === 200) {
@@ -350,7 +323,7 @@ const rebuildFollowCache = () => {
  * @return {Promise<{}>}
  */
 const fetchCurrentUser = async () => {
-    const user = await twitchAPI('Get User', {});
+    const user = await twitchAPI(endpoints.GET_USER, {});
 
     authorizedUser = user;
 
@@ -398,7 +371,7 @@ const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
  */
 const fetchUserFollows = async () => {
     userFollows = await fetchPaginatedResource(
-        'Get User Follows', 'follows', 100
+        endpoints.GET_USER_FOLLOWS, 'follows', 100
     );
 }
 
@@ -411,7 +384,7 @@ const fetchTwitchFollowedStreams = async () => {
     if (! authorizedUser) return Promise.resolve([]);
 
     return await fetchPaginatedResource(
-        'Get Followed Streams', 'streams', 100
+        endpoints.GET_FOLLOWED_STREAMS, 'streams', 100
     )
 }
 
@@ -426,7 +399,7 @@ const fetchLocalFollowedStreams = async () => {
 
     for (const chunk of follows) {
         const res = await twitchAPI(
-            'Get Live Streams',
+            endpoints.GET_STREAMS,
             { limit: 100, channel: map(chunk, 'id').join(',') }
         )
         result.push(...res.streams);

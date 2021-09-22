@@ -2,6 +2,7 @@
 
 import utils from "./utils";
 import LazyLoad from "vanilla-lazyload";
+import {tabs} from "./contants";
 
 const bp = browser.extension.getBackgroundPage();
 
@@ -95,9 +96,9 @@ const filterContent = (noScroll) => {
             noResults.classList.add('noResults');
             if (results[index].content.length) {
                 noResults.textContent = browser.i18n.getMessage('noResults');
-            } else if (index === 0 && mode === 'channels') {
+            } else if (index === 0 && mode === tabs.SEARCH) {
                 noResults.textContent = browser.i18n.getMessage('channelsTabReady');
-            } else if (mode.substr(0, 8) === 'followed') {
+            } else if (tabs.isFollowedTab(mode)) {
                 noResults.textContent = browser.i18n.getMessage('noFollowedResults');
             } else {
                 noResults.textContent = browser.i18n.getMessage('noSearchResults');
@@ -149,8 +150,8 @@ const updatePage = (noScroll) => {
         search.classList.remove('possible');
         back.classList[index > 0 ? 'add' : 'remove']('possible');
     } else {
-        if (results[index].total || mode === 'channels') {
-            searchBox.placeholder = mode === 'channels' ?
+        if (results[index].total || mode === tabs.SEARCH) {
+            searchBox.placeholder = mode === tabs.SEARCH ?
                 browser.i18n.getMessage('searchTwitch') :
                 browser.i18n.getMessage('searchOrFilterOf', [
                     delimitNumber(contentArea.children.length),
@@ -170,7 +171,7 @@ const updatePage = (noScroll) => {
     exitSearch.classList[forward.classList.contains('possible') ||
     back.classList.contains('possible') ? 'add' : 'remove']('possible');
 
-    if (mode === 'followedChannels' || mode === 'followedStreams') {
+    if (mode === tabs.FOLLOWED_CHANNELS || mode === tabs.FOLLOWED_STREAMS) {
         refresh.classList.remove('possible');
     } else {
         refresh.classList.add('possible');
@@ -619,7 +620,7 @@ const updateTab = (newMode) => {
         contentArea.removeChild(contentArea.firstChild);
     }
 
-    if (mode === 'about') {
+    if (mode === tabs.ABOUT) {
         // Show the about page
         const about = document.getElementById('about-page').cloneNode(true);
         about.id = '';
@@ -632,38 +633,38 @@ const updateTab = (newMode) => {
 
         if (index === 0) {
             // Tell the Twitch API to find us the information we want
-            if (mode === 'games') {
+            if (mode === tabs.GAMES) {
                 if (results[index].content.length < 1) getApiResults('Get Top Games');
                 else updatePage();
-            } else if (mode === 'streams') {
+            } else if (mode === tabs.STREAMS) {
                 if (results[index].content.length < 1) {
                     getApiResults('Get Live Streams');
                 } else updatePage();
-            } else if (mode === 'videos') {
+            } else if (mode === tabs.VIDEOS) {
                 if (results[index].content.length < 1) {
                     getApiResults('Get Top Videos');
                 } else updatePage();
-            } else if (mode === 'clips') {
+            } else if (mode === tabs.CLIPS) {
                 if (results[index].content.length < 1) getApiResults('Get Top Clips');
                 else updatePage();
-            } else if (mode === 'channels') {
+            } else if (mode === tabs.SEARCH) {
                 updatePage();
-            } else if (mode === 'followedStreams') {
+            } else if (mode === tabs.FOLLOWED_STREAMS) {
                 index = 0;
                 results = bp.defaultResults();
                 results[index].content = bp.getUserFollowedStreams();
                 results[index].type = 'stream';
                 bp.setResults(results);
                 updatePage();
-            } else if (mode === 'followedVideos') {
+            } else if (mode === tabs.FOLLOWED_VIDEOS) {
                 if (results[index].content.length < 1) {
                     getApiResults('Get Followed Videos');
                 } else updatePage();
-            } else if (mode === 'followedClips') {
+            } else if (mode === tabs.FOLLOWED_CLIPS) {
                 if (results[index].content.length < 1) {
                     getApiResults('Get Followed Clips');
                 } else updatePage();
-            } else if (mode === 'followedChannels') {
+            } else if (mode === tabs.FOLLOWED_CHANNELS) {
                 index = 0;
                 results = bp.defaultResults();
                 results[index].content = bp.getUserFollows();
@@ -738,7 +739,7 @@ const initialize = () => {
         // You don't want people to remain on a tab after it becomes unusable
         document.getElementById(mode).classList.remove('selected');
         bp.setResults(bp.defaultResults());
-        setMode('games');
+        setMode(tabs.STREAMS);
     }
     document.getElementById(mode).classList.add('selected');
 
@@ -785,15 +786,15 @@ forward.addEventListener('click', () => {
 const makeSearch = () => {
     // Perform search using getApiResults
     if (!search.classList.contains('possible') || !searchBox.value) return;
-    if (mode === 'games') {
+    if (mode === tabs.GAMES) {
         getApiResults('Search Games', {
             query: searchBox.value,
         }, true);
-    } else if (mode === 'streams') {
+    } else if (mode === tabs.STREAMS) {
         getApiResults('Search Streams', {
             query: searchBox.value,
         }, true);
-    } else if (mode === 'channels') {
+    } else if (mode === tabs.SEARCH) {
         getApiResults('Search Channels', {
             query: searchBox.value,
         }, true);
