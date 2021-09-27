@@ -85,6 +85,70 @@ const setStorage = (key, value, callback) => {
 };
 
 /**
+ * Call Twitch API from popup
+ *
+ * @param endpoint  API endpoint
+ * @param theOpts   Endpoint options
+ * @param newIndex  Should results create new history entry?
+ * @param reset     Resets current history entry
+ * @return {Promise<T>}
+ */
+const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
+    let offset = results[resultsIndex].content.length;
+    const opts = clone(theOpts);
+
+    if (newIndex) {
+        resultsIndex += 1;
+        // Remove elements after the new one
+        results.splice(
+            resultsIndex, results.length - resultsIndex,
+            defaultResults()[0],
+        );
+        offset = 0;
+    }
+
+    if (reset) {
+        offset = 0;
+        results[resultsIndex].content = defaultContent();
+        delete opts.limit;
+        delete opts.language;
+        delete opts.cursor;
+    }
+
+    if (! opts.limit) {
+        opts.limit = 100;
+    }
+
+    // todo also check endpointList if language is allowed in next ver
+    if (getStorage('languageCodes')) {
+        opts.language = getStorage('languageCodes');
+    }
+
+    if (endpoint !== endpoints.GET_TOP_CLIPS && endpoint !== endpoints.GET_FOLLOWED_CLIPS) {
+        opts.offset = offset;
+    } else {
+        opts.cursor = results[resultsIndex].cursor;
+    }
+
+    return twitchAPI(endpoint, opts)
+        .then(response => {
+            results[resultsIndex].content.push(...response[endpointList[endpoint].responseKey]);
+            results[resultsIndex].type = endpointList[endpoint].contentType;
+
+            results[resultsIndex].total = response._total;
+            results[resultsIndex].endpoint = endpoint;
+            results[resultsIndex].opts = opts;
+            results[resultsIndex].cursor = response._cursor;
+
+            return response;
+        })
+        .catch(error => {
+            console.log(error);
+            return error;
+        });
+};
+
+/**
  * Calls Twitch API
  *
  * @param endpoint  expects a string describing the endpoint
@@ -137,6 +201,11 @@ const twitchAPI = (endpoint, theOpts, callback) => {
             }
         });
 };
+
+const saveTabState = (searchQuery, scrollPos) => {
+    results[resultsIndex].filter = searchQuery;
+    results[resultsIndex].scroll = scrollPos;
+}
 
 const updateBadge = () => {
     const streamNo = userFollowedStreams.length;
@@ -546,6 +615,7 @@ browser.browserAction.setBadgeBackgroundColor({
 // Exports
 
 window.authorize = authorize;
+window.callApi = callApi;
 window.deauthorize = deauthorize;
 window.defaultContent = defaultContent;
 window.defaultResults = defaultResults;
@@ -560,6 +630,7 @@ window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
 window.isFollowing = isFollowing;
 window.playAlarm = playAlarm;
+window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResults = setResults;

@@ -42,70 +42,81 @@ export const endpointList = {
         url: () => 'games/top',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'top'
+        responseKey: 'top',
+        contentType: 'game'
     },
     [endpoints.GET_TOP_VIDEOS]: {
         url: () => 'videos/top',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'vods'
+        responseKey: 'vods',
+        contentType: 'video'
     },
     [endpoints.GET_TOP_CLIPS]: {
         url: () => 'clips/top',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'clips'
+        responseKey: 'clips',
+        contentType: 'clip'
     },
     [endpoints.GET_STREAMS]: {
         url: () => 'streams',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'stream'
+        responseKey: 'streams',
+        contentType: 'stream'
     },
 
     [endpoints.GET_FOLLOWED_STREAMS]: {
         url: () => 'streams/followed',
         method: 'GET',
         requireAuth: true,
-        responseKey: 'streams'
+        responseKey: 'streams',
+        contentType: 'stream'
     },
     [endpoints.GET_FOLLOWED_VIDEOS]: {
         url: () => 'videos/followed',
         method: 'GET',
         requireAuth: true,
-        responseKey: 'videos'
+        responseKey: 'videos',
+        contentType: 'video'
     },
     [endpoints.GET_FOLLOWED_CLIPS]: {
         url: () => 'clips/followed',
         method: 'GET',
         requireAuth: true,
-        responseKey: 'clips'
+        responseKey: 'clips',
+        contentType: 'clip'
     },
 
     [endpoints.GET_CHANNEL_VIDEOS]: {
         url: (id) => `channels/${id}/videos`,
         method: 'GET',
         requireAuth: false,
-        responseKey: 'videos'
+        responseKey: 'videos',
+        contentType: 'video'
     },
 
     [endpoints.SEARCH_GAMES]: {
         url: () => 'search/games',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'games'
+        responseKey: 'games',
+        contentType: 'game'
     },
     [endpoints.SEARCH_CHANNELS]: {
         url: () => 'search/channels',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'channels'
+        responseKey: 'channels',
+        contentType: 'channel'
     },
     [endpoints.SEARCH_STREAMS]: {
         url: () => 'search/streams',
         method: 'GET',
         requireAuth: false,
-        responseKey: 'streams'
+        responseKey: 'streams',
+        contentType: 'stream'
     },
 
     [endpoints.GET_CHANNEL_BY_ID]: {

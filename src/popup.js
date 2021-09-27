@@ -2,7 +2,7 @@
 
 import utils from "./utils";
 import LazyLoad from "vanilla-lazyload";
-import {tabs} from "./contants";
+import {endpoints, tabs} from "./contants";
 
 const bp = browser.extension.getBackgroundPage();
 
@@ -134,7 +134,7 @@ const updatePage = (noScroll) => {
         forward.classList.remove('possible');
     }
 
-    if (index > 0 || mode.substr(0, 8) === 'followed') {
+    if (index > 0 || tabs.isFollowedTab(mode)) {
         if (results[index].total) {
             searchBox.placeholder =
                 browser.i18n.getMessage('filterOf', [
@@ -184,92 +184,30 @@ const updatePage = (noScroll) => {
     lazyload.update();
 };
 
-const getApiResults = (endpoint, theOpts = {}, newIndex, reset) => {
-    const results = bp.getResults();
-    let offset = contentArea.children.length;
-    let index = bp.getIndex();
-    const opts = theOpts;
-
-    results[index].filter = searchBox.value;
-    results[index].scroll = reset ? 0 : contentArea.scrollTop;
-
-    if (newIndex) {
-        index += 1;
-        bp.setIndex(index);
-        // Remove elements after the new one
-        results.splice(
-            index, results.length - index,
-            bp.defaultResults()[0],
-        );
-        offset = 0;
-    }
-
-    if (reset) {
-        offset = 0;
-        results[index].content = bp.defaultContent();
-        delete opts.limit;
-        delete opts.language;
-        delete opts.cursor;
-    }
-
-    if (! Object.prototype.hasOwnProperty.call(opts, 'limit')) {
-        opts.limit = 100;
-    }
-
-    if (bp.getStorage('languageCodes')) {
-        opts.language = bp.getStorage('languageCodes');
-    }
-
-    if (endpoint !== 'Get Top Clips' && endpoint !== 'Get Followed Clips') {
-        opts.offset = offset;
-    } else {
-        opts.cursor = results[index].cursor;
-    }
-
+const callApi = (endpoint, opts = {}, newIndex, reset) => {
     refresh.classList.add('thinking');
     searchBox.placeholder = browser.i18n.getMessage('loading');
-    bp.twitchAPI(endpoint, opts, (data) => {
-        if (data) {
-            if (endpoint === 'Get Top Games') {
-                Array.prototype.push.apply(results[index].content, data.top);
-                results[index].type = 'game';
-            }
-            else if (endpoint === 'Get Live Streams' || endpoint === 'Search Streams') {
-                Array.prototype.push.apply(results[index].content, data.streams);
-                results[index].type = 'stream';
-            }
-            else if (endpoint === 'Search Games') {
-                Array.prototype.push.apply(results[index].content, data.games);
-                results[index].type = 'game';
-            }
-            else if (endpoint === 'Get Top Videos') {
-                Array.prototype.push.apply(results[index].content, data.vods);
-                results[index].type = 'video';
-            }
-            else if (endpoint === 'Get Followed Videos' || endpoint === 'Get Channel Videos') {
-                Array.prototype.push.apply(results[index].content, data.videos);
-                results[index].type = 'video';
-            }
-            else if (endpoint === 'Get Followed Clips' || endpoint === 'Get Top Clips') {
-                Array.prototype.push.apply(results[index].content, data.clips);
-                results[index].type = 'clip';
-            }
-            else if (endpoint === 'Search Channels') {
-                Array.prototype.push.apply(results[index].content, data.channels);
-                results[index].type = 'channel';
-            }
+    saveTabState();
 
-            results[index].total = data._total;
-            results[index].endpoint = endpoint;
-            results[index].opts = JSON.stringify(opts);
-            results[index].cursor = data._cursor;
-            bp.setResults(results);
-        }
-        refresh.classList.remove('thinking');
-        searchBox.value = '';
-        updatePage();
-    });
-};
+    bp.callApi(endpoint, opts, newIndex, reset)
+        .then(() => {
+            console.log('done popup');
+
+        })
+        .catch(() => {
+
+            // show error screen
+        })
+        .finally(() => {
+            refresh.classList.remove('thinking');
+            searchBox.value = '';
+            updatePage();
+        })
+}
+
+const saveTabState = () => {
+    bp.saveTabState(searchBox.value, contentArea.scrollTop);
+}
 
 const UI = {
     insertBackgroundUrl: (element, url, useLazyloader = true) => {
@@ -578,28 +516,29 @@ const cardClickHandler = (e) => {
             updatePage(true);
             break;
         case 'browseVideosByChannel':
-            getApiResults('Get Channel Videos', { _id: meta.streamerId, }, true);
+            callApi(endpoints.GET_CHANNEL_VIDEOS, { _id: meta.streamerId, }, true);
             break;
         case 'browseClipsByChannel':
-            getApiResults('Get Top Clips', { channel: meta.name }, true);
+            callApi(endpoints.GET_TOP_CLIPS, { channel: meta.name }, true);
             break;
         case 'browseGame':
-            getApiResults('Get Live Streams', { game: meta.game }, true);
+            callApi(endpoints.GET_STREAMS, { game: meta.game }, true);
             break;
         case 'browseChannelsByGame':
-            getApiResults('Get Top Videos', { game: meta.game }, true);
+            callApi(endpoints.GET_TOP_VIDEOS, { game: meta.game }, true);
             break;
         case 'browseClipsByGame':
-            getApiResults('Get Top Clips', { game: meta.game }, true);
+            callApi(endpoints.GET_TOP_CLIPS, { game: meta.game }, true);
             break;
     }
 }
 
+/**
+ * Update the current selected tab and the mode
+ *
+ * @param newMode
+ */
 const updateTab = (newMode) => {
-    /*
-      Update the current selected tab and the mode
-    */
-
     // console.log("updateTab");
     mode = bp.getMode();
 
@@ -634,19 +573,21 @@ const updateTab = (newMode) => {
         if (index === 0) {
             // Tell the Twitch API to find us the information we want
             if (mode === tabs.GAMES) {
-                if (results[index].content.length < 1) getApiResults('Get Top Games');
-                else updatePage();
+                if (results[index].content.length < 1) {
+                    callApi(endpoints.GET_TOP_GAMES);
+                } else updatePage();
             } else if (mode === tabs.STREAMS) {
                 if (results[index].content.length < 1) {
-                    getApiResults('Get Live Streams');
+                    callApi(endpoints.GET_STREAMS);
                 } else updatePage();
             } else if (mode === tabs.VIDEOS) {
                 if (results[index].content.length < 1) {
-                    getApiResults('Get Top Videos');
+                    callApi(endpoints.GET_TOP_VIDEOS);
                 } else updatePage();
             } else if (mode === tabs.CLIPS) {
-                if (results[index].content.length < 1) getApiResults('Get Top Clips');
-                else updatePage();
+                if (results[index].content.length < 1) {
+                    callApi(endpoints.GET_TOP_CLIPS);
+                } else updatePage();
             } else if (mode === tabs.SEARCH) {
                 updatePage();
             } else if (mode === tabs.FOLLOWED_STREAMS) {
@@ -658,11 +599,11 @@ const updateTab = (newMode) => {
                 updatePage();
             } else if (mode === tabs.FOLLOWED_VIDEOS) {
                 if (results[index].content.length < 1) {
-                    getApiResults('Get Followed Videos');
+                    callApi(endpoints.GET_FOLLOWED_VIDEOS);
                 } else updatePage();
             } else if (mode === tabs.FOLLOWED_CLIPS) {
                 if (results[index].content.length < 1) {
-                    getApiResults('Get Followed Clips');
+                    callApi(endpoints.GET_FOLLOWED_CLIPS);
                 } else updatePage();
             } else if (mode === tabs.FOLLOWED_CHANNELS) {
                 index = 0;
@@ -678,13 +619,12 @@ const updateTab = (newMode) => {
     }
 };
 
+/**
+ * Initializes the popup interface, essentially ensuring that all non-dynamic
+ * content (streams, games, etc.) is properly displayed.
+ * Includes internationalization, proper tooltips, etc.
+ */
 const initialize = () => {
-    /*
-      Initalizes the popup interface, essentially ensuring that all non-dynamic
-      content (streams, games, etc.) is properly diplayed.
-      Includes internationalization, proper tooltips, etc.
-    */
-
     mode = bp.getMode();
 
     // Login/logout
@@ -772,6 +712,7 @@ settings.addEventListener('click', () => browser.runtime.openOptionsPage());
 // Back button
 back.addEventListener('click', () => {
     if (!back.classList.contains('possible')) return;
+    saveTabState();
     bp.setIndex(bp.getIndex() - 1);
     updatePage();
 });
@@ -779,23 +720,27 @@ back.addEventListener('click', () => {
 // Forward button
 forward.addEventListener('click', () => {
     if (!forward.classList.contains('possible')) return;
+    saveTabState();
     bp.setIndex(bp.getIndex() + 1);
     updatePage();
 });
 
+/**
+ * Perform search
+ */
 const makeSearch = () => {
-    // Perform search using getApiResults
     if (!search.classList.contains('possible') || !searchBox.value) return;
+
     if (mode === tabs.GAMES) {
-        getApiResults('Search Games', {
+        callApi(endpoints.SEARCH_GAMES, {
             query: searchBox.value,
         }, true);
     } else if (mode === tabs.STREAMS) {
-        getApiResults('Search Streams', {
+        callApi(endpoints.SEARCH_STREAMS, {
             query: searchBox.value,
         }, true);
     } else if (mode === tabs.SEARCH) {
-        getApiResults('Search Channels', {
+        callApi(endpoints.SEARCH_CHANNELS, {
             query: searchBox.value,
         }, true);
     }
@@ -820,10 +765,7 @@ refresh.addEventListener('click', () => {
     // for explanation of this check see below
     // on contentArea scroll handler
     if (results[index].endpoint) {
-        getApiResults(
-            results[index].endpoint,
-            JSON.parse(results[index].opts), false, true,
-        );
+        callApi(results[index].endpoint, results[index].opts, false, true);
     }
 });
 
@@ -878,7 +820,7 @@ contentArea.addEventListener('scroll', () => {
         // results is now reset to default values and endpoint is an empty string
         // i cant do much here except adding this check...
         if (results[index].endpoint) {
-            getApiResults(results[index].endpoint, JSON.parse(results[index].opts));
+            callApi(results[index].endpoint, results[index].opts);
         }
     }
 });
