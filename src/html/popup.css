@@ -64,6 +64,13 @@ html, body {
     float: right;
 }
 
+.twitch-fox-icon {
+    height: 36px;
+    width: 36px;
+    background: url(../assets/twitch-fox.svg) no-repeat center;
+    background-size: 28px 28px;
+}
+
 /* End New */
 
 .screenLock {
@@ -268,6 +275,12 @@ html, body {
     top: 7px;
     margin-left: -100%;
     margin-right: -100%;
+}
+
+.menuButton.fakeTab {
+    position: relative;
+    background-color: #17141F;
+    transition: background-color 0.5s ease;
 }
 
 .menuButton.tab {

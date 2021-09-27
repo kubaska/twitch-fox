@@ -686,7 +686,7 @@ const selectTab = (e) => {
 
 document.querySelectorAll('#menu .tab')
     .forEach(tab => {
-        document.addEventListener('click', selectTab);
+        tab.addEventListener('click', selectTab);
     });
 
 // Settings page
@@ -763,10 +763,7 @@ exitSearch.addEventListener('click', () => {
 // Avatar
 avatar.addEventListener('click', () => {
     if (bp.getAuthorizedUser()) {
-        const url = `https://www.twitch.tv/${bp.getAuthorizedUser().name}`;
-        browser.tabs.create({
-            url,
-        });
+        utils.openStream(bp.getAuthorizedUser().name);
     }
 });
 
