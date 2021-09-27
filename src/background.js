@@ -4,6 +4,7 @@ import axios from "axios";
 import _storage from './storage';
 import {chunk, clone, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 import {endpointList, endpoints, tabs} from "./contants";
+import utils from "./utils";
 
 // Variable declarations
 
@@ -533,31 +534,7 @@ _storage.load().then(() => {
     Alarm.initialize();
 
     initializeFollows();
-})
-
-const openTwitchPage = (name) => {
-    browser.tabs.create({
-        url: 'https://twitch.tv/'+name,
-    });
-};
-
-const openPopout = (name) => {
-    browser.windows.create({
-        url: `https://player.twitch.tv/?parent=localhost&channel=${name}`,
-        height: 500,
-        width: 850,
-        type: 'popup',
-    });
-};
-
-const openChat = (name) => {
-    browser.windows.create({
-        url: `https:/twitch.tv/${name}/chat?popout`,
-        height: 600,
-        width: 340,
-        type: 'popup',
-    });
-};
+});
 
 // Assignments
 
@@ -591,9 +568,9 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
 browser.notifications.onClicked.addListener(() => {
     if (! lastNotificationStreamName) return;
 
-    if (getStorage('openTwitchPage')) openTwitchPage(lastNotificationStreamName);
-    if (getStorage('openPopout')) openPopout(lastNotificationStreamName);
-    if (getStorage('openChat')) openChat(lastNotificationStreamName);
+    if (getStorage('openTwitchPage')) utils.openStream(lastNotificationStreamName);
+    if (getStorage('openPopout')) utils.openStreamPopout(lastNotificationStreamName);
+    if (getStorage('openChat')) utils.openChatPopout(lastNotificationStreamName);
 
     lastNotificationStreamName = '';
 });

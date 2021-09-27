@@ -464,41 +464,23 @@ const cardClickHandler = (e) => {
     switch (trigger) {
         case 'openStream':
             if (meta.type === 'video') {
-                browser.tabs.create({
-                    url: 'https://twitch.tv/videos/'+meta.id,
-                });
+                utils.openVideo(meta.id);
             }
             else if (meta.type === 'clip') {
-                browser.tabs.create({
-                    url: 'https://clips.twitch.tv/'+meta.id,
-                });
+                utils.openClip(meta.id);
             }
             else {
-                browser.tabs.create({
-                    url: 'https://twitch.tv/'+meta.name,
-                });
+                utils.openStream(meta.name);
             }
             break;
         case 'openGame':
-            browser.tabs.create({
-                url: 'https://www.twitch.tv/directory/game/'+meta.game
-            });
+            utils.openGameDirectory(meta.game);
             break;
         case 'openStreamPopout':
-            browser.windows.create({
-                url: 'https://player.twitch.tv/?parent=localhost&channel='+meta.name,
-                height: 500,
-                width: 850,
-                type: 'popup',
-            });
+            utils.openStreamPopout(meta.name);
             break;
         case 'openChat':
-            browser.windows.create({
-                url: `https:/twitch.tv/${meta.name}/chat?popout`,
-                height: 600,
-                width: 340,
-                type: 'popup',
-            });
+            utils.openChatPopout(meta.name);
             break;
         case 'enlarge':
             enlarge(topElem);
