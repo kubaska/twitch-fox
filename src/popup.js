@@ -298,7 +298,7 @@ addCard = (content, type) => {
             'channelClipsTip', content.channel.display_name
         );
 
-        const following = bp.isFollowing(content.channel.name);
+        const following = bp.isFollowing(content.channel._id);
         card.querySelector('.follow').style = following ? 'display:none' : '';
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
@@ -318,6 +318,7 @@ addCard = (content, type) => {
             : content.tracking_id;
         const urlId = type === 'video' ? id : content.slug;
         const channel = type === 'video' ? content.channel : content.broadcaster;
+        const streamerId = type === 'video' ? channel._id : channel.id;
 
         card.dataset['type'] = type;
 
@@ -325,7 +326,7 @@ addCard = (content, type) => {
         card.dataset['id'] = urlId;
         // for some reason, Twitch returns id prop with an underscore
         // for videos and without for clips...
-        card.dataset['streamerId'] = type === 'video' ? channel._id : channel.id;
+        card.dataset['streamerId'] = streamerId;
         card.dataset['name'] = channel.name;
         card.dataset['game'] = content.game;
 
@@ -356,7 +357,7 @@ addCard = (content, type) => {
         // Hide chat button
         card.querySelector('.contentButton.chat').classList.add('hide');
 
-        const following = bp.isFollowing(channel.name);
+        const following = bp.isFollowing(streamerId);
         card.querySelector('.follow').style = following ? 'display:none' : '';
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
@@ -421,7 +422,7 @@ addCard = (content, type) => {
             card.querySelector('.cornerGame').classList.add('hide');
         }
 
-        const following = bp.isFollowing(channel.name);
+        const following = bp.isFollowing(channel._id);
         card.querySelectorAll('.follow').forEach(btn => btn.style = following ? 'display:none' : '');
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
         if (! bp.getAuthorizedUser()) {

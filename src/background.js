@@ -313,10 +313,24 @@ const importFollows = (json) => {
     rebuildFollowCache();
 }
 
-const isFollowing = (name) => {
-    return userFollowsCache.has(name);
+/**
+ * Check if channel with specified ID is followed by user.
+ *
+ * @param id
+ * @return {boolean}
+ */
+const isFollowing = (id) => {
+    return userFollowsCache.has(id);
 }
 
+/**
+ * Follow Twitch channel
+ *
+ * @param id
+ * @param name
+ * @param forceLocal
+ * @return {Promise<boolean>}
+ */
 const follow = async (id, name, forceLocal) => {
     if (authorizedUser && ! forceLocal) {
         const response = await twitchAPI('Follow Channel', { _id: id });
@@ -334,7 +348,7 @@ const follow = async (id, name, forceLocal) => {
         // save in storage
         const allLocalFollows = _storage.get('localFollows');
 
-        const exists = find(allLocalFollows, { id, name });
+        const exists = find(allLocalFollows, { id });
 
         if (exists) {
             console.log(`!!! Follow [${id}, ${name}] already exists, skipping`);
@@ -342,13 +356,19 @@ const follow = async (id, name, forceLocal) => {
         }
 
         allLocalFollows.push({ id, name });
-        userFollowsCache.add(name);
+        userFollowsCache.add(id);
         _storage.set('localFollows', allLocalFollows);
 
         return true;
     }
 };
 
+/**
+ * Unfollows Twitch channel
+ *
+ * @param id
+ * @param name
+ */
 const unfollow = (id, name) => {
     const existsLocally = find(_storage.get('localFollows'), { id });
 
@@ -371,19 +391,19 @@ const unfollow = (id, name) => {
         pullAllBy(userFollows, [{ id }], 'id');
     }
 
-    if (name) {
-        userFollowsCache.delete(name);
+    if (id) {
+        userFollowsCache.delete(id);
     }
 }
 
 const rebuildFollowCache = () => {
     const local = _storage.get('localFollows');
     local.forEach(follow => {
-        userFollowsCache.add(follow.name);
+        userFollowsCache.add(follow.id);
     });
 
     userFollows.forEach(follow => {
-        userFollowsCache.add(follow.channel.name);
+        userFollowsCache.add(follow.channel._id);
     });
 };
 
