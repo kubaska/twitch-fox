@@ -3,6 +3,7 @@
 import utils from "./utils";
 import LazyLoad from "vanilla-lazyload";
 import {endpoints, tabs} from "./contants";
+import {debounce} from "lodash";
 
 const bp = browser.extension.getBackgroundPage();
 
@@ -185,6 +186,10 @@ const updatePage = (noScroll) => {
 };
 
 const callApi = (endpoint, opts = {}, newIndex, reset) => {
+    // we dont have endpoint when we change popup mode and all content gets removed
+    // scroll handler fires and results is reset to default values
+    if (! endpoint) return;
+
     refresh.classList.add('thinking');
     searchBox.placeholder = browser.i18n.getMessage('loading');
     saveTabState();
@@ -745,11 +750,7 @@ refresh.addEventListener('click', () => {
     const results = bp.getResults();
     const index = bp.getIndex();
 
-    // for explanation of this check see below
-    // on contentArea scroll handler
-    if (results[index].endpoint) {
-        callApi(results[index].endpoint, results[index].opts, false, true);
-    }
+    callApi(results[index].endpoint, results[index].opts, false, true);
 });
 
 // Exit search button
@@ -791,19 +792,16 @@ screenLock.addEventListener('click', () => {
     screenLock.appendChild(enlargedPreview);
 });
 
-contentArea.addEventListener('scroll', () => {
+const handleScrollEvent = (e) => {
     if (contentArea.scrollHeight - contentArea.scrollTop === 564) {
         const results = bp.getResults();
         const index = bp.getIndex();
 
-        // this fires when we change popup mode and all content gets removed
-        // results is now reset to default values and endpoint is an empty string
-        // i cant do much here except adding this check...
-        if (results[index].endpoint) {
-            callApi(results[index].endpoint, results[index].opts);
-        }
+        callApi(results[index].endpoint, results[index].opts);
     }
-});
+}
+
+contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
 
 browser.runtime.onMessage.addListener((request) => {
     if (request.content === 'INITIALIZE') {
