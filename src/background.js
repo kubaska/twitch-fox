@@ -38,10 +38,10 @@ const _axios = axios.create({
     }
 });
 _axios.interceptors.request.use(function (request) {
-    const token = _storage.get('token')
+    const token = _storage.get('token');
 
     if (token) {
-        request.headers.Authorization = `OAuth ${token}`
+        request.headers.Authorization = `OAuth ${token}`;
     }
 
     return request;
@@ -297,16 +297,33 @@ const deauthorize = () => {
     rebuildFollowCache();
 };
 
+const importFollowsLegacy = (json) => {
+    const parsed = JSON.parse(json);
+
+    const follows = parsed.map(follow => {
+        const id = parseInt(follow);
+
+        // todo resolve nicknames of streamers when we switch to Helix
+
+        if (id) return { id };
+        else    return false;
+    }).filter(value => value);
+
+    setStorage('localFollows', follows);
+
+    rebuildFollowCache();
+}
+
 const importFollows = (json) => {
     const parsed = JSON.parse(json);
 
-    const follows = filter(parsed, follow => {
+    const follows = parsed.map(follow => {
         const { id, name } = follow;
 
         if (id && name) return { id, name };
         else if (id)    return { id };
         else            return false;
-    });
+    }).filter(value => value);
 
     setStorage('localFollows', follows);
 
@@ -625,6 +642,7 @@ window.getStorage = getStorage;
 window.getUserFollows = getUserFollows;
 window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
+window.importFollowsLegacy = importFollowsLegacy;
 window.isFollowing = isFollowing;
 window.playAlarm = playAlarm;
 window.saveTabState = saveTabState;

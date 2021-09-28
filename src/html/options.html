@@ -43,6 +43,11 @@
             margin-left: 5px;
         }
 
+        .error-message {
+            font-size: 1em !important;
+            color: red !important;
+        }
+
         .follow-list {
             display: flex;
             flex-wrap: wrap;
@@ -56,6 +61,8 @@
         .follow-remove {
             cursor: pointer;
         }
+
+        .d-none { display: none; }
     </style>
 </head>
 
@@ -63,7 +70,7 @@
 
 <form id="main-form">
     <h3 data-i18n="userInterfaceSettings">User interface settings</h3>
-    <hr>
+    <hr/>
 
     <div class="row">
         <div class="description">
@@ -110,7 +117,7 @@
     </div>
 
     <h3>Stream Notifications</h3>
-    <hr>
+    <hr/>
 
     <div class="row">
         <div class="description">
@@ -178,12 +185,13 @@
     </div>
 
     <h3 data-i18n="followsSettings">Follows Settings</h3>
-    <hr>
+    <hr/>
 
     <div class="row">
         <div class="description">
             <p>Import local follows</p>
             <span>This will overwrite your current follows.</span>
+            <p class="error-message d-none"></p>
         </div>
 
         <div class="control">
@@ -201,6 +209,9 @@
             <input type="button" id="exportFollows" value="Export follows">
         </div>
     </div>
+
+    <h3>Locally followed channels</h3>
+    <hr/>
 
     <div class="follow-list" id="localFollowsList"></div>
 </form>

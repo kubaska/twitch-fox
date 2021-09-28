@@ -40,30 +40,86 @@ document.querySelectorAll('[data-internal]').forEach(control => {
     control.addEventListener('change', saveOption);
 });
 
-// fill follow list
-document.getElementById('localFollowsList').innerHTML = bp.getStorage('localFollows').map(follow => {
-    return `<div class="follow">
+// fill local follow list
+function displayLocalFollows() {
+    const html = bp.getStorage('localFollows').map(follow => {
+        return `<div class="follow">
 <span>[${follow.id}] ${follow.name || '(name unknown)'}</span>
-<span class="follow-remove" data-follow-id="${follow.id}" data-stream-name="${follow.name}">remove</span>
+<span class="follow-remove" data-id="${follow.id}">remove</span>
 </div>`;
-}).join('');
+    }).join('');
 
-document.querySelectorAll('.follow-remove').forEach(btn => {
-    btn.addEventListener('click', removeFollow);
-})
+    document.getElementById('localFollowsList').innerHTML = html ? html : '<span>None yet!</span>';
+
+    document.querySelectorAll('.follow-remove').forEach(btn => {
+        btn.addEventListener('click', removeFollow);
+    });
+}
 
 function removeFollow(e) {
-    bp.unfollow(parseInt(e.target.dataset['followId']), e.target.dataset['streamName']);
-    document.removeEventListener(e.target, removeFollow);
+    bp.unfollow(parseInt(e.target.dataset['id']));
+    e.target.removeEventListener('click', removeFollow);
     e.target.parentElement.remove();
+}
+
+function showImportError(message) {
+    const err = document.querySelector('.error-message');
+    err.innerText = 'Import error: ' + message;
+    err.classList.remove('d-none');
 }
 
 // import & export
 document.getElementById('importFollows').addEventListener('change', (e) => {
+    document.querySelector('.error-message').classList.add('d-none');
+
     const file = e.target.files[0];
+
+    if (! file) return;
+    if (! file.name.endsWith('.txt')) return showImportError('Invalid file');
+
     const reader = new FileReader();
+
     reader.onload = () => {
-        bp.importFollows(reader.result);
+        let parsed = null;
+        try {
+            parsed = JSON.parse(reader.result);
+        } catch (e) {
+            console.log(e);
+            return showImportError('Error parsing file: invalid file');
+        }
+
+        // check if file structure is correct
+        if (! Array.isArray(parsed)) return showImportError('Invalid file structure');
+        if (parsed.length < 1) return showImportError('Invalid file structure: missing entries');
+
+        const entryType = typeof parsed[0]; // string for legacy, object for v4.3.0+
+
+        if (! (entryType === 'string' || entryType === 'object')) return showImportError('Invalid entry structure');
+
+        // check if structure is consistent
+        let result = parsed.every(element => {
+            const type = typeof element;
+
+            // check if all entries have the correct type
+            if (type !== entryType) return false;
+
+            // check if object type contains ID - required field
+            if (type === 'object' && ! element.id) return false;
+
+            return true;
+        });
+
+        if (! result) return showImportError('Inconsistent file structure: is the file corrupted?');
+
+        if (entryType === 'string') {
+            bp.importFollowsLegacy(reader.result);
+        }
+        else if (entryType === 'object') {
+            bp.importFollows(reader.result);
+        }
+
+        displayLocalFollows();
+        document.getElementById('importFollows').value = '';
     }
     reader.readAsText(file);
 });
@@ -83,6 +139,7 @@ document.getElementById('exportFollows').addEventListener('click', () => {
     downloadLink.click();
 });
 
+displayLocalFollows();
 document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));
 
 // browser.runtime.onMessage.addListener(() => window.location.reload());
