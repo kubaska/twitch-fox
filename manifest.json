@@ -27,9 +27,7 @@
   ],
 
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["vendor.js", "background.js"]
   },
 
   "browser_action": {

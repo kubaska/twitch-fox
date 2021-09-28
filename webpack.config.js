@@ -36,5 +36,19 @@ module.exports = {
                 use: ["babel-loader"]
             }
         ]
+    },
+
+    optimization: {
+        splitChunks: {
+            // chunks: 'all'
+            cacheGroups: {
+                vendor: {
+                    name: "vendor", // part of the bundle name and
+                    // can be used in chunks array of HtmlWebpackPlugin
+                    test: /[\\/]node_modules[\\/]/,
+                    chunks: "all",
+                },
+            },
+        }
     }
 };
