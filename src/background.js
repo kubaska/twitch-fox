@@ -384,9 +384,8 @@ const follow = async (id, name, forceLocal) => {
  * Unfollows Twitch channel
  *
  * @param id
- * @param name
  */
-const unfollow = (id, name) => {
+const unfollow = (id) => {
     const existsLocally = find(_storage.get('localFollows'), { id });
 
     if (existsLocally) {
