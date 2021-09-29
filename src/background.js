@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, clone, differenceBy, filter, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {chunk, clone, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 import {endpointList, endpoints, tabs} from "./contants";
 import utils from "./utils";
 
@@ -167,7 +167,6 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
  */
 const twitchAPI = (endpoint, theOpts, callback) => {
     const opts = clone(theOpts);
-    console.log(endpoint, theOpts);
 
     if (! endpointList[endpoint]) {
         console.log('Invalid endpoint: ', endpoint);

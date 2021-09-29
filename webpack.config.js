@@ -43,8 +43,7 @@ module.exports = {
             // chunks: 'all'
             cacheGroups: {
                 vendor: {
-                    name: "vendor", // part of the bundle name and
-                    // can be used in chunks array of HtmlWebpackPlugin
+                    name: "vendor",
                     test: /[\\/]node_modules[\\/]/,
                     chunks: "all",
                 },
