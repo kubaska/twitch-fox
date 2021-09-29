@@ -356,7 +356,7 @@ const follow = async (id, name, forceLocal) => {
 
         if (successful) {
             userFollows.push(...response);
-            userFollowsCache.add(response.channel.name);
+            userFollowsCache.add(response.channel._id);
         }
 
         return successful;
@@ -419,7 +419,7 @@ const rebuildFollowCache = () => {
     });
 
     userFollows.forEach(follow => {
-        userFollowsCache.add(follow.channel._id);
+        userFollowsCache.add(parseInt(follow.channel._id));
     });
 };
 
@@ -439,13 +439,14 @@ const fetchCurrentUser = async () => {
 /**
  * Fetch entire resource.
  *
- * @param endpoint    API Endpoint
- * @param responseKey Block in which Twitch returns all data we are interested in.
- *                    Should be moved to twitchAPI eventually.
- * @param limit       1-100
+ * @param endpoint       API Endpoint
+ * @param requestOptions Additional request options
+ * @param responseKey    Block in which Twitch returns all data we are interested in.
+ *                       Should be moved to twitchAPI eventually.
+ * @param limit          1-100
  * @return {Promise<[]|*[]>}
  */
-const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
+const fetchPaginatedResource = async (endpoint, requestOptions, responseKey, limit = 100) => {
     let result = [];
     let keepGoing = true;
 
@@ -455,7 +456,7 @@ const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
         try {
             response = await twitchAPI(
                 endpoint,
-                { limit, offset: result.length }
+                { limit, offset: result.length, ...requestOptions }
             );
         } catch (e) {
             // we are unauthorized or connection issue
@@ -477,7 +478,7 @@ const fetchPaginatedResource = async (endpoint, responseKey, limit = 100) => {
  */
 const fetchUserFollows = async () => {
     userFollows = await fetchPaginatedResource(
-        endpoints.GET_USER_FOLLOWS, 'follows', 100
+        endpoints.GET_USER_FOLLOWS, { _id: authorizedUser._id }, 'follows', 100
     );
 }
 
@@ -490,7 +491,7 @@ const fetchTwitchFollowedStreams = async () => {
     if (! authorizedUser) return Promise.resolve([]);
 
     return await fetchPaginatedResource(
-        endpoints.GET_FOLLOWED_STREAMS, 'streams', 100
+        endpoints.GET_FOLLOWED_STREAMS, {}, 'streams', 100
     )
 }
 
