@@ -49,6 +49,7 @@ function displayLocalFollows() {
 </div>`;
     }).join('');
 
+    document.getElementById('no-of-follows').innerText = bp.getStorage('localFollows').length;
     document.getElementById('localFollowsList').innerHTML = html ? html : '<span>None yet!</span>';
 
     document.querySelectorAll('.follow-remove').forEach(btn => {
