@@ -151,7 +151,7 @@ const updatePage = (noScroll) => {
         search.classList.remove('possible');
         back.classList[index > 0 ? 'add' : 'remove']('possible');
     } else {
-        if (results[index].total || mode === tabs.SEARCH) {
+        if (mode === tabs.GAMES || mode === tabs.SEARCH) {
             searchBox.placeholder = mode === tabs.SEARCH ?
                 browser.i18n.getMessage('searchTwitch') :
                 browser.i18n.getMessage('searchOrFilterOf', [
@@ -199,8 +199,8 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
             console.log('done popup');
 
         })
-        .catch(() => {
-
+        .catch(error => {
+            console.log('popup callApi error', error);
             // show error screen
         })
         .finally(() => {
@@ -228,29 +228,38 @@ const UI = {
             element = element.parentElement;
         }
         return element;
+    },
+
+    getImageUrl: (url, width, height) => {
+        return url.replace(/%?{width}x%?{height}/, `${width}x${height}`);
     }
 }
 
 addCard = (content, type) => {
+    if (document.getElementById(type.toUpperCase()+'!'+content.id)) return;
+
     if (type === 'game') {
         let card = document.getElementById('stub-game').cloneNode(true);
 
+        // fixme do we need this?
         const game = content.game ? content.game : content;
 
-        card.id = `GAME!${game._id}`;
-        card.dataset['game'] = game.name;
+        card.id = `GAME!${game.id}`;
+        card.dataset['gameId'] = game.id;
+        card.dataset['game'] = game.name; // todo remove?
 
         card.querySelectorAll('.game-name').forEach(element => {
             element.textContent = game.name;
         })
 
-        card.querySelector('.contentBack').dataset['bg'] = game.box.medium;
+        card.querySelector('.contentBack').dataset['bg'] = UI.getImageUrl(game.box_art_url, 136, 190);
 
+        // TODO Top Games endpoint does not return viewer count anymore. Remove this if they wont add it back.
         if (content.viewers) {
             card.querySelector('.viewer-count').textContent = delimitNumber(content.viewers);
         } else {
             // Searching for game does not return the viewer count, hide it
-            card.querySelector('.viewer-count').classList.add('hide');
+            card.querySelector('.viewer-count').classList.add('d-none');
         }
 
         card.querySelector('.tag').textContent = game.name;
@@ -264,53 +273,59 @@ addCard = (content, type) => {
 
         card.dataset['type'] = type;
 
-        card.id = `STREAM!${content._id}`;
-        card.dataset['id'] = content._id;
-        card.dataset['streamerId'] = content.channel._id;
-        card.dataset['name'] = content.channel.name;
-        card.dataset['game'] = content.game;
+        card.id = `STREAM!${content.id}`;
+        card.dataset['id'] = content.id;
+        card.dataset['streamerId'] = content.user_id;
+        card.dataset['name'] = content.user_name;
+        card.dataset['gameId'] = content.game_id;
+        card.dataset['game'] = content.game_name; // todo remove
 
-        card.querySelector('.status.stream').textContent = content.channel.status;
+        card.querySelector('.status.stream').textContent = content.title;
 
-        UI.insertBackgroundUrl(card.querySelector('.contentBack'), content.preview.large);
+        UI.insertBackgroundUrl(
+            card.querySelector('.contentBack'),
+            UI.getImageUrl(content.thumbnail_url, 640, 360)
+        );
 
-        if (content.game) {
-            card.querySelector('.game-name').textContent = content.game;
+        if (content.game_name) {
+            card.querySelector('.game-name').textContent = content.game_name;
             UI.insertBackgroundUrl(
                 card.querySelector('.cornerGame'),
-                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
+                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name}-52x72.jpg`
             );
         } else {
             card.querySelector('.cornerGame').classList.add('hide');
         }
 
-        const startDate = new Date(content.created_at);
+        const startDate = new Date(content.started_at);
         const now = Date.now();
 
         card.querySelector('.uptime-time').textContent = utils.timeSince(startDate, now);
         card.querySelector('.uptime-started').textContent = startDate.toLocaleString();
-        card.querySelector('.viewer-number').textContent = delimitNumber(content.viewers);
+        card.querySelector('.viewer-number').textContent = delimitNumber(content.viewer_count);
 
         card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = content.channel.display_name;
+            element.textContent = content.user_name;
         });
 
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', content.channel.display_name
+            'channelVideosTip', content.user_name
         );
         card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', content.channel.display_name
+            'channelClipsTip', content.user_name
         );
 
-        const following = bp.isFollowing(content.channel._id);
+        const following = bp.isFollowing(content.user_id);
         card.querySelector('.follow').style = following ? 'display:none' : '';
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
-        UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
+        // fixme Get channel images from cached follows?
+        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
+        card.querySelector('.cornerLogo').classList.add('d-none');
 
         card.querySelector('.tag').textContent =
-            content.game+content.channel.name+content.channel.display_name+content.channel.status;
+            content.game_name+content.user_login+content.user_name+content.title;
 
         card.addEventListener('click', cardClickHandler);
 
@@ -318,95 +333,91 @@ addCard = (content, type) => {
     }
     else if (type === 'video' || type === 'clip') {
         let card = document.getElementById('stub-stream').cloneNode(true);
-        const id = type === 'video'
-            ? content._id.replace('v', '') // ids come with v on start eg. v12345678
-            : content.tracking_id;
-        const urlId = type === 'video' ? id : content.slug;
-        const channel = type === 'video' ? content.channel : content.broadcaster;
-        const streamerId = type === 'video' ? channel._id : channel.id;
+
+        const streamerId = type === 'video' ? content.id : content.broadcaster_id;
+        const streamerName = type === 'video' ? content.user_name : content.broadcaster_name;
 
         card.dataset['type'] = type;
 
-        card.id = type === 'video' ? `VIDEO!${id}` : `CLIP!${id}`;
-        card.dataset['id'] = urlId;
+        card.id = `${type.toUpperCase()}!${content.id}`;
+        card.dataset['id'] = content.id;
         // for some reason, Twitch returns id prop with an underscore
         // for videos and without for clips...
         card.dataset['streamerId'] = streamerId;
-        card.dataset['name'] = channel.name;
-        card.dataset['game'] = content.game;
+        card.dataset['name'] = streamerName;
+        // card.dataset['game'] = content.game;
 
         card.querySelector('.status.stream').textContent = content.title;
 
-        UI.insertBackgroundUrl(
-            card.querySelector('.contentBack'),
-            type === 'video' ? content.preview.large : content.thumbnails.medium
-        );
-
-        if (content.game) {
-            card.querySelector('.game-name').textContent = content.game;
+        if (content.thumbnail_url) {
             UI.insertBackgroundUrl(
-                card.querySelector('.cornerGame'),
-                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
+                card.querySelector('.contentBack'),
+                type === 'video' ? UI.getImageUrl(content.thumbnail_url, 640, 360) : content.thumbnail_url
             );
         } else {
-            card.querySelector('.cornerGame').classList.add('hide');
+            // handle no image
         }
 
-        let seconds = type === 'video' ? content.length : content.duration;
+        // No game returned for videos, only ID returned for clips.
+        // if (content.game) {
+        //     card.querySelector('.game-name').textContent = content.game;
+        //     UI.insertBackgroundUrl(
+        //         card.querySelector('.cornerGame'),
+        //         `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
+        //     );
+        // } else {
+            card.querySelector('.cornerGame').classList.add('d-none');
+        // }
+
         const createdAt = new Date(content.created_at);
 
-        card.querySelector('.uptime-time').textContent = utils.secondsToHHMMSS(parseInt(seconds));
+        card.querySelector('.uptime-time').textContent = content.duration;
+        // card.querySelector('.uptime-time').textContent = utils.secondsToHHMMSS(parseInt(content.duration));
         card.querySelector('.uptime-started').textContent = createdAt.toLocaleString();
-        card.querySelector('.viewer-number').textContent = delimitNumber(content.views);
+        card.querySelector('.viewer-number').textContent = delimitNumber(content.view_count);
 
         // Hide chat button
-        card.querySelector('.contentButton.chat').classList.add('hide');
+        card.querySelector('.contentButton.chat').classList.add('d-none');
 
         const following = bp.isFollowing(streamerId);
         card.querySelector('.follow').style = following ? 'display:none' : '';
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
         card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = channel.display_name;
+            element.textContent = streamerName;
         });
 
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', channel.display_name
+            'channelVideosTip', streamerName
         );
         card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', channel.display_name
+            'channelClipsTip', streamerName
         );
 
-        UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
+        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
+        card.querySelector('.cornerLogo').classList.add('d-none');
 
-        card.querySelector('.tag').textContent =
-            content.game+channel.name+channel.display_name+channel.status;
+        card.querySelector('.tag').textContent = streamerName+content.title;
 
         card.addEventListener('click', cardClickHandler);
 
         contentArea.appendChild(card);
-
-        // if (document.getElementById(id)) {
-        //     return;
-        // }
-
     }
     else if (type === 'channel') {
-        const channel = content.channel ? content.channel : content;
+        const channel = content.channel ? content.channel : content; // todo remove?
 
         let card = document.getElementById('stub-channel').cloneNode(true);
-        card.id = `CHANNEL!${channel._id}`;
-        card.dataset['id'] = channel._id;
-        card.dataset['streamerId'] = channel._id;
-        card.dataset['name'] = channel.name;
+        card.id = `CHANNEL!${channel.id}`;
+        card.dataset['id'] = channel.id;
+        card.dataset['streamerId'] = channel.id;
+        card.dataset['name'] = channel.display_name;
 
         card.querySelectorAll('.streamer-name').forEach(element => {
             element.textContent = channel.display_name;
         });
 
-        card.querySelector('.status.channel').textContent = channel.description;
-
+        // todo this endpoint does not return channel logo. remove laster
         UI.insertBackgroundUrl(
             card.querySelector('.contentBack'),
             channel.logo
@@ -416,15 +427,16 @@ addCard = (content, type) => {
         );
 
         if (content.game) {
-            card.dataset['game'] = content.game;
-            card.querySelector('.game-name').textContent = content.game;
+            card.dataset['gameId'] = content.game_id;
+            card.dataset['game'] = content.game_name;
+            card.querySelector('.game-name').textContent = content.game_name;
             UI.insertBackgroundUrl(
                 card.querySelector('.cornerGame'),
-                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`,
+                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name}-52x72.jpg`,
                 false
             );
         } else {
-            card.querySelector('.cornerGame').classList.add('hide');
+            card.querySelector('.cornerGame').classList.add('d-none');
         }
 
         const following = bp.isFollowing(channel._id);
@@ -442,7 +454,7 @@ addCard = (content, type) => {
             'channelClipsTip', channel.display_name
         );
 
-        card.querySelector('.tag').textContent = channel.name+channel.display_name;
+        card.querySelector('.tag').textContent = channel.broadcaster_login+channel.display_name;
 
         card.addEventListener('click', cardClickHandler);
 
@@ -464,7 +476,8 @@ const cardClickHandler = (e) => {
         id: topElem.dataset['id'],
         streamerId: parseInt(topElem.dataset['streamerId']),
         name: topElem.dataset['name'],
-        game: topElem.dataset['game']
+        game: topElem.dataset['game'],
+        gameId: topElem.dataset['gameId'],
     }
 
     switch (trigger) {
@@ -504,19 +517,22 @@ const cardClickHandler = (e) => {
             updatePage(true);
             break;
         case 'browseVideosByChannel':
-            callApi(endpoints.GET_CHANNEL_VIDEOS, { _id: meta.streamerId, }, true);
+            callApi(endpoints.GET_VIDEOS, { user_id: meta.streamerId }, true);
             break;
         case 'browseClipsByChannel':
-            callApi(endpoints.GET_TOP_CLIPS, { channel: meta.name }, true);
+            callApi(endpoints.GET_CLIPS, {
+                broadcaster_id: meta.streamerId,
+                started_at: (new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString()
+            }, true);
             break;
         case 'browseGame':
-            callApi(endpoints.GET_STREAMS, { game: meta.game }, true);
+            callApi(endpoints.GET_STREAMS, { game_id: meta.gameId }, true);
             break;
         case 'browseChannelsByGame':
-            callApi(endpoints.GET_TOP_VIDEOS, { game: meta.game }, true);
+            callApi(endpoints.GET_VIDEOS, { game_id: meta.gameId, period: 'month' }, true);
             break;
         case 'browseClipsByGame':
-            callApi(endpoints.GET_TOP_CLIPS, { game: meta.game }, true);
+            callApi(endpoints.GET_CLIPS, { game_id: meta.gameId }, true);
             break;
     }
 }
@@ -564,36 +580,44 @@ const updateTab = (newMode) => {
                 if (results[index].content.length < 1) {
                     callApi(endpoints.GET_TOP_GAMES);
                 } else updatePage();
-            } else if (mode === tabs.STREAMS) {
+            }
+            else if (mode === tabs.STREAMS) {
                 if (results[index].content.length < 1) {
                     callApi(endpoints.GET_STREAMS);
                 } else updatePage();
-            } else if (mode === tabs.VIDEOS) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_TOP_VIDEOS);
-                } else updatePage();
-            } else if (mode === tabs.CLIPS) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_TOP_CLIPS);
-                } else updatePage();
-            } else if (mode === tabs.SEARCH) {
+            }
+            // else if (mode === tabs.VIDEOS) {
+            //     if (results[index].content.length < 1) {
+            //         callApi(endpoints.GET_TOP_VIDEOS);
+            //     } else updatePage();
+            // }
+            // else if (mode === tabs.CLIPS) {
+            //     if (results[index].content.length < 1) {
+            //         callApi(endpoints.GET_TOP_CLIPS);
+            //     } else updatePage();
+            // }
+            else if (mode === tabs.SEARCH) {
                 updatePage();
-            } else if (mode === tabs.FOLLOWED_STREAMS) {
+            }
+            else if (mode === tabs.FOLLOWED_STREAMS) {
                 index = 0;
                 results = bp.defaultResults();
                 results[index].content = bp.getUserFollowedStreams();
                 results[index].type = 'stream';
                 bp.setResults(results);
                 updatePage();
-            } else if (mode === tabs.FOLLOWED_VIDEOS) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_FOLLOWED_VIDEOS);
-                } else updatePage();
-            } else if (mode === tabs.FOLLOWED_CLIPS) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_FOLLOWED_CLIPS);
-                } else updatePage();
-            } else if (mode === tabs.FOLLOWED_CHANNELS) {
+            }
+            // else if (mode === tabs.FOLLOWED_VIDEOS) {
+            //     if (results[index].content.length < 1) {
+            //         callApi(endpoints.GET_FOLLOWED_VIDEOS);
+            //     } else updatePage();
+            // }
+            // else if (mode === tabs.FOLLOWED_CLIPS) {
+            //     if (results[index].content.length < 1) {
+            //         callApi(endpoints.GET_FOLLOWED_CLIPS);
+            //     } else updatePage();
+            // }
+            else if (mode === tabs.FOLLOWED_CHANNELS) {
                 index = 0;
                 results = bp.defaultResults();
                 results[index].content = bp.getUserFollows();
@@ -723,11 +747,13 @@ const makeSearch = () => {
         callApi(endpoints.SEARCH_GAMES, {
             query: searchBox.value,
         }, true);
-    } else if (mode === tabs.STREAMS) {
-        callApi(endpoints.SEARCH_STREAMS, {
-            query: searchBox.value,
-        }, true);
-    } else if (mode === tabs.SEARCH) {
+    }
+    // else if (mode === tabs.STREAMS) {
+    //     callApi(endpoints.SEARCH_STREAMS, {
+    //         query: searchBox.value,
+    //     }, true);
+    // }
+    else if (mode === tabs.SEARCH) {
         callApi(endpoints.SEARCH_CHANNELS, {
             query: searchBox.value,
         }, true);
@@ -793,7 +819,9 @@ screenLock.addEventListener('click', () => {
 });
 
 const handleScrollEvent = (e) => {
-    if (contentArea.scrollHeight - contentArea.scrollTop === 564) {
+    const scrollTop = contentArea.scrollTop;
+
+    if (scrollTop && (contentArea.scrollHeight - scrollTop === 564)) {
         const results = bp.getResults();
         const index = bp.getIndex();
 

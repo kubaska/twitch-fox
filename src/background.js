@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, clone, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {chunk, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 import {endpointList, endpoints, tabs} from "./contants";
 import utils from "./utils";
 
@@ -21,19 +21,19 @@ let popupMode = tabs.STREAMS; // default mode is streams
 
 const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
 const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
-const scope = 'user_follows_edit user_read';
+const scope = 'user:read:email user:read:follows user:edit:follows';
 const responseType = 'token';
 const audio = new Audio();
 
+// Enums
 const BROWSER_ALARM_TYPE = {
     FETCH_FOLLOWED_STREAMS: 'fetchFollowedStreams'
 }
 
 // axios
 const _axios = axios.create({
-    baseURL: 'https://api.twitch.tv/kraken/',
+    baseURL: 'https://api.twitch.tv/helix/',
     headers: {
-        Accept: 'application/vnd.twitchtv.v5+json',
         'Client-ID': clientID
     }
 });
@@ -41,8 +41,11 @@ _axios.interceptors.request.use(function (request) {
     const token = _storage.get('token');
 
     if (token) {
-        request.headers.Authorization = `OAuth ${token}`;
+        request.headers.Authorization = `Bearer ${token}`;
     }
+
+    // This prevents Twitch from returning results for user region.
+    request.headers['Accept-Language'] = undefined;
 
     return request;
 })
@@ -95,8 +98,8 @@ const setStorage = (key, value, callback) => {
  * @return {Promise<T>}
  */
 const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
-    let offset = results[resultsIndex].content.length;
-    const opts = clone(theOpts);
+    const opts = utils.cloneObj(theOpts);
+    console.log('callApi', endpoint);
 
     if (newIndex) {
         resultsIndex += 1;
@@ -105,41 +108,41 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
             resultsIndex, results.length - resultsIndex,
             defaultResults()[0],
         );
-        offset = 0;
     }
 
     if (reset) {
-        offset = 0;
         results[resultsIndex].content = defaultContent();
-        delete opts.limit;
+        results[resultsIndex].scroll = 0;
+        delete opts.first;
         delete opts.language;
-        delete opts.cursor;
+        delete opts.after;
     }
 
-    if (! opts.limit) {
-        opts.limit = 100;
+    // Old "limit" field
+    if (! opts.first) {
+        opts.first = 100;
     }
 
     // todo also check endpointList if language is allowed in next ver
-    if (getStorage('languageCodes')) {
+    if (endpointList[endpoint].langCodesAllowed && getStorage('languageCodes')) {
         opts.language = getStorage('languageCodes');
     }
 
-    if (endpoint !== endpoints.GET_TOP_CLIPS && endpoint !== endpoints.GET_FOLLOWED_CLIPS) {
-        opts.offset = offset;
-    } else {
-        opts.cursor = results[resultsIndex].cursor;
+    // todo check
+    // after = cursor
+    if (results[resultsIndex].cursor) {
+        opts.after = results[resultsIndex].cursor;
     }
 
     return twitchAPI(endpoint, opts)
         .then(response => {
-            results[resultsIndex].content.push(...response[endpointList[endpoint].responseKey]);
+            results[resultsIndex].content.push(...response.data);
             results[resultsIndex].type = endpointList[endpoint].contentType;
 
-            results[resultsIndex].total = response._total;
+            results[resultsIndex].total = response.total;
             results[resultsIndex].endpoint = endpoint;
             results[resultsIndex].opts = opts;
-            results[resultsIndex].cursor = response._cursor;
+            results[resultsIndex].cursor = response.pagination.cursor;
 
             return response;
         })
@@ -152,53 +155,34 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
 /**
  * Calls Twitch API
  *
- * @param endpoint  expects a string describing the endpoint
- * @param theOpts   expects an object that may look like the example below:
- * {
-        channel: 121059319,
-        game: 'Overwatch',
-        language: 'en',
-        stream_type: 'live',
-        limit: '25',
-        offset: '0'
-    }
- * @param callback  expects the function to be called after the request is finished
+ * @param endpoint  Endpoint
+ * @param theOpts   Request options
  * @return {Promise<AxiosResponse<any>>|*[]|*}
  */
-const twitchAPI = (endpoint, theOpts, callback) => {
-    const opts = clone(theOpts);
-
+const twitchAPI = (endpoint, theOpts) => {
     if (! endpointList[endpoint]) {
         console.log('Invalid endpoint: ', endpoint);
         return;
     }
 
-    const { url, method, requireAuth } = endpointList[endpoint];
-
-    if (requireAuth && ! _storage.get('token')) {
-        console.log('Endpoint requires auth but we are not logged in');
-        if (callback) return callback([]);
-        return [];
-    }
+    const opts = utils.cloneObj(theOpts);
+    const { url, method } = endpointList[endpoint];
 
     // Check if url function takes arguments and feed it ID if it does
-    const _url = url.length
-        ? url(opts._id)
-        : url();
+    // const _url = url.length
+    //     ? url(opts.id)
+    //     : url();
+    //
+    // delete opts.id;
+    const _url = url();
 
-    delete opts._id;
+    console.log('[REQ]', endpoint, opts);
 
     return _axios.request({ url: _url, method, params: opts })
         .then(response => {
-            if (callback) {
-                if (response.status === 200) {
-                    callback(response.data);
-                } else if (response.status === 204) callback(true);
-                else callback();
-            }
-            else {
-                return response.data;
-            }
+            console.log('[RES]', endpoint, response);
+
+            return response.data;
         });
 };
 
@@ -213,7 +197,7 @@ const updateBadge = () => {
     // set description (hover on badge)
     let streams = take(userFollowedStreams, 20).map(stream => {
         return browser.i18n.getMessage('streaming', [
-            stream.channel.display_name, stream.channel.game
+            stream.user_name, stream.game_name
         ]);
     }).join('\n')
 
@@ -257,27 +241,30 @@ const playAlarm = () => {
 
 const desktopNotification = (stream) => {
     const title = browser.i18n.getMessage('streaming', [
-        stream.channel.display_name, stream.channel.game,
+        stream.user_name, stream.game_name,
     ]);
-    const logo = stream.channel.logo != null
-        ? stream.channel.logo
-        : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
+
+    // fixme logo
+    // const logo = stream.channel.logo != null
+    //     ? stream.channel.logo
+    //     : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
+    const logo = '/assets/twitch-fox.svg';
 
     browser.notifications.create('follow-notification', {
         type: 'basic',
         iconUrl: logo,
         title,
-        message: stream.channel.status,
+        message: stream.title,
     });
 
-    lastNotificationStreamName = stream.channel.name;
+    lastNotificationStreamName = stream.user_name;
 };
 
 /**
  * Send the user to the authorization page
  */
 const authorize = () => {
-    const url = `https://api.twitch.tv/kraken/oauth2/authorize?client_id=${
+    const url = `https://id.twitch.tv/oauth2/authorize?client_id=${
         clientID}&redirect_uri=${redirectURI}&response_type=${
         responseType}&scope=${scope}`;
     browser.tabs.create({
@@ -290,6 +277,7 @@ const authorize = () => {
  */
 const deauthorize = () => {
     _storage.set('token', null);
+    // todo invalidate token
     authorizedUser = null;
     userFollows = [];
     userFollowedStreams = [];
@@ -417,9 +405,10 @@ const rebuildFollowCache = () => {
         userFollowsCache.add(follow.id);
     });
 
-    userFollows.forEach(follow => {
-        userFollowsCache.add(parseInt(follow.channel._id));
-    });
+    // todo add back after dealing with online follows
+    // userFollows.forEach(follow => {
+    //     userFollowsCache.add(parseInt(follow.channel._id));
+    // });
 };
 
 /**
@@ -428,9 +417,10 @@ const rebuildFollowCache = () => {
  * @return {Promise<{}>}
  */
 const fetchCurrentUser = async () => {
-    const user = await twitchAPI(endpoints.GET_USER, {});
+    const user = await twitchAPI(endpoints.GET_USERS, {});
+    // todo make this retryable
 
-    authorizedUser = user;
+    authorizedUser = user.data[0]; // ???
 
     return user;
 }
@@ -440,12 +430,10 @@ const fetchCurrentUser = async () => {
  *
  * @param endpoint       API Endpoint
  * @param requestOptions Additional request options
- * @param responseKey    Block in which Twitch returns all data we are interested in.
- *                       Should be moved to twitchAPI eventually.
  * @param limit          1-100
  * @return {Promise<[]|*[]>}
  */
-const fetchPaginatedResource = async (endpoint, requestOptions, responseKey, limit = 100) => {
+const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => {
     let result = [];
     let keepGoing = true;
 
@@ -460,11 +448,12 @@ const fetchPaginatedResource = async (endpoint, requestOptions, responseKey, lim
         } catch (e) {
             // we are unauthorized or connection issue
             // just resolve with empty result
+            // todo make this retryable
             return [];
         }
 
-        result.push(...response[responseKey]);
-        if (response[responseKey].length < limit) keepGoing = false;
+        result.push(...response.data);
+        if (response.data.length < limit) keepGoing = false;
     }
 
     return result;
@@ -477,7 +466,7 @@ const fetchPaginatedResource = async (endpoint, requestOptions, responseKey, lim
  */
 const fetchUserFollows = async () => {
     userFollows = await fetchPaginatedResource(
-        endpoints.GET_USER_FOLLOWS, { _id: authorizedUser._id }, 'follows', 100
+        endpoints.GET_USER_FOLLOWS, { from_id: authorizedUser.id }, 100
     );
 }
 
@@ -490,7 +479,7 @@ const fetchTwitchFollowedStreams = async () => {
     if (! authorizedUser) return Promise.resolve([]);
 
     return await fetchPaginatedResource(
-        endpoints.GET_FOLLOWED_STREAMS, {}, 'streams', 100
+        endpoints.GET_FOLLOWED_STREAMS, { user_id: authorizedUser.id }, 100
     )
 }
 
@@ -649,6 +638,5 @@ window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResults = setResults;
 window.setStorage = setStorage;
-window.twitchAPI = twitchAPI;
 window.unfollow = unfollow;
 window._storage = () => _storage;

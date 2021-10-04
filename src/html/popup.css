@@ -972,6 +972,7 @@ html, body {
 .hide {
     display: none;
 }
+.d-none { display: none; }
 
 .user-select-all {
     -moz-user-select: all;
