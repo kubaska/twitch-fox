@@ -196,7 +196,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
 
     bp.callApi(endpoint, opts, newIndex, reset)
         .then(() => {
-            console.log('done popup');
+            // console.log('done popup');
 
         })
         .catch(() => {
@@ -793,7 +793,9 @@ screenLock.addEventListener('click', () => {
 });
 
 const handleScrollEvent = (e) => {
-    if (contentArea.scrollHeight - contentArea.scrollTop === 564) {
+    const scrollTop = contentArea.scrollTop;
+
+    if (scrollTop && (contentArea.scrollHeight - scrollTop === 564)) {
         const results = bp.getResults();
         const index = bp.getIndex();
 

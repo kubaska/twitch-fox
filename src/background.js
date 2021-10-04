@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, clone, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
+import {chunk, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
 import {endpointList, endpoints, tabs} from "./contants";
 import utils from "./utils";
 
@@ -96,7 +96,7 @@ const setStorage = (key, value, callback) => {
  */
 const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
     let offset = results[resultsIndex].content.length;
-    const opts = clone(theOpts);
+    const opts = utils.cloneObj(theOpts);
 
     if (newIndex) {
         resultsIndex += 1;
@@ -111,6 +111,7 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
     if (reset) {
         offset = 0;
         results[resultsIndex].content = defaultContent();
+        results[resultsIndex].scroll = 0;
         delete opts.limit;
         delete opts.language;
         delete opts.cursor;
@@ -162,23 +163,21 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         limit: '25',
         offset: '0'
     }
- * @param callback  expects the function to be called after the request is finished
  * @return {Promise<AxiosResponse<any>>|*[]|*}
  */
-const twitchAPI = (endpoint, theOpts, callback) => {
-    const opts = clone(theOpts);
+const twitchAPI = (endpoint, theOpts) => {
+    const opts = utils.cloneObj(theOpts);
 
     if (! endpointList[endpoint]) {
         console.log('Invalid endpoint: ', endpoint);
-        return;
+        return Promise.reject();
     }
 
     const { url, method, requireAuth } = endpointList[endpoint];
 
     if (requireAuth && ! _storage.get('token')) {
         console.log('Endpoint requires auth but we are not logged in');
-        if (callback) return callback([]);
-        return [];
+        return Promise.reject();
     }
 
     // Check if url function takes arguments and feed it ID if it does
@@ -190,15 +189,7 @@ const twitchAPI = (endpoint, theOpts, callback) => {
 
     return _axios.request({ url: _url, method, params: opts })
         .then(response => {
-            if (callback) {
-                if (response.status === 200) {
-                    callback(response.data);
-                } else if (response.status === 204) callback(true);
-                else callback();
-            }
-            else {
-                return response.data;
-            }
+            return response.data;
         });
 };
 
@@ -649,6 +640,5 @@ window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResults = setResults;
 window.setStorage = setStorage;
-window.twitchAPI = twitchAPI;
 window.unfollow = unfollow;
 window._storage = () => _storage;
