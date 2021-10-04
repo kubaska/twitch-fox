@@ -38,6 +38,10 @@ module.exports = {
         ]
     },
 
+    node: {
+        global: false
+    },
+
     optimization: {
         splitChunks: {
             // chunks: 'all'
