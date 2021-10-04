@@ -291,16 +291,19 @@ addCard = (content, type) => {
         card.querySelector('.uptime-started').textContent = startDate.toLocaleString();
         card.querySelector('.viewer-number').textContent = delimitNumber(content.viewers);
 
-        card.querySelectorAll('.streamer-name').forEach(element => {
+        card.querySelectorAll('.streamer-display-name').forEach(element => {
             element.textContent = content.channel.display_name;
+        });
+        card.querySelectorAll('.streamer-name').forEach(element => {
+            element.textContent = content.channel.name;
         });
 
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', content.channel.display_name
+            'channelVideosTip', content.channel.name
         );
         card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', content.channel.display_name
+            'channelClipsTip', content.channel.name
         );
 
         const following = bp.isFollowing(content.channel._id);
@@ -366,16 +369,19 @@ addCard = (content, type) => {
         card.querySelector('.follow').style = following ? 'display:none' : '';
         card.querySelector('.unfollow').style = following ? '' : 'display:none';
 
-        card.querySelectorAll('.streamer-name').forEach(element => {
+        card.querySelectorAll('.streamer-display-name').forEach(element => {
             element.textContent = channel.display_name;
+        });
+        card.querySelectorAll('.streamer-name').forEach(element => {
+            element.textContent = channel.name;
         });
 
         // tooltip stuff
         card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', channel.display_name
+            'channelVideosTip', channel.name
         );
         card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', channel.display_name
+            'channelClipsTip', channel.name
         );
 
         UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
