@@ -233,6 +233,8 @@ const UI = {
 
 addCard = (content, type) => {
     if (type === 'game') {
+        if (document.getElementById(`GAME!${content._id}`)) return;
+
         let card = document.getElementById('stub-game').cloneNode(true);
 
         const game = content.game ? content.game : content;
@@ -260,6 +262,8 @@ addCard = (content, type) => {
         contentArea.appendChild(card);
     }
     else if (type === 'stream') {
+        if (document.getElementById(`STREAM!${content._id}`)) return;
+
         let card = document.getElementById('stub-stream').cloneNode(true);
 
         card.dataset['type'] = type;
@@ -320,10 +324,13 @@ addCard = (content, type) => {
         contentArea.appendChild(card);
     }
     else if (type === 'video' || type === 'clip') {
-        let card = document.getElementById('stub-stream').cloneNode(true);
         const id = type === 'video'
             ? content._id.replace('v', '') // ids come with v on start eg. v12345678
             : content.tracking_id;
+
+        if (document.getElementById(`${type.toUpperCase()}!${id}`)) return;
+
+        let card = document.getElementById('stub-stream').cloneNode(true);
         const urlId = type === 'video' ? id : content.slug;
         const channel = type === 'video' ? content.channel : content.broadcaster;
         const streamerId = type === 'video' ? channel._id : channel.id;
@@ -392,14 +399,11 @@ addCard = (content, type) => {
         card.addEventListener('click', cardClickHandler);
 
         contentArea.appendChild(card);
-
-        // if (document.getElementById(id)) {
-        //     return;
-        // }
-
     }
     else if (type === 'channel') {
         const channel = content.channel ? content.channel : content;
+
+        if (document.getElementById(`CHANNEL!${channel._id}`)) return;
 
         let card = document.getElementById('stub-channel').cloneNode(true);
         card.id = `CHANNEL!${channel._id}`;
