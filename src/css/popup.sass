@@ -1,0 +1,159 @@
+@import 'themes'
+@import 'cards'
+@import 'utils'
+
+body
+    width: 600px
+    height: 600px
+    padding: 0
+    margin: 0
+    background-color: var(--primary)
+    font-family: Helvetica, serif
+    font-size: 12px
+    color: var(--text-primary)
+    user-select: none
+    -moz-user-select: none
+
+@media (min-width: 601px)
+    body
+        width: 100vw
+        height: 100vh
+
+#root
+    height: 100%
+
+.logo
+    background: url('../../assets/twitch-fox.svg') no-repeat center / 75%
+
+.container
+    display: grid
+    grid-template-columns: 36px 1fr
+    grid-template-rows: 36px 1fr
+    grid-template-areas: "navbar navbar" "menu content"
+    justify-content: stretch
+    height: 100%
+
+.navbar
+    grid-area: navbar
+    background-color: #4B367C
+    display: flex
+
+.menu
+    grid-area: menu
+    background-color: var(--menu-bg)
+    border-right: 1px solid #2C2541
+    display: flex
+    flex-direction: column
+    justify-content: space-between
+
+    &-button
+        height: 36px
+        width: 36px
+        transition: background-color 0.5s ease
+
+        &__games
+            background-image: url(../../assets/images/games.png)
+        &__streams
+            background-image: url(../../assets/images/streams.png)
+        &__channels
+            background-image: url(../../assets/images/channels.png)
+        &__followed-streams
+            background-image: url(../../assets/images/followedStreams.png)
+        &__followed-channels
+            background-image: url(../../assets/images/followedChannels.png)
+        &__settings
+            background-image: url(../../assets/images/settings.png)
+        &__about
+            background-image: url(../../assets/images/about.png)
+        &__exit
+            background: url(../../assets/images/exit.svg) no-repeat center / 75%
+
+.tab--selected
+    background-color: #53505B
+
+.contentArea
+    grid-area: content
+    overflow: auto
+
+.icon
+    background-repeat: no-repeat
+    background-size: contain
+
+    &:hover
+        cursor: pointer
+        opacity: 1
+
+    &--inactive
+        opacity: 0.8
+        cursor: not-allowed !important
+
+    &--small
+        height: 18px
+        width: 18px
+    &--medium
+        height: 30px
+        width: 30px
+        color: white
+
+    &__arrow-left
+        background-image: url(../../assets/images/back.png)
+    &__arrow-right
+        background-image: url(../../assets/images/forward.png)
+    &__search
+        background-image: url(../../assets/images/search.png)
+    &__refresh
+        background-image: url(../../assets/images/refresh.png)
+    &__exit
+        background-image: url(../../assets/images/exit.png)
+
+    &__uptime
+        background: url(../../assets/images/uptime.png) no-repeat center
+        width: 20px
+        height: 20px
+    &__stream
+        background-image: url(../../assets/images/glitch.png)
+    &__popout
+        background-image: url(../../assets/images/popout.png)
+    &__chat
+        background-image: url(../../assets/images/chat.png)
+    &__enlarge
+        background-image: url(../../assets/images/enlarge.png)
+    &__videos
+        background-image: url(../../assets/images/videos.png)
+    &__clips
+        background-image: url(../../assets/images/clips.png)
+    &__follow
+        background-image: url(../../assets/images/follow.png)
+    &__unfollow
+        background-image: url(../../assets/images/unfollow.png)
+
+.navigation
+    display: flex
+    flex-grow: 1
+    margin: 4px 0
+    padding: 0 4px
+    gap: 4px
+    align-items: center
+    background-color: var(--search-bg)
+
+    input
+        flex-grow: 1
+        border: 0 solid
+        background-color: var(--search-bg)
+        color: var(--text-primary)
+
+.preview
+    position: fixed
+    opacity: 0
+    visibility: hidden
+    z-index: 3
+    background: rgba(0,0,0,0.8) no-repeat none 50%/contain
+    box-shadow: 0 0 0 3000px rgba(0,0,0,0.8)
+
+    &.enabled
+        opacity: 1
+        visibility: visible
+        width: 100% !important
+        height: 90% !important
+        top: 5% !important
+        left: 0 !important

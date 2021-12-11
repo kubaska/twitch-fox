@@ -5,7 +5,7 @@
             {
                 "debug": true,
                 "targets": {
-                    "firefox": "68"
+                    "firefox": "76"
                 }
             }
         ]

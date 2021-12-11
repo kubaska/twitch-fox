@@ -1,0 +1,212 @@
+.media-container
+    display: grid
+    grid-template-rows: 1fr
+    grid-gap: 8px
+    grid-template-columns: repeat(auto-fill, minmax(var(--col-size), 1fr))
+    padding: 8px
+
+    &.stream,&.video,&.clip
+        --col-size: 250px
+        --image-padding: 56.25%
+    &.game
+        --col-size: 136px
+        // This gets too big TODO
+        --image-padding: 139.7%
+    &.channel
+        // todo
+        --col-size: 150px
+        --image-padding: 100%
+
+.media-object
+    color: #fff
+
+    &__cover
+        position: relative
+
+    &__cover-wrap
+        background-color: #333
+        padding-top: var(--image-padding)
+        position: relative
+        width: 100%
+
+    // same as on-top
+    &__cover-inner
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+
+    &__info
+        font-size: 12px
+        line-height: 20px
+        color: var(--text-primary)
+
+    & .btn
+        width: 30px
+        height: 30px
+        background-color: #6441A4
+
+        &:hover
+            background-color: #7D5BBE
+
+.on-top
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+
+// Slide down animation
+// Used for streams, VODs and channels.
+.background--slide-down
+    background-color: black
+    opacity: 0.6
+    height: 20px
+    /* todo fix rest of animation */
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease
+
+// Darken the background
+// Used for games.
+.background--darken
+    background-color: black
+    opacity: 0
+    transition: opacity 0.3s ease
+
+.overlay--stream
+    display: grid
+    grid-template-columns: 1fr min-content
+    grid-template-rows: min-content 1fr min-content
+    grid-template-areas: "title uptime" "title navsmol" "nav nav"
+
+    & > .title
+        grid-area: title
+        min-width: 0
+        display: flex
+        padding: 4px
+
+        & > .status
+            height: 20px
+            line-height: 14px
+            word-wrap: break-word
+
+    & > .uptime
+        grid-area: uptime
+        display: flex
+        margin-right: 5px
+        line-height: 20px
+
+    & > .upper
+        grid-area: navsmol
+        visibility: hidden
+        display: flex
+        align-items: flex-end
+        flex-direction: column
+        justify-content: flex-end
+
+    & > .lower
+        grid-area: nav
+        display: flex
+        align-items: flex-end
+        justify-content: flex-end
+
+        & > .lower--controls
+            visibility: hidden
+            display: flex
+            flex-grow: 1
+
+        & > .logo
+            border-width: 2px 2px 0 0
+            border-color: var(--primary-accent)
+            border-style: solid
+
+        & > .category
+            width: 38px
+            height: 52px
+            border-width: 2px 0 0 2px
+            border-color: var(--primary-accent)
+            border-style: solid
+
+            & > img
+                cursor: pointer
+                height: 100%
+                width: 100%
+
+.overlay--game
+    display: flex
+    flex-direction: column
+    cursor: pointer
+    visibility: hidden
+
+    & > .upper
+        display: flex
+        align-items: flex-end
+        flex-direction: column
+
+    & > .lower
+        display: flex
+        align-items: flex-end
+
+.overlay--channel
+    display: grid
+    grid-template-columns: 1fr min-content
+    grid-template-rows: min-content 1fr min-content
+    grid-template-areas: "title title" "description navright" "nav nav"
+
+    & > .title
+        grid-area: title
+        line-height: 20px
+        text-align: center
+
+    & > .description
+        grid-area: description
+        visibility: hidden
+        display: flex
+        min-height: 0
+        min-width: 0
+        padding: 0 4px
+
+        & > .description--text
+            word-wrap: break-word
+            white-space: inherit
+
+    & > .upper
+        grid-area: navright
+        visibility: hidden
+        display: flex
+        align-items: flex-end
+        flex-direction: column
+        justify-content: flex-end
+
+    & > .lower
+        grid-area: nav
+        display: flex
+        align-items: flex-end
+        justify-content: flex-end
+
+        &> .lower--controls
+            visibility: hidden
+            display: flex
+            flex-grow: 1
+
+// Animations
+.media-object__cover:hover
+    &.stream,&.channel
+        .upper
+            visibility: visible
+        .lower--controls
+            visibility: visible
+        .status
+            height: 100%
+            white-space: inherit
+        .background
+            height: 100%
+        // channel specific
+        .description
+            visibility: visible
+
+    &.category
+        .overlay
+            visibility: visible
+        .background
+            opacity: 0.4

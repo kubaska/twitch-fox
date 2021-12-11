@@ -4,228 +4,168 @@
 
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="popup.css"/>
-    <link id="darkMode" rel="stylesheet"/>
-    <link id="styleLink" rel="stylesheet"/>
+    <link rel="stylesheet" href="popup.css" />
+    <link id="tooltips-stylesheet" rel="stylesheet" />
+    <title>Twitch Fox</title>
 </head>
 
 <body>
 
 <div class="container">
     <div class="navbar">
-        <div class="twitch-fox-icon"></div>
-        <div class="searchBar" id="searchBar">
-            <div class="menuButton search back" id="back">
-                <span class="tooltip" id="backTip"></span>
-            </div>
-            <div class="menuButton search forward" id="forward">
-                <span class="tooltip" id="forwardTip"></span>
-            </div>
-            <div class="menuButton search" id="search">
-                <span class="tooltip" id="searchTip"></span>
-            </div>
-            <input type="text" id="searchBox" class="searchBox">
-            <div class="menuButton search refresh possible" id="refresh">
-                <span class="tooltip" id="refreshTip"></span>
-            </div>
-            <div class="menuButton search exitSearch" id="exitSearch">
-                <span class="tooltip" id="exitSearchTip"></span>
-            </div>
+        <div class="menu-button logo"></div>
+        <div id="navigation" class="navigation">
+            <span id="back" class="icon icon--small icon__arrow-left tooltipped" data-tooltip="Go back one search level"></span>
+            <span id="forward" class="icon icon--small icon__arrow-right tooltipped" data-tooltip="Go forward one search level"></span>
+            <span id="search" class="icon icon--small icon__search tooltipped" data-tooltip="Enter text to filter results, and press this icon or the 'ENTER' key to search Twitch with your query."></span>
+            <input id="searchBox" type="text" />
+            <span id="refresh" class="icon icon--small icon__refresh tooltipped" data-tooltip="Refresh the results"></span>
+            <span id="exitSearch" class="icon icon--small icon__exit tooltipped" data-tooltip="Exit the search"></span>
         </div>
-        <div class="menuButton avatar" id="avatar">
-            <span class="tooltip" id="avatarTip"></span>
-        </div>
-        <div class="menuButton login" id="login">
-            <span class="loginText" id="loginText"></span>
-            <span class="tooltip" id="loginTip"></span>
-        </div>
+        <div id="avatar" class="menu-button"></div>
+        <div id="logout" class="menu-button menu-button__exit tooltipped" data-tooltip="Log out from Twitch"></div>
     </div>
 
     <div class="menu" id="menu">
         <div>
-            <div class="menuButton tab games" id="games">
-                <span class="tooltip" id="gamesTip"></span>
-            </div>
-            <div class="menuButton tab streams" id="streams">
-                <span class="tooltip" id="streamsTip"></span>
-            </div>
-<!--            <div class="menuButton tab videos" id="videos">-->
-<!--                <span class="tooltip" id="videosTip"></span>-->
-<!--            </div>-->
-<!--            <div class="menuButton tab clips" id="clips">-->
-<!--                <span class="tooltip" id="clipsTip"></span>-->
-<!--            </div>-->
-            <div class="menuButton tab channels" id="channels">
-                <span class="tooltip" id="channelsTip"></span>
-            </div>
+            <div class="menu-button menu-button__games tab tooltipped" id="games" data-tooltip="Browse the top games on Twitch"></div>
+            <div class="menu-button menu-button__streams tab tooltipped" id="streams" data-tooltip="Browse the top live streams on Twitch"></div>
+            <div class="menu-button menu-button__channels tab tooltipped" id="channels" data-tooltip="Search for channels on Twitch"></div>
         </div>
 
         <div>
-            <div class="menuButton tab followedStreams" id="followedStreams">
-                <span class="tooltip" id="followedStreamsTip"></span>
-            </div>
-<!--            <div class="menuButton tab followedVideos" id="followedVideos">-->
-<!--                <span class="tooltip" id="followedVideosTip"></span>-->
-<!--            </div>-->
-<!--            <div class="menuButton tab followedClips" id="followedClips">-->
-<!--                <span class="tooltip" id="followedClipsTip"></span>-->
-<!--            </div>-->
-            <div class="menuButton tab followedChannels" id="followedChannels">
-                <span class="tooltip" id="followedChannelsTip"></span>
-            </div>
+            <div class="menu-button menu-button__followed-streams tab tooltipped" id="followedStreams" data-tooltip="View streams of currently live followed channels"></div>
+            <div class="menu-button menu-button__followed-channels tab tooltipped" id="followedChannels" data-tooltip="View all followed channels"></div>
         </div>
 
         <div>
-            <div class="menuButton fakeTab settings" id="settings">
-                <span class="tooltip" id="settingsTip"></span>
-            </div>
-            <div class="menuButton tab about" id="about">
-                <span class="tooltip" id="aboutTip"></span>
-            </div>
+            <div class="menu-button menu-button__settings tab--fake tooltipped" id="settings" data-tooltip="Visit the settings page"></div>
+            <div class="menu-button menu-button__about tab tooltipped" id="about" data-tooltip="Learn about the add-on you're using right now, Twitch Fox!"></div>
         </div>
     </div>
 
-    <div class="contentArea contentAreaCss" id="contentArea">
-
+    <div id="content-area" class="contentArea">
+        <div id="media-container" class="media-container"></div>
     </div>
 </div>
 
-<div class="screenLock hidden" id="screenLock">
-    <div class="lockBackground"></div>
-    <div class="enlargedPreview" id="enlargedPreview"></div>
-</div>
+<div id="preview" class="preview"></div>
 
-<div id="stubs" style="display: none">
-    <div class="content game" id="stub-game">
-        <div class="contentBack game lazy">
-            <div class="hoverBack game"></div>
-            <div class="hideUntilHover">
-                <div class="clickBack game" data-trigger="browseGame"></div>
-                <div class="contentButton bottom game twitch" data-trigger="openGame">
-                    <span class="tooltip">Open Twitch page</span>
+<div id="stubs" class="d-none">
+    <div id="stub-game" class="media-object">
+        <div class="media-object__cover category">
+            <div class="media-object__cover-wrap">
+                <div>
+                    <img class="media-object__cover-inner" loading="lazy" decoding="async" src="" />
                 </div>
-                <div class="contentButton side game smallVideos" data-trigger="browseChannelsByGame">
-                    <span class="tooltip">
-                        <span>View the top videos from channels playing</span>&nbsp;<span class="game-name"></span>
-                    </span>
+            </div>
+
+            <div class="on-top background background--darken"></div>
+
+            <div class="on-top overlay overlay--game">
+                <div class="h-50 upper" data-trigger="browseGame">
+                    <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByGame" data-tooltip="View the top videos from channels playing %MSG%"></div>
+                    <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByGame" data-tooltip="View the top clips from streams playing %MSG%"></div>
                 </div>
-                <div class="contentButton side game smallClips" data-trigger="browseClipsByGame">
-                    <span class="tooltip">
-                        <span>View the top clips from streams playing</span>&nbsp;<span class="game-name"></span>
-                    </span>
+
+                <div class="h-50 lower" data-trigger="browseGame">
+                    <div class="btn icon icon--medium icon__stream tooltipped" data-trigger="openGame" data-tooltip="Open Twitch page"></div>
                 </div>
             </div>
         </div>
-        <span class="gameTitle">
-            <span class="bottomText gameTop game-name"></span>
-            <span class="tooltip noDisable game-name"></span>
-        </span>
-        <div class="bottomText gameBottom">
-            <span class="viewer-count"></span>&nbsp;<span>viewers</span>
+        <div class="media-object__info">
+            <div class="media-object__name title text-truncate"></div>
         </div>
-        <span class="tag"></span>
     </div>
 
-    <div class="content stream" id="stub-stream">
-        <div class="contentBack stream lazy">
-            <div class="hoverBack stream"></div>
-            <div class="status stream">Stream Title</div>
-            <div class="hideUntilHover">
-                <div class="contentButton bottom stream twitch" data-trigger="openStream">
-                    <span class="tooltip">Open Twitch page</span>
-                </div>
-                <div class="contentButton bottom stream popout" data-trigger="openStreamPopout">
-                    <span class="tooltip">Open content in a popout window</span>
-                </div>
-                <div class="contentButton bottom stream chat" data-trigger="openChat">
-                    <span class="tooltip">Open chat in a popout window</span>
-                </div>
-                <div class="contentButton bottom stream enlarge" data-trigger="enlarge">
-                    <span class="tooltip">Enlarge the preview</span>
-                </div>
-
-                <div class="contentButton bottom stream follow" data-trigger="follow">
-                    <span class="tooltip">Follow this channel</span>
-                </div>
-                <div class="contentButton bottom stream unfollow" data-trigger="unfollow">
-                    <span class="tooltip">Unfollow this channel</span>
-                </div>
-
-                <div class="contentButton side stream smallVideos" data-trigger="browseVideosByChannel">
-                    <span class="tooltip">View videos from this channel</span>
-                </div>
-                <div class="contentButton side stream smallClips" data-trigger="browseClipsByChannel">
-                    <span class="tooltip">View clips from this channel</span>
+    <div id="stub-stream" class="media-object">
+        <div class="media-object__cover stream">
+            <div class="media-object__cover-wrap">
+                <div>
+                    <img class="media-object__cover-inner" loading="lazy" decoding="async" src="" />
                 </div>
             </div>
-            <div class="uptime">
-                <span class="uptime-time"></span>
-                <span class="tooltip noDisable">
-                    <span>Stream started at</span>
-                    <span class="uptime-started"></span>
-                </span>
+
+            <div class="on-top background background--slide-down"></div>
+
+            <div class="on-top overlay overlay--stream">
+                <div class="title">
+                    <span class="status text-truncate"></span>
+                </div>
+
+                <div class="uptime tooltipped" data-tooltip="%MSG%">
+                    <span class="icon icon--small icon__uptime"></span>
+                    <span class="uptime--time"></span>
+                </div>
+
+                <div class="upper">
+                    <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByChannel" data-tooltip="View videos uploaded by %MSG%"></div>
+                    <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByChannel" data-tooltip="View clips made from %MSG%'s streams"></div>
+                </div>
+
+                <div class="lower">
+<!--                    <div class="logo" style="width: 45px; height: 45px; background-color:lightgreen;"></div>-->
+                    <div class="lower--controls">
+                        <span class="btn icon icon--medium icon__stream" data-trigger="openStream" data-tooltip="Open Twitch page"></span>
+                        <span class="btn icon icon--medium icon__popout" data-trigger="openStreamPopout" data-tooltip="Open content in a popout window"></span>
+                        <span class="btn icon icon--medium icon__chat" data-trigger="openChat" data-tooltip="Open chat in a popout window"></span>
+                        <span class="btn icon icon--medium icon__enlarge" data-trigger="enlarge" data-tooltip="Enlarge the preview"></span>
+                    </div>
+                    <div class="category tooltipped" data-tooltip="View the top live streams playing %MSG%">
+                        <img data-trigger="browseGame" class="category-img" src="" />
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="cornerGame lazy" data-trigger="browseGame">
-            <span class="tooltip noDisable">
-                <span>View the top live streams playing</span>&nbsp;<span class="game-name"></span>
-            </span>
-        </div>
-        <div class="cornerLogo lazy">
-            <span class="tooltip"><span class="streamer-name"></span><span>'s logo</span></span>
-        </div>
-        <div class="bottomText stream">
-            <span class="viewer-number"></span>&nbsp;<span>viewers on</span>&nbsp;<span class="streamer-name"></span>
-        </div>
-        <span class="tag"></span>
-    </div>
-
-    <div class="content channel" id="stub-channel">
-        <div class="contentBack channel">
-            <div class="hoverBack channel"></div>
-            <div class="topName">
+        <div class="media-object__info">
+            <div class="media-object__name text-truncate">
+                <span class="viewer-count"></span>
+                <span class="lang__stream"> viewers on </span>
+                <span class="lang__videos d-none"> views on </span>
                 <span class="streamer-name"></span>
-                <span class="tooltip noDisable streamer-name"></span>
             </div>
-            <div class="status channel"></div>
-            <div class="hideUntilHover">
-                <div class="contentButton bottom channel twitch" data-trigger="openStream">
-                    <span class="tooltip">Open Twitch page</span>
+        </div>
+    </div>
+
+    <div id="stub-channel" class="media-object">
+        <div class="media-object__cover channel">
+            <div class="media-object__cover-wrap">
+                <div>
+                    <img class="media-object__cover-inner" loading="lazy" decoding="async" src="" />
                 </div>
-                <div class="contentButton bottom channel chat" data-trigger="openChat">
-                    <span class="tooltip">Open chat in a popout window</span>
+            </div>
+
+            <div class="on-top background background--slide-down"></div>
+
+            <div class="on-top overlay overlay--channel">
+                <div class="title">
+                    <span class="status text-truncate"></span>
                 </div>
 
-                <div class="contentButton bottom channel follow followTwitch" data-trigger="follow">
-                    <span class="tooltip">Follow this channel with your Twitch account</span>
-                </div>
-                <div class="contentButton bottom channel follow" data-trigger="followLocal">
-                    <span class="tooltip">Follow this channel LOCALLY</span>
-                </div>
-                <div class="contentButton bottom channel unfollow" data-trigger="unfollow">
-                    <span class="tooltip">Unfollow this channel</span>
+                <div class="description">
+                    <span class="description--text text-truncate"></span>
                 </div>
 
-                <div class="contentButton side channel smallVideos" data-trigger="browseVideosByChannel">
-                    <span class="tooltip">View videos from this channel</span>
+                <div class="upper">
+                    <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByChannel" data-tooltip="View videos uploaded by %MSG%"></div>
+                    <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByChannel" data-tooltip="View clips made from %MSG%'s streams"></div>
                 </div>
-                <div class="contentButton side channel smallClips" data-trigger="browseClipsByChannel">
-                    <span class="tooltip">View clips from this channel</span>
+
+                <div class="lower">
+                    <div class="lower--controls">
+                        <span class="btn icon icon--medium icon__stream" data-tooltip="Open Twitch page" data-trigger="openStream"></span>
+                        <span class="btn icon icon--medium icon__chat" data-tooltip="Open chat in a popout window" data-trigger="openChat"></span>
+                        <span class="btn icon icon--medium icon__follow"></span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="cornerGame channel" data-trigger="browseGame">
-            <span class="tooltip">
-                <span>View the top live streams playing</span>&nbsp;<span class="game-name"></span>
-            </span>
-        </div>
-        <span class="tag"></span>
     </div>
 
     <div id="about-page" class="about-page">
         <div class="about-logo">
-            <div class="bigTwitchFox"></div>
-            <span class="versionText">Twitch Fox, version 4.4.0 (fork)</span>
+            <div class="logo"></div>
+            <span class="versionText">Twitch Fox, version 5.0.0 (fork)</span>
         </div>
 
         <div>

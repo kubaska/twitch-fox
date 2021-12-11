@@ -614,6 +614,12 @@ browser.browserAction.setBadgeBackgroundColor({
     color: '#6641A5',
 });
 
+browser.contextMenus.create({
+    contexts: ['browser_action'],
+    onclick: () => { browser.tabs.create({ url: 'html/popup.html' })},
+    title: 'Open Extended View'
+})
+
 // Exports
 
 window.authorize = authorize;

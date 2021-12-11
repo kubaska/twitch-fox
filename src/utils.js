@@ -1,17 +1,31 @@
 /* global browser */
 
 export default {
-    delimitNumber: () => {
-
+    delimitNumber: (number = 0) => {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
+
+    // Used by stream cards. Returns difference in HH:MM:SS format between supplied and current time.
     timeSince: (date, now) => {
         const secs = Math.floor((now - date.getTime()) / 1000);
         const hr = Math.floor(secs/3600);
         return (hr?`${hr}:`:'')+('0'+Math.floor(secs/60)%60).slice(-2)+':'+('0'+(secs%60)).slice(-2)
     },
-    secondsToHHMMSS: (seconds) => {
-        const hr = Math.floor(seconds/3600);
-        return (hr?`${hr}:`:'')+('0'+Math.floor(seconds/60)%60).slice(-2)+':'+('0'+(seconds%60)).slice(-2);
+    // Used by video cards.
+    // Converts "13h23m42s" format to 13:23:42, "1h9m1s" to 1:09:01 and "44s" to 0:44.
+    formattedTimeToHHMMSS: (time) => {
+        const parts = time.split(/[a-zA-Z]/g).filter(_=>_);
+        if (parts.length === 1) parts.unshift('0');
+        return parts.map((part, index) => {
+            if (index) return part.padStart(2, '0');
+            else return part;
+        }).join(':');
+    },
+    // Used by clip cards. Formats seconds to MM:SS format.
+    // Eg. 43 => 0:43, 43,7 => 0:43
+    secondsToMMSS: (seconds) => {
+        seconds = Math.round(seconds);
+        return ('0'+Math.floor(seconds/60)%60).slice(-2)+':'+('0'+(seconds%60)).slice(-2);
     },
     cloneObj: (obj) => {
         return JSON.parse(JSON.stringify(obj));

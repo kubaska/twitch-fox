@@ -1,16 +1,17 @@
 /* global browser */
 
-import utils from "./utils";
-import LazyLoad from "vanilla-lazyload";
 import {endpoints, tabs} from "./contants";
+import {makeCard, UI} from "./ui";
+import utils from "./utils";
 import {debounce} from "lodash";
+import './css/popup.sass';
 
 const bp = browser.extension.getBackgroundPage();
 
-const settings = document.getElementById('settings');
+// Navigation
 const back = document.getElementById('back');
 const forward = document.getElementById('forward');
-const searchBar = document.getElementById('searchBar');
+const searchBar = document.getElementById('navigation');
 const search = document.getElementById('search');
 const searchBox = document.getElementById('searchBox');
 const refresh = document.getElementById('refresh');
@@ -18,23 +19,14 @@ const exitSearch = document.getElementById('exitSearch');
 const avatar = document.getElementById('avatar');
 const login = document.getElementById('login');
 const loginText = document.getElementById('loginText');
-const contentArea = document.getElementById('contentArea');
-const screenLock = document.getElementById('screenLock');
-const lazyload = new LazyLoad({
-    container: contentArea
-});
 
-let enlargedPreview = document.getElementById('enlargedPreview');
-let enlargedContent = '';
-let newEnlarged;
-let oldEnlarged;
+const contentArea = document.getElementById('content-area');
+const mediaContainer = document.getElementById('media-container');
+const previewElement = document.getElementById('preview');
+const settings = document.getElementById('settings');
 
 let mode;
 
-const delimitNumber = (num = 0) => num.toString().replace(
-    /\B(?=(\d{3})+(?!\d))/g,
-    browser.i18n.getMessage('delimiter'),
-);
 
 /**
  * Set the popup mode in both the script and the storage
@@ -46,32 +38,32 @@ const setMode = (newMode) => {
     bp.setMode(newMode);
 };
 
-let addCard;
 
 const enlarge = (element) => {
-    if (oldEnlarged && oldEnlarged.id !== enlargedPreview.id) {
-        screenLock.removeChild(oldEnlarged);
-    }
-    const contentBack = element.querySelector('.contentBack');
-    const rect = contentBack.getBoundingClientRect();
-    newEnlarged = enlargedPreview.cloneNode();
-    newEnlarged.id = 'newEnlarged';
-    element.classList.add('hidden');
-    enlargedContent = element.id;
-    enlargedPreview.style.backgroundImage = contentBack.style.backgroundImage;
-    enlargedPreview.style.left = `${rect.left}px`;
-    enlargedPreview.style.top = `${rect.top}px`;
-    enlargedPreview.style.transform = `translate(${-rect.left}px,${131 - rect.top}px)`;
-    enlargedPreview.classList.add('enlarged');
-    screenLock.classList.remove('hidden');
-};
+    const cover = element.querySelector('.media-object__cover-inner');
+    const rect = cover.getBoundingClientRect();
+    previewElement.style.backgroundImage = `url(${cover.src})`;
+    previewElement.style.left = `${rect.left}px`;
+    previewElement.style.top = `${rect.top}px`;
+    previewElement.style.width = `${rect.width}px`;
+    previewElement.style.height = `${rect.height}px`;
+    previewElement.style.transition = 'none';
+
+    setTimeout(() => {
+        previewElement.style.transition = 'all 0.3s ease';
+        previewElement.classList.add('enabled');
+    }, 1);
+}
+previewElement.addEventListener('click', () => {
+    previewElement.classList.remove('enabled');
+});
 
 const filterContent = (noScroll) => {
     const filter = searchBox.value.toLowerCase();
     const results = bp.getResults();
     const index = bp.getIndex();
 
-    const tags = document.querySelectorAll('.contentArea .tag');
+    const tags = document.querySelectorAll('.media-container .tag');
     let hidden = 0;
     for (let i = 0; i < tags.length; i += 1) {
         if (tags[i].textContent.toLowerCase().search(filter) > -1) {
@@ -121,68 +113,79 @@ const updatePage = (noScroll) => {
     const results = bp.getResults();
     const index = bp.getIndex();
 
-    while (contentArea.hasChildNodes()) {
-        contentArea.removeChild(contentArea.firstChild);
+    while (mediaContainer.hasChildNodes()) {
+        mediaContainer.removeChild(mediaContainer.firstChild);
     }
+    let addCount = 0;
+    let cards = document.createDocumentFragment();
 
     for (let i = 0; i < results[index].content.length; i += 1) {
-        addCard(results[index].content[i], results[index].type);
+        const card = makeCard(bp, results[index].type, results[index].content[i]);
+        card.addEventListener('click', cardClickHandler);
+        cards.appendChild(card);
+        addCount++;
     }
 
+    mediaContainer.appendChild(cards);
+
+    console.log('Cards added: ', addCount);
+    mediaContainer.className = 'media-container ' + results[index].type;
+
     if (results.length - index > 1) {
-        forward.classList.add('possible');
+        forward.classList.remove('icon--inactive');
     } else {
-        forward.classList.remove('possible');
+        forward.classList.add('icon--inactive');
     }
 
     if (index > 0 || tabs.isFollowedTab(mode)) {
         if (results[index].total) {
             searchBox.placeholder =
                 browser.i18n.getMessage('filterOf', [
-                    delimitNumber(contentArea.children.length),
-                    delimitNumber(results[index].total),
+                    utils.delimitNumber(mediaContainer.children.length),
+                    utils.delimitNumber(results[index].total),
                 ]);
         } else {
             searchBox.placeholder = browser.i18n.getMessage(
                 'filter',
-                delimitNumber(contentArea.children.length),
+                utils.delimitNumber(mediaContainer.children.length),
             );
         }
-        search.classList.remove('possible');
-        back.classList[index > 0 ? 'add' : 'remove']('possible');
+        search.classList.add('icon--inactive');
+        back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
     } else {
         if (mode === tabs.GAMES || mode === tabs.SEARCH) {
             searchBox.placeholder = mode === tabs.SEARCH ?
                 browser.i18n.getMessage('searchTwitch') :
                 browser.i18n.getMessage('searchOrFilterOf', [
-                    delimitNumber(contentArea.children.length),
-                    delimitNumber(results[index].total),
+                    utils.delimitNumber(mediaContainer.children.length),
+                    utils.delimitNumber(results[index].total),
                 ]);
-            search.classList.add('possible');
+            search.classList.remove('icon--inactive');
         } else {
             searchBox.placeholder = browser.i18n.getMessage(
                 'filter',
-                delimitNumber(contentArea.children.length),
+                utils.delimitNumber(mediaContainer.children.length),
             );
-            search.classList.remove('possible');
+            search.classList.add('icon--inactive');
         }
-        back.classList.remove('possible');
+        back.classList.add('icon--inactive');
     }
 
-    exitSearch.classList[forward.classList.contains('possible') ||
-    back.classList.contains('possible') ? 'add' : 'remove']('possible');
+    // fixme
+    exitSearch.classList[forward.classList.contains('icon--inactive') ||
+    back.classList.contains('icon--inactive') ? 'add' : 'remove']('icon--inactive');
 
     if (mode === tabs.FOLLOWED_CHANNELS || mode === tabs.FOLLOWED_STREAMS) {
-        refresh.classList.remove('possible');
+        refresh.classList.add('icon--inactive');
     } else {
-        refresh.classList.add('possible');
-        refresh.firstElementChild.textContent = browser.i18n.getMessage('refreshTip');
+        refresh.classList.remove('icon--inactive');
+        // fixme
+        // refresh.firstElementChild.textContent = browser.i18n.getMessage('refreshTip');
     }
 
     if (!noScroll) searchBox.value = results[index].filter;
 
     filterContent(noScroll);
-    lazyload.update();
 };
 
 const callApi = (endpoint, opts = {}, newIndex, reset) => {
@@ -214,262 +217,11 @@ const saveTabState = () => {
     bp.saveTabState(searchBox.value, contentArea.scrollTop);
 }
 
-const UI = {
-    insertBackgroundUrl: (element, url, useLazyloader = true) => {
-        if (useLazyloader) {
-            element.dataset['bg'] = url;
-        } else {
-            element.style.backgroundImage = `url("${url}")`;
-        }
-    },
-
-    getParentElement: (element, klass) => {
-        while (element && ! element.classList.contains(klass)) {
-            element = element.parentElement;
-        }
-        return element;
-    },
-
-    getImageUrl: (url, width, height) => {
-        return url.replace(/%?{width}x%?{height}/, `${width}x${height}`);
-    }
-}
-
-addCard = (content, type) => {
-    if (document.getElementById(type.toUpperCase()+'!'+content.id)) return;
-
-    if (type === 'game') {
-        let card = document.getElementById('stub-game').cloneNode(true);
-
-        // fixme do we need this?
-        const game = content.game ? content.game : content;
-
-        card.id = `GAME!${game.id}`;
-        card.dataset['gameId'] = game.id;
-        card.dataset['game'] = game.name; // todo remove?
-
-        card.querySelectorAll('.game-name').forEach(element => {
-            element.textContent = game.name;
-        })
-
-        card.querySelector('.contentBack').dataset['bg'] = UI.getImageUrl(game.box_art_url, 136, 190);
-
-        // TODO Top Games endpoint does not return viewer count anymore. Remove this if they wont add it back.
-        if (content.viewers) {
-            card.querySelector('.viewer-count').textContent = delimitNumber(content.viewers);
-        } else {
-            // Searching for game does not return the viewer count, hide it
-            card.querySelector('.viewer-count').classList.add('d-none');
-        }
-
-        card.querySelector('.tag').textContent = game.name;
-
-        card.addEventListener('click', cardClickHandler);
-
-        contentArea.appendChild(card);
-    }
-    else if (type === 'stream') {
-        let card = document.getElementById('stub-stream').cloneNode(true);
-
-        card.dataset['type'] = type;
-
-        card.id = `STREAM!${content.id}`;
-        card.dataset['id'] = content.id;
-        card.dataset['streamerId'] = content.user_id;
-        card.dataset['name'] = content.user_name;
-        card.dataset['gameId'] = content.game_id;
-        card.dataset['game'] = content.game_name; // todo remove
-
-        card.querySelector('.status.stream').textContent = content.title;
-
-        UI.insertBackgroundUrl(
-            card.querySelector('.contentBack'),
-            UI.getImageUrl(content.thumbnail_url, 640, 360)
-        );
-
-        if (content.game_name) {
-            card.querySelector('.game-name').textContent = content.game_name;
-            UI.insertBackgroundUrl(
-                card.querySelector('.cornerGame'),
-                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name}-52x72.jpg`
-            );
-        } else {
-            card.querySelector('.cornerGame').classList.add('hide');
-        }
-
-        const startDate = new Date(content.started_at);
-        const now = Date.now();
-
-        card.querySelector('.uptime-time').textContent = utils.timeSince(startDate, now);
-        card.querySelector('.uptime-started').textContent = startDate.toLocaleString();
-        card.querySelector('.viewer-number').textContent = delimitNumber(content.viewer_count);
-
-        card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = content.user_name;
-        });
-
-        // tooltip stuff
-        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', content.user_name
-        );
-        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', content.user_name
-        );
-
-        const following = bp.isFollowing(content.user_id);
-        card.querySelector('.follow').style = following ? 'display:none' : '';
-        card.querySelector('.unfollow').style = following ? '' : 'display:none';
-
-        // fixme Get channel images from cached follows?
-        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
-        card.querySelector('.cornerLogo').classList.add('d-none');
-
-        card.querySelector('.tag').textContent =
-            content.game_name+content.user_login+content.user_name+content.title;
-
-        card.addEventListener('click', cardClickHandler);
-
-        contentArea.appendChild(card);
-    }
-    else if (type === 'video' || type === 'clip') {
-        let card = document.getElementById('stub-stream').cloneNode(true);
-
-        const streamerId = type === 'video' ? content.id : content.broadcaster_id;
-        const streamerName = type === 'video' ? content.user_name : content.broadcaster_name;
-
-        card.dataset['type'] = type;
-
-        card.id = `${type.toUpperCase()}!${content.id}`;
-        card.dataset['id'] = content.id;
-        // for some reason, Twitch returns id prop with an underscore
-        // for videos and without for clips...
-        card.dataset['streamerId'] = streamerId;
-        card.dataset['name'] = streamerName;
-        // card.dataset['game'] = content.game;
-
-        card.querySelector('.status.stream').textContent = content.title;
-
-        if (content.thumbnail_url) {
-            UI.insertBackgroundUrl(
-                card.querySelector('.contentBack'),
-                type === 'video' ? UI.getImageUrl(content.thumbnail_url, 640, 360) : content.thumbnail_url
-            );
-        } else {
-            // handle no image
-        }
-
-        // No game returned for videos, only ID returned for clips.
-        // if (content.game) {
-        //     card.querySelector('.game-name').textContent = content.game;
-        //     UI.insertBackgroundUrl(
-        //         card.querySelector('.cornerGame'),
-        //         `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
-        //     );
-        // } else {
-            card.querySelector('.cornerGame').classList.add('d-none');
-        // }
-
-        const createdAt = new Date(content.created_at);
-
-        card.querySelector('.uptime-time').textContent = content.duration;
-        // card.querySelector('.uptime-time').textContent = utils.secondsToHHMMSS(parseInt(content.duration));
-        card.querySelector('.uptime-started').textContent = createdAt.toLocaleString();
-        card.querySelector('.viewer-number').textContent = delimitNumber(content.view_count);
-
-        // Hide chat button
-        card.querySelector('.contentButton.chat').classList.add('d-none');
-
-        const following = bp.isFollowing(streamerId);
-        card.querySelector('.follow').style = following ? 'display:none' : '';
-        card.querySelector('.unfollow').style = following ? '' : 'display:none';
-
-        card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = streamerName;
-        });
-
-        // tooltip stuff
-        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', streamerName
-        );
-        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', streamerName
-        );
-
-        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
-        card.querySelector('.cornerLogo').classList.add('d-none');
-
-        card.querySelector('.tag').textContent = streamerName+content.title;
-
-        card.addEventListener('click', cardClickHandler);
-
-        contentArea.appendChild(card);
-    }
-    else if (type === 'channel') {
-        const channel = content.channel ? content.channel : content; // todo remove?
-
-        let card = document.getElementById('stub-channel').cloneNode(true);
-        card.id = `CHANNEL!${channel.id}`;
-        card.dataset['id'] = channel.id;
-        card.dataset['streamerId'] = channel.id;
-        card.dataset['name'] = channel.display_name;
-
-        card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = channel.display_name;
-        });
-
-        // todo this endpoint does not return channel logo. remove laster
-        UI.insertBackgroundUrl(
-            card.querySelector('.contentBack'),
-            channel.logo
-                ? channel.logo
-                : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png',
-            false
-        );
-
-        if (content.game) {
-            card.dataset['gameId'] = content.game_id;
-            card.dataset['game'] = content.game_name;
-            card.querySelector('.game-name').textContent = content.game_name;
-            UI.insertBackgroundUrl(
-                card.querySelector('.cornerGame'),
-                `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name}-52x72.jpg`,
-                false
-            );
-        } else {
-            card.querySelector('.cornerGame').classList.add('d-none');
-        }
-
-        const following = bp.isFollowing(channel._id);
-        card.querySelectorAll('.follow').forEach(btn => btn.style = following ? 'display:none' : '');
-        card.querySelector('.unfollow').style = following ? '' : 'display:none';
-        if (! bp.getAuthorizedUser()) {
-            card.querySelector('.followTwitch').classList.add('noAccess');
-        }
-
-        // tooltip stuff
-        card.querySelector('.smallVideos .tooltip').textContent = browser.i18n.getMessage(
-            'channelVideosTip', channel.display_name
-        );
-        card.querySelector('.smallClips .tooltip').textContent = browser.i18n.getMessage(
-            'channelClipsTip', channel.display_name
-        );
-
-        card.querySelector('.tag').textContent = channel.broadcaster_login+channel.display_name;
-
-        card.addEventListener('click', cardClickHandler);
-
-        contentArea.appendChild(card);
-    }
-};
-
 const cardClickHandler = (e) => {
     const trigger = e.target.dataset['trigger'];
-
     if (! trigger) return;
 
-    if (e.target.classList.contains('noAccess')) return;
-
-    const topElem = UI.getParentElement(e.target, 'content');
+    const topElem = UI.getParentElement(e.target, 'media-object');
 
     const meta = {
         type: topElem.dataset['type'],
@@ -528,7 +280,7 @@ const cardClickHandler = (e) => {
         case 'browseGame':
             callApi(endpoints.GET_STREAMS, { game_id: meta.gameId }, true);
             break;
-        case 'browseChannelsByGame':
+        case 'browseVideosByGame':
             callApi(endpoints.GET_VIDEOS, { game_id: meta.gameId, period: 'month' }, true);
             break;
         case 'browseClipsByGame':
@@ -554,13 +306,13 @@ const updateTab = (newMode) => {
             // The mode we are trying to switch to is not allowed
             return;
         }
-        document.getElementById(mode).classList.remove('selected');
+        document.getElementById(mode).classList.remove('tab--selected');
         setMode(newMode);
     }
 
-    document.getElementById(mode).classList.add('selected');
-    while (contentArea.hasChildNodes()) {
-        contentArea.removeChild(contentArea.firstChild);
+    document.getElementById(mode).classList.add('tab--selected');
+    while (mediaContainer.hasChildNodes()) {
+        mediaContainer.removeChild(mediaContainer.firstChild);
     }
 
     if (mode === tabs.ABOUT) {
@@ -586,16 +338,6 @@ const updateTab = (newMode) => {
                     callApi(endpoints.GET_STREAMS);
                 } else updatePage();
             }
-            // else if (mode === tabs.VIDEOS) {
-            //     if (results[index].content.length < 1) {
-            //         callApi(endpoints.GET_TOP_VIDEOS);
-            //     } else updatePage();
-            // }
-            // else if (mode === tabs.CLIPS) {
-            //     if (results[index].content.length < 1) {
-            //         callApi(endpoints.GET_TOP_CLIPS);
-            //     } else updatePage();
-            // }
             else if (mode === tabs.SEARCH) {
                 updatePage();
             }
@@ -607,16 +349,6 @@ const updateTab = (newMode) => {
                 bp.setResults(results);
                 updatePage();
             }
-            // else if (mode === tabs.FOLLOWED_VIDEOS) {
-            //     if (results[index].content.length < 1) {
-            //         callApi(endpoints.GET_FOLLOWED_VIDEOS);
-            //     } else updatePage();
-            // }
-            // else if (mode === tabs.FOLLOWED_CLIPS) {
-            //     if (results[index].content.length < 1) {
-            //         callApi(endpoints.GET_FOLLOWED_CLIPS);
-            //     } else updatePage();
-            // }
             else if (mode === tabs.FOLLOWED_CHANNELS) {
                 index = 0;
                 results = bp.defaultResults();
@@ -641,21 +373,21 @@ const initialize = () => {
 
     // Login/logout
     if (bp.getAuthorizedUser()) {
-        loginText.textContent = browser.i18n.getMessage('logout');
-        avatar.classList.remove('noAccess');
-        avatar.style.backgroundImage = `url("${bp.getAuthorizedUser().logo}")`;
+        // loginText.textContent = browser.i18n.getMessage('logout');
+        // avatar.classList.remove('noAccess');
+        // avatar.style.backgroundImage = `url("${bp.getAuthorizedUser().logo}")`;
     } else {
-        loginText.textContent = browser.i18n.getMessage('login');
-        avatar.classList.add('noAccess');
-        avatar.style.backgroundImage = '';
+        // loginText.textContent = browser.i18n.getMessage('login');
+        // avatar.classList.add('noAccess');
+        // avatar.style.backgroundImage = '';
     }
 
-    if (!bp.getStorage('tooltips')) {
-        document.getElementById('styleLink').href = 'noTooltips.css';
+    if (bp.getStorage('tooltips')) {
+        document.getElementById('tooltips-stylesheet').href = 'tooltips.css';
     }
 
     if (bp.getStorage('darkMode')) {
-        document.getElementById('darkMode').href = 'dark.css';
+        document.documentElement.classList.add('__theme-dark');
     }
 
     // Tooltips
@@ -687,22 +419,13 @@ const initialize = () => {
     });
 
     // Select current tab
-    if (document.getElementById(mode).classList.contains('noAccess')) {
-        // You don't want people to remain on a tab after it becomes unusable
-        document.getElementById(mode).classList.remove('selected');
-        bp.setResults(bp.defaultResults());
-        setMode(tabs.STREAMS);
-    }
-    document.getElementById(mode).classList.add('selected');
+    document.getElementById(mode).classList.add('tab--selected');
 
     updateTab();
 };
 
 const selectTab = (e) => {
-    if (e.target.classList.contains('tab') &&
-        ! e.target.classList.contains('noAccess') &&
-        e.target.id !== mode
-    ) {
+    if (e.target.classList.contains('tab') && e.target.id !== mode) {
         bp.setResults(bp.defaultResults());
         bp.setIndex(0);
         updateTab(e.target.id);
@@ -723,7 +446,7 @@ settings.addEventListener('click', () => browser.runtime.openOptionsPage());
 
 // Back button
 back.addEventListener('click', () => {
-    if (!back.classList.contains('possible')) return;
+    if (back.classList.contains('icon--inactive')) return;
     saveTabState();
     bp.setIndex(bp.getIndex() - 1);
     updatePage();
@@ -731,7 +454,7 @@ back.addEventListener('click', () => {
 
 // Forward button
 forward.addEventListener('click', () => {
-    if (!forward.classList.contains('possible')) return;
+    if (forward.classList.contains('icon--inactive')) return;
     saveTabState();
     bp.setIndex(bp.getIndex() + 1);
     updatePage();
@@ -741,7 +464,7 @@ forward.addEventListener('click', () => {
  * Perform search
  */
 const makeSearch = () => {
-    if (!search.classList.contains('possible') || !searchBox.value) return;
+    if (search.classList.contains('icon--inactive') || !searchBox.value) return;
 
     if (mode === tabs.GAMES) {
         callApi(endpoints.SEARCH_GAMES, {
@@ -781,7 +504,7 @@ refresh.addEventListener('click', () => {
 
 // Exit search button
 exitSearch.addEventListener('click', () => {
-    if (!exitSearch.classList.contains('possible')) return;
+    if (exitSearch.classList.contains('icon--inactive')) return;
     bp.setResults(bp.defaultResults());
     bp.setIndex(0);
     updateTab();
@@ -795,33 +518,20 @@ avatar.addEventListener('click', () => {
 });
 
 // Login/logout
-login.addEventListener('click', () => {
-    if (bp.getAuthorizedUser()) {
-        bp.deauthorize();
-        initialize();
-        updatePage(true);
-    } else {
-        bp.authorize();
-    }
-});
-
-screenLock.addEventListener('click', () => {
-    screenLock.classList.add('hidden');
-    document.getElementById(enlargedContent).classList.remove('hidden');
-    enlargedPreview.classList.remove('enlarged');
-    enlargedPreview.style.transform = 'none';
-    oldEnlarged = enlargedPreview;
-    oldEnlarged.id = 'oldEnlarged';
-
-    enlargedPreview = newEnlarged;
-    enlargedPreview.id = 'enlargedPreview';
-    screenLock.appendChild(enlargedPreview);
-});
+// login.addEventListener('click', () => {
+//     if (bp.getAuthorizedUser()) {
+//         bp.deauthorize();
+//         initialize();
+//         updatePage(true);
+//     } else {
+//         bp.authorize();
+//     }
+// });
 
 const handleScrollEvent = (e) => {
     const scrollTop = contentArea.scrollTop;
 
-    if (scrollTop && (contentArea.scrollHeight - scrollTop === 564)) {
+    if (scrollTop && (contentArea.scrollHeight - scrollTop === contentArea.clientHeight)) {
         const results = bp.getResults();
         const index = bp.getIndex();
 

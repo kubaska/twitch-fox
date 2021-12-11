@@ -27,4 +27,5 @@ Download a signed release from [here](https://github.com/kubaska/twitch-fox/rele
 ## Using new features
 Follow and unfollow prioritizes your Twitch account, so if you're logged in it will follow/unfollow the channel on your account. If you want to specifically follow user locally, then search their name in channel search tab. List of locally followed channels, and option to unfollow, is available in addon options.
 
-
+## Boring stuff
+This project uses icons from 'Material Design' set by Templarian.

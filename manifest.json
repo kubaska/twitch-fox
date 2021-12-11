@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "__MSG_extensionName__",
-    "description": "__MSG_extensionDescription__",
-    "version": "4.4.0",
+    "name": "Twitch Fox",
+    "description": "(Fork) Quickly browse Twitch. Receive notifications for channels and games. Many customizable features.",
+    "version": "5.0.0beta1",
     "default_locale": "en",
 
     "incognito": "not_allowed",
@@ -20,6 +20,7 @@
 
     "permissions": [
         "notifications",
+        "contextMenus",
         "storage",
         "alarms",
         "tabs",

@@ -1,0 +1,56 @@
+.tooltipped
+    position: relative
+
+    &:before
+        content: attr(data-tooltip)
+        position: absolute
+        width: 140px
+        padding: 5px 0
+        border-radius: 6px
+        background-color: black
+        color: white
+        text-align: center
+        line-height: normal
+        //display: none
+        visibility: hidden
+        z-index: 1
+
+    &:hover::before
+        //display: block
+        visibility: visible
+
+// Specific positioning
+.icon__arrow-left.tooltipped:before,
+.icon__arrow-right.tooltipped:before,
+.icon__search.tooltipped:before
+    top: 28px
+
+.icon__refresh.tooltipped:before,
+.icon__exit.tooltipped:before
+    top: 28px
+    left: -60px
+
+.tab.tooltipped:before
+    left: 37px
+.tab--fake.tooltipped:before
+    left: 37px
+
+.menu-button__about.tooltipped:before
+    top: -20px
+.menu-button__exit.tooltipped:before
+    top: 38px
+    left: -110px
+
+.uptime.tooltipped:before
+    top: 20px
+    right: 30px
+.category.tooltipped:before
+    top: 53px
+    left: -100px
+.icon__videos.tooltipped:before
+    top: 31px
+    left: -107px
+.icon__clips.tooltipped:before
+    top: 31px
+    left: -107px
+

@@ -1,7 +1,0 @@
-.tooltip {
-    display: none;
-}
-
-.tooltip.noDisable {
-    display: inherit;
-}
