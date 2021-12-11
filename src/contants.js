@@ -26,7 +26,6 @@ const endpoints = {
 
     SEARCH_GAMES: 'Search Games',
     SEARCH_CHANNELS: 'Search Channels',
-    SEARCH_STREAMS: 'Search Streams',
 
     GET_USERS: 'Get Users',
     GET_USER_FOLLOWS: 'Get User Follows',
@@ -64,7 +63,7 @@ export const endpointList = {
     },
 
     [endpoints.SEARCH_GAMES]: {
-        url: () => 'search/games',
+        url: () => 'search/categories',
         method: 'GET',
         contentType: 'game'
     },
@@ -72,11 +71,6 @@ export const endpointList = {
         url: () => 'search/channels',
         method: 'GET',
         contentType: 'channel'
-    },
-    [endpoints.SEARCH_STREAMS]: {
-        url: () => 'search/streams',
-        method: 'GET',
-        contentType: 'stream'
     },
 
     [endpoints.GET_USERS]: {
