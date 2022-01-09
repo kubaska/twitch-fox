@@ -196,13 +196,10 @@ const updateBadge = () => {
 
     // set description (hover on badge)
     let streams = take(userFollowedStreams, 20).map(stream => {
-        return browser.i18n.getMessage('streaming', [
-            stream.user_name, stream.game_name
-        ]);
+        return `${stream.user_name} streaming ${stream.game_name}`;
     }).join('\n')
 
     if (streamNo > 20) {
-        // todo i18n
         streams += `\n...and ${streamNo - 20} more`;
     }
 
@@ -240,9 +237,7 @@ const playAlarm = () => {
 };
 
 const desktopNotification = (stream) => {
-    const title = browser.i18n.getMessage('streaming', [
-        stream.user_name, stream.game_name,
-    ]);
+    const title = `${stream.user_name} streaming ${stream.game_name}`;
 
     // fixme logo
     // const logo = stream.channel.logo != null
@@ -284,6 +279,11 @@ const deauthorize = () => {
     rebuildFollowCache();
 };
 
+/**
+ * Import follows using 4.3.0 schema
+ *
+ * @param json
+ */
 const importFollowsLegacy = (json) => {
     const parsed = JSON.parse(json);
 
@@ -301,6 +301,11 @@ const importFollowsLegacy = (json) => {
     rebuildFollowCache();
 }
 
+/**
+ * Import follows using current schema
+ *
+ * @param json
+ */
 const importFollows = (json) => {
     const parsed = JSON.parse(json);
 

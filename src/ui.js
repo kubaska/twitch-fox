@@ -32,8 +32,6 @@ const UI = {
 }
 
 const makeCard = (bp, type, content) => {
-    // if (document.getElementById(type.toUpperCase()+'!'+content.id)) return;
-
     if (type === 'game') {
         let card = document.getElementById('stub-game').cloneNode(true);
 
