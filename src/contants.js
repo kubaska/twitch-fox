@@ -84,4 +84,38 @@ export const endpointList = {
     }
 };
 
+/**
+ * Describe tab features.
+ *
+ * apiSearchable - Ability to search API instead of displayed results.
+ * endpoint      - What endpoint should we call when user selects the tab
+ * refreshable   - Is tab refreshable?
+ * staticContent - Contains ID of HTML element to copy and display.
+ */
+export const tabInfo = {
+    [tabs.GAMES]: {
+        apiSearchable: true,
+        endpoint: endpoints.GET_TOP_GAMES,
+        refreshable: true,
+    },
+    [tabs.STREAMS]: {
+        endpoint: endpoints.GET_STREAMS,
+        refreshable: true,
+    },
+    [tabs.SEARCH]: {
+        apiSearchable: true,
+        refreshable: true,
+    },
+    // [tabs.FOLLOWED_STREAMS]: {
+    //
+    // },
+    // [tabs.FOLLOWED_CHANNELS]: {
+    //
+    // },
+    [tabs.ABOUT]: {
+        hideNavigation: true,
+        staticContent: 'about-page'
+    }
+};
+
 export { endpoints };

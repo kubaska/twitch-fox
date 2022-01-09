@@ -1,6 +1,6 @@
 /* global browser */
 
-import {endpoints, tabs} from "./contants";
+import {endpoints, tabInfo, tabs} from "./contants";
 import {makeCard, UI} from "./ui";
 import utils from "./utils";
 import {debounce} from "lodash";
@@ -58,49 +58,51 @@ previewElement.addEventListener('click', () => {
     previewElement.classList.remove('enabled');
 });
 
-const filterContent = (noScroll) => {
+const filterContent = (noScroll, scrollPos) => {
     const filter = searchBox.value.toLowerCase();
-    const results = bp.getResults();
-    const index = bp.getIndex();
 
-    const tags = document.querySelectorAll('.media-container .tag');
+    const tags = document.querySelectorAll('.media-container > .media-object[data-tag]');
     let hidden = 0;
-    for (let i = 0; i < tags.length; i += 1) {
-        if (tags[i].textContent.toLowerCase().search(filter) > -1) {
-            tags[i].parentElement.classList.remove('hide');
-        } else {
-            tags[i].parentElement.classList.add('hide');
-            hidden += 1;
-        }
-    }
-
-    if (!filter && !noScroll) {
-        contentArea.scrollTop = results[index].scroll;
-    }
-
-    let noResults = document.getElementById('noResults');
-    if (tags.length - hidden === 0) {
-        if (noResults) {
-            noResults.classList.remove('hide');
+    tags.forEach(element => {
+        if (element.dataset['tag'].includes(filter)) {
+            element.classList.remove('d-none');
         }
         else {
-            noResults = document.createElement('div');
-            noResults.id = 'noResults';
-            noResults.classList.add('noResults');
-            if (results[index].content.length) {
-                noResults.textContent = browser.i18n.getMessage('noResults');
-            } else if (index === 0 && mode === tabs.SEARCH) {
-                noResults.textContent = browser.i18n.getMessage('channelsTabReady');
-            } else if (tabs.isFollowedTab(mode)) {
-                noResults.textContent = browser.i18n.getMessage('noFollowedResults');
-            } else {
-                noResults.textContent = browser.i18n.getMessage('noSearchResults');
-            }
-            contentArea.append(noResults);
+            element.classList.add('d-none');
+            hidden += 1;
         }
+    });
+
+    if (! filter && ! noScroll) {
+        contentArea.scrollTop = scrollPos;
     }
-    else if (noResults) {
-        noResults.classList.add('hide');
+
+    // todo display svg or image in css class
+    // add it to media-container when there is no results here
+    // or results contentLength = 0
+    if (tags.length - hidden === 0) {
+        // contentArea.classList.add('no-results');
+        if (document.getElementById('noResults')) return;
+        const index = bp.getIndex();
+
+        let noResults = document.createElement('div');
+        noResults.id = 'no-results';
+        noResults.classList.add('no-results');
+        if (bp.getResultsContentLength()) {
+            noResults.textContent = 'No results found.';
+        } else if (index === 0 && mode === tabs.SEARCH) {
+            noResults.textContent = 'Use the search bar above to search for channels on Twitch.';
+        } else if (tabs.isFollowedTab(mode)) {
+            noResults.textContent = 'No followed results found. Please wait for potential loading results.';
+        } else {
+            noResults.textContent = 'No search results found.';
+        }
+
+        mediaContainer.appendChild(noResults);
+    }
+    else {
+        // contentArea.classList.remove('no-results');
+        document.getElementById('no-results')?.remove();
     }
 };
 
@@ -116,76 +118,55 @@ const updatePage = (noScroll) => {
     while (mediaContainer.hasChildNodes()) {
         mediaContainer.removeChild(mediaContainer.firstChild);
     }
-    let addCount = 0;
+
     let cards = document.createDocumentFragment();
 
     for (let i = 0; i < results[index].content.length; i += 1) {
         const card = makeCard(bp, results[index].type, results[index].content[i]);
         card.addEventListener('click', cardClickHandler);
         cards.appendChild(card);
-        addCount++;
     }
 
     mediaContainer.appendChild(cards);
 
-    console.log('Cards added: ', addCount);
-    mediaContainer.className = 'media-container ' + results[index].type;
+    mediaContainer.classList.add('media-container');
 
-    if (results.length - index > 1) {
-        forward.classList.remove('icon--inactive');
-    } else {
-        forward.classList.add('icon--inactive');
+    // Add correct content CSS class to size content,
+    // but only if there is something to display.
+    if (results[index].content.length) {
+        mediaContainer.className = 'media-container ' + results[index].type;
     }
+    else mediaContainer.className = 'media-container';
 
-    if (index > 0 || tabs.isFollowedTab(mode)) {
-        if (results[index].total) {
+    if (tabInfo[mode].apiSearchable) {
+        // Adjust placeholder if there is content displayed.
+        if (results[index].content.length) {
             searchBox.placeholder =
-                browser.i18n.getMessage('filterOf', [
-                    utils.delimitNumber(mediaContainer.children.length),
-                    utils.delimitNumber(results[index].total),
-                ]);
+                `Search Twitch or filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
         } else {
-            searchBox.placeholder = browser.i18n.getMessage(
-                'filter',
-                utils.delimitNumber(mediaContainer.children.length),
-            );
+            searchBox.placeholder = 'Search Twitch';
         }
+
+        search.classList.remove('icon--inactive');
+    }
+    else {
+        searchBox.placeholder =
+            `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
+
         search.classList.add('icon--inactive');
-        back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
-    } else {
-        if (mode === tabs.GAMES || mode === tabs.SEARCH) {
-            searchBox.placeholder = mode === tabs.SEARCH ?
-                browser.i18n.getMessage('searchTwitch') :
-                browser.i18n.getMessage('searchOrFilterOf', [
-                    utils.delimitNumber(mediaContainer.children.length),
-                    utils.delimitNumber(results[index].total),
-                ]);
-            search.classList.remove('icon--inactive');
-        } else {
-            searchBox.placeholder = browser.i18n.getMessage(
-                'filter',
-                utils.delimitNumber(mediaContainer.children.length),
-            );
-            search.classList.add('icon--inactive');
-        }
-        back.classList.add('icon--inactive');
     }
 
-    // fixme
-    exitSearch.classList[forward.classList.contains('icon--inactive') ||
-    back.classList.contains('icon--inactive') ? 'add' : 'remove']('icon--inactive');
+    back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
+    forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+    exitSearch.classList[(index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
 
-    if (mode === tabs.FOLLOWED_CHANNELS || mode === tabs.FOLLOWED_STREAMS) {
-        refresh.classList.add('icon--inactive');
-    } else {
+    if (tabInfo[mode].refreshable) {
         refresh.classList.remove('icon--inactive');
-        // fixme
-        // refresh.firstElementChild.textContent = browser.i18n.getMessage('refreshTip');
+    } else {
+        refresh.classList.add('icon--inactive');
     }
 
-    if (!noScroll) searchBox.value = results[index].filter;
-
-    filterContent(noScroll);
+    filterContent(noScroll, results[index].scroll);
 };
 
 const callApi = (endpoint, opts = {}, newIndex, reset) => {
@@ -196,6 +177,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
     refresh.classList.add('thinking');
     searchBox.placeholder = browser.i18n.getMessage('loading');
     saveTabState();
+    // todo: lock navigation for the duration of api call
 
     bp.callApi(endpoint, opts, newIndex, reset)
         .then(() => {
@@ -210,7 +192,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
             refresh.classList.remove('thinking');
             searchBox.value = '';
             updatePage();
-        })
+        });
 }
 
 const saveTabState = () => {
@@ -295,69 +277,53 @@ const cardClickHandler = (e) => {
  * @param newMode
  */
 const updateTab = (newMode) => {
-    // console.log("updateTab");
     mode = bp.getMode();
 
-    let results = bp.getResults();
     let index = bp.getIndex();
 
     if (newMode) {
-        if (document.getElementById(newMode).classList.contains('noAccess')) {
-            // The mode we are trying to switch to is not allowed
-            return;
-        }
         document.getElementById(mode).classList.remove('tab--selected');
         setMode(newMode);
+        document.getElementById(newMode).classList.add('tab--selected');
     }
 
-    document.getElementById(mode).classList.add('tab--selected');
     while (mediaContainer.hasChildNodes()) {
         mediaContainer.removeChild(mediaContainer.firstChild);
     }
 
-    if (mode === tabs.ABOUT) {
-        // Show the about page
-        const about = document.getElementById('about-page').cloneNode(true);
-        about.id = '';
-        contentArea.appendChild(about);
-        searchBar.classList.add('hide');
+    if (tabInfo[mode].staticContent) {
+        const content = document.getElementById(tabInfo[mode].staticContent).cloneNode(true);
+        content.id = '';
+        mediaContainer.appendChild(content);
+        mediaContainer.className = 'media-container';
+        searchBar.classList.add('invisible');
+        return;
     } else {
-        // Show the content area
-        contentArea.classList.remove('hide');
-        searchBar.classList.remove('hide');
+        contentArea.classList.remove('d-none');
+        searchBar.classList.remove('invisible');
+    }
 
-        if (index === 0) {
-            // Tell the Twitch API to find us the information we want
-            if (mode === tabs.GAMES) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_TOP_GAMES);
-                } else updatePage();
-            }
-            else if (mode === tabs.STREAMS) {
-                if (results[index].content.length < 1) {
-                    callApi(endpoints.GET_STREAMS);
-                } else updatePage();
-            }
-            else if (mode === tabs.SEARCH) {
-                updatePage();
-            }
-            else if (mode === tabs.FOLLOWED_STREAMS) {
-                index = 0;
-                results = bp.defaultResults();
-                results[index].content = bp.getUserFollowedStreams();
-                results[index].type = 'stream';
-                bp.setResults(results);
-                updatePage();
-            }
-            else if (mode === tabs.FOLLOWED_CHANNELS) {
-                index = 0;
-                results = bp.defaultResults();
-                results[index].content = bp.getUserFollows();
-                results[index].type = 'channel';
-                bp.setResults(results);
-                updatePage();
-            }
-        } else {
+    if (index !== 0) {
+        return updatePage();
+    }
+
+    const endpoint = tabInfo[mode].endpoint;
+    if (endpoint) {
+        if (! bp.getResultsContentLength()) {
+            callApi(endpoint);
+        }
+        else updatePage();
+    }
+    else {
+        if (mode === tabs.SEARCH) {
+            updatePage();
+        }
+        else if (mode === tabs.FOLLOWED_STREAMS) {
+            bp.setResultsToFollowedStreams();
+            updatePage();
+        }
+        else if (mode === tabs.FOLLOWED_CHANNELS) {
+            bp.setResultsToFollowedChannels();
             updatePage();
         }
     }
@@ -366,7 +332,6 @@ const updateTab = (newMode) => {
 /**
  * Initializes the popup interface, essentially ensuring that all non-dynamic
  * content (streams, games, etc.) is properly displayed.
- * Includes internationalization, proper tooltips, etc.
  */
 const initialize = () => {
     mode = bp.getMode();

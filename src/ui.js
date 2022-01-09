@@ -1,13 +1,6 @@
 import utils from "./utils";
 
 const UI = {
-    insertBackgroundUrl: (element, url, useLazyloader = true) => {
-        if (useLazyloader) {
-            element.dataset['bg'] = url;
-        } else {
-            element.style.backgroundImage = `url("${url}")`;
-        }
-    },
     insertBackground: (card, url) => {
         card.querySelector('.media-object__cover-inner').src = url;
     },
@@ -42,6 +35,7 @@ const makeCard = (bp, type, content) => {
         card.dataset['id'] = game.id;
         card.dataset['gameId'] = game.id;
         card.dataset['game'] = game.name; // todo remove?
+        card.dataset['tag'] = game.name;
 
         card.querySelectorAll('.title').forEach(element => {
             element.textContent = game.name;
@@ -61,11 +55,6 @@ const makeCard = (bp, type, content) => {
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), game.name);
         UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), game.name);
 
-        // card.querySelector('.tag').textContent = game.name;
-
-        // card.addEventListener('click', cardClickHandler);
-
-        // contentArea.appendChild(card);
         return card;
     }
     else if (type === 'stream') {
@@ -80,6 +69,7 @@ const makeCard = (bp, type, content) => {
         card.dataset['streamerId'] = content.user_id;
         card.dataset['name'] = content.user_login;
         card.dataset['gameId'] = content.game_id;
+        card.dataset['tag'] = content.game_name + content.user_login + content.user_name + content.title;
 
         card.querySelector('.status').textContent = content.title;
 
@@ -114,19 +104,13 @@ const makeCard = (bp, type, content) => {
         // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
         // card.querySelector('.cornerLogo').classList.add('d-none');
 
-        // card.querySelector('.tag').textContent =
-        //     content.game_name+content.user_login+content.user_name+content.title;
-
-        // card.addEventListener('click', cardClickHandler);
-
-        // contentArea.appendChild(card);
         return card;
     }
     else if (type === 'video' || type === 'clip') {
         let card = document.getElementById('stub-stream').cloneNode(true);
 
-        const streamerId = type === 'video' ? content.id : content.broadcaster_id;
-        const streamerName = type === 'video' ? content.user_name : content.broadcaster_name;
+        const streamerId = type === 'video' ? content.user_id : content.broadcaster_id;
+        const streamerName = type === 'video' ? content.user_login : content.broadcaster_name;
 
         card.dataset['type'] = type;
 
@@ -134,6 +118,7 @@ const makeCard = (bp, type, content) => {
         card.dataset['id'] = content.id;
         card.dataset['streamerId'] = streamerId;
         card.dataset['name'] = streamerName;
+        card.dataset['tag'] = streamerName + content.title;
         // card.dataset['game'] = content.game;
 
         card.querySelector('.status').textContent = content.title;
@@ -186,11 +171,6 @@ const makeCard = (bp, type, content) => {
         // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
         // card.querySelector('.cornerLogo').classList.add('d-none');
 
-        // card.querySelector('.tag').textContent = streamerName+content.title;
-
-        // card.addEventListener('click', cardClickHandler);
-
-        // contentArea.appendChild(card);
         return card;
     }
     else if (type === 'channel') {
@@ -204,6 +184,7 @@ const makeCard = (bp, type, content) => {
         card.dataset['id'] = channel.id;
         card.dataset['streamerId'] = channel.id;
         card.dataset['name'] = channel.display_name;
+        card.dataset['tag'] = channel.login + channel.display_name;
 
         card.querySelector('.status').textContent = channel.display_name;
 
@@ -229,11 +210,6 @@ const makeCard = (bp, type, content) => {
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.display_name);
         UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.display_name);
 
-        // card.querySelector('.tag').textContent = channel.broadcaster_login+channel.display_name;
-
-        // card.addEventListener('click', cardClickHandler);
-
-        // contentArea.appendChild(card);
         return card;
     }
 };

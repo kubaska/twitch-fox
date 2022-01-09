@@ -80,6 +80,10 @@ const setIndex = (newIndex) => {
     resultsIndex = newIndex;
 };
 
+const getResultsContentLength = () => {
+    return results[resultsIndex].content.length;
+}
+
 const setMode = newMode => { popupMode = newMode; }
 
 const getStorage = key => _storage.get(key);
@@ -113,6 +117,7 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
     if (reset) {
         results[resultsIndex].content = defaultContent();
         results[resultsIndex].scroll = 0;
+        results[resultsIndex].cursor = '';
         delete opts.first;
         delete opts.language;
         delete opts.after;
@@ -185,6 +190,22 @@ const twitchAPI = (endpoint, theOpts) => {
             return response.data;
         });
 };
+
+const setResultsToFollowedStreams = () => {
+    let results = defaultResults();
+    results[0].content = getUserFollowedStreams();
+    results[0].type = 'stream';
+    setResults(results);
+    setIndex(0);
+}
+
+const setResultsToFollowedChannels = () => {
+    let results = defaultResults();
+    results[0].content = getUserFollows();
+    results[0].type = 'channel';
+    setResults(results);
+    setIndex(0);
+}
 
 const saveTabState = (searchQuery, scrollPos) => {
     results[resultsIndex].filter = searchQuery;
@@ -637,6 +658,7 @@ window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
 window.getMode = getMode;
 window.getResults = getResults;
+window.getResultsContentLength = getResultsContentLength;
 window.getStorage = getStorage;
 window.getUserFollows = getUserFollows;
 window.getUserFollowedStreams = getUserFollowedStreams;
@@ -648,6 +670,8 @@ window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResults = setResults;
+window.setResultsToFollowedChannels = setResultsToFollowedChannels;
+window.setResultsToFollowedStreams = setResultsToFollowedStreams;
 window.setStorage = setStorage;
 window.unfollow = unfollow;
 window._storage = () => _storage;
