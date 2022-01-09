@@ -371,52 +371,22 @@ const updateTab = (newMode) => {
 const initialize = () => {
     mode = bp.getMode();
 
-    // Login/logout
-    if (bp.getAuthorizedUser()) {
-        // loginText.textContent = browser.i18n.getMessage('logout');
-        // avatar.classList.remove('noAccess');
-        // avatar.style.backgroundImage = `url("${bp.getAuthorizedUser().logo}")`;
-    } else {
-        // loginText.textContent = browser.i18n.getMessage('login');
-        // avatar.classList.add('noAccess');
-        // avatar.style.backgroundImage = '';
-    }
+    const user = bp.getAuthorizedUser();
 
+    // Tooltips & avatar specific
     if (bp.getStorage('tooltips')) {
         document.getElementById('tooltips-stylesheet').href = 'tooltips.css';
+        UI.fillTooltip(avatar, user.display_name);
+    } else {
+        avatar.title = user.display_name;
     }
+
+    // Avatar
+    avatar.style.backgroundImage = `url("${user.profile_image_url}")`;
 
     if (bp.getStorage('darkMode')) {
         document.documentElement.classList.add('__theme-dark');
     }
-
-    // Tooltips
-    document.querySelectorAll('.tooltip').forEach(tooltip => {
-        if (tooltip.id === 'loginTip') {
-            if (bp.getAuthorizedUser()) {
-                tooltip.textContent = browser.i18n.getMessage('logoutTip');
-            } else {
-                tooltip.textContent = browser.i18n.getMessage(tooltip.id);
-            }
-        }
-        else if (tooltip.id === 'avatarTip') {
-            if (bp.getAuthorizedUser()) {
-                if (bp.getStorage('tooltips')) {
-                    tooltip.textContent =
-                        browser.i18n.getMessage(
-                            tooltip.id,
-                            bp.getAuthorizedUser().display_name,
-                        );
-                } else {
-                    tooltip.classList.add('noDisable');
-                    tooltip.textContent = bp.getAuthorizedUser().display_name;
-                }
-            }
-        }
-        else if (tooltip.id) {
-            tooltip.textContent = browser.i18n.getMessage(tooltip.id);
-        }
-    });
 
     // Select current tab
     document.getElementById(mode).classList.add('tab--selected');
