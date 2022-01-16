@@ -5,7 +5,8 @@ export default {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
 
-    // Used by stream cards. Returns difference in HH:MM:SS format between supplied and current time.
+    // Used by stream cards.
+    // Returns difference in HH:MM:SS format between supplied and current time.
     timeSince: (date, now) => {
         const secs = Math.floor((now - date.getTime()) / 1000);
         const hr = Math.floor(secs/3600);

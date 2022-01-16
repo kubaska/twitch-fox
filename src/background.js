@@ -293,7 +293,6 @@ const authorize = () => {
  */
 const deauthorize = () => {
     _storage.set('token', null);
-    // todo invalidate token
     authorizedUser = null;
     userFollows = [];
     userFollowedStreams = [];
@@ -431,10 +430,9 @@ const rebuildFollowCache = () => {
         userFollowsCache.add(follow.id);
     });
 
-    // todo add back after dealing with online follows
-    // userFollows.forEach(follow => {
-    //     userFollowsCache.add(parseInt(follow.channel._id));
-    // });
+    userFollows.forEach(follow => {
+        userFollowsCache.add(parseInt(follow.id));
+    });
 };
 
 /**
@@ -446,13 +444,19 @@ const fetchCurrentUser = async () => {
     const user = await twitchAPI(endpoints.GET_USERS, {});
     // todo make this retryable
 
-    authorizedUser = user.data[0]; // ???
+    if (user?.data && user.data[0]) {
+        authorizedUser = user.data[0];
+    } else {
+        // Token expired or API is down
+        authorizedUser = null;
+    }
 
-    return user;
+    return authorizedUser;
 }
 
 /**
  * Fetch entire resource.
+ * Endpoint must have data and pagination keys.
  *
  * @param endpoint       API Endpoint
  * @param requestOptions Additional request options
@@ -462,6 +466,7 @@ const fetchCurrentUser = async () => {
 const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => {
     let result = [];
     let keepGoing = true;
+    let pagination = null;
 
     while (keepGoing) {
         let response;
@@ -469,7 +474,7 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
         try {
             response = await twitchAPI(
                 endpoint,
-                { limit, offset: result.length, ...requestOptions }
+                { first: limit, after: pagination, ...requestOptions }
             );
         } catch (e) {
             // we are unauthorized or connection issue
@@ -480,6 +485,7 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
 
         result.push(...response.data);
         if (response.data.length < limit) keepGoing = false;
+        pagination = response?.pagination?.cursor;
     }
 
     return result;
@@ -521,7 +527,7 @@ const fetchLocalFollowedStreams = async () => {
     for (const chunk of follows) {
         const res = await twitchAPI(
             endpoints.GET_STREAMS,
-            { limit: 100, channel: map(chunk, 'id').join(',') }
+            { first: 100, channel: map(chunk, 'id').join(',') }
         )
         result.push(...res.streams);
     }

@@ -9,7 +9,7 @@
 
 <body>
 
-<div class="container">
+<div id="main-container" class="container">
     <div class="navbar">
         <div class="menu-button logo"></div>
         <div id="navigation" class="navigation">
@@ -44,6 +44,22 @@
 
     <div id="content-area" class="content-area">
         <div id="media-container" class="media-container"></div>
+    </div>
+
+    <div id="login-container" class="login-container d-none">
+        <div class="logo-container" style="height: 120px">
+            <div class="logo hw-100 bg-contain"></div>
+        </div>
+        <p class="text-center" style="font-size: 32px">To continue using Twitch Fox, please log in to Twitch</p>
+
+        <details open>
+            <summary class="fw-bold" style="font-size: 20px">Why?</summary>
+            <p class="text-faded" style="font-size: 16px">Using new Twitch API requires authorization.</p>
+        </details>
+
+        <div class="flex-grow"></div>
+
+        <button id="login" class="twitch-btn">Log In</button>
     </div>
 </div>
 
@@ -161,9 +177,9 @@
     </div>
 
     <div id="about-page" class="about-page">
-        <div class="about-logo">
-            <div class="logo"></div>
-            <span class="versionText">Twitch Fox, version 5.0.0 (fork)</span>
+        <div class="logo-container" style="height: 150px">
+            <div class="logo hw-100 bg-contain"></div>
+            <span class="versionText fw-bold">Twitch Fox, version 5.0.0 (fork)</span>
         </div>
 
         <div>

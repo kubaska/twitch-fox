@@ -8,6 +8,9 @@ import './css/popup.sass';
 
 const bp = browser.extension.getBackgroundPage();
 
+const login = document.getElementById('login');
+const logout = document.getElementById('logout');
+
 // Navigation
 const back = document.getElementById('back');
 const forward = document.getElementById('forward');
@@ -17,9 +20,9 @@ const searchBox = document.getElementById('searchBox');
 const refresh = document.getElementById('refresh');
 const exitSearch = document.getElementById('exitSearch');
 const avatar = document.getElementById('avatar');
-const login = document.getElementById('login');
-const loginText = document.getElementById('loginText');
 
+const mainContainer = document.getElementById('main-container');
+const loginContainer = document.getElementById('login-container');
 const contentArea = document.getElementById('content-area');
 const mediaContainer = document.getElementById('media-container');
 const previewElement = document.getElementById('preview');
@@ -335,8 +338,21 @@ const updateTab = (newMode) => {
  */
 const initialize = () => {
     mode = bp.getMode();
-
     const user = bp.getAuthorizedUser();
+
+    if (bp.getStorage('darkMode')) {
+        document.documentElement.classList.add('__theme-dark');
+    }
+
+    if (! user) {
+        loginContainer.classList.remove('d-none');
+        mainContainer.classList.add('overflow-hidden');
+        login.addEventListener('click', () => {
+            bp.authorize();
+            window.close();
+        });
+        return;
+    }
 
     // Tooltips & avatar specific
     if (bp.getStorage('tooltips')) {
@@ -349,14 +365,15 @@ const initialize = () => {
     // Avatar
     avatar.style.backgroundImage = `url("${user.profile_image_url}")`;
 
-    if (bp.getStorage('darkMode')) {
-        document.documentElement.classList.add('__theme-dark');
-    }
-
     // Select current tab
     document.getElementById(mode).classList.add('tab--selected');
 
     updateTab();
+
+    if (! document.body.classList.contains('__initialized')) {
+        initializeEvents();
+        document.body.classList.add('__initialized');
+    }
 };
 
 const selectTab = (e) => {
@@ -366,34 +383,6 @@ const selectTab = (e) => {
         updateTab(e.target.id);
     }
 }
-
-/*
-  Click events
-*/
-
-document.querySelectorAll('#menu .tab')
-    .forEach(tab => {
-        tab.addEventListener('click', selectTab);
-    });
-
-// Settings page
-settings.addEventListener('click', () => browser.runtime.openOptionsPage());
-
-// Back button
-back.addEventListener('click', () => {
-    if (back.classList.contains('icon--inactive')) return;
-    saveTabState();
-    bp.setIndex(bp.getIndex() - 1);
-    updatePage();
-});
-
-// Forward button
-forward.addEventListener('click', () => {
-    if (forward.classList.contains('icon--inactive')) return;
-    saveTabState();
-    bp.setIndex(bp.getIndex() + 1);
-    updatePage();
-});
 
 /**
  * Perform search
@@ -406,62 +395,12 @@ const makeSearch = () => {
             query: searchBox.value,
         }, true);
     }
-    // else if (mode === tabs.STREAMS) {
-    //     callApi(endpoints.SEARCH_STREAMS, {
-    //         query: searchBox.value,
-    //     }, true);
-    // }
     else if (mode === tabs.SEARCH) {
         callApi(endpoints.SEARCH_CHANNELS, {
             query: searchBox.value,
         }, true);
     }
 };
-
-// Search button
-search.addEventListener('click', makeSearch);
-
-// Enter key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') makeSearch();
-});
-
-// Search box
-searchBox.addEventListener('input', filterContent);
-
-// Refresh button
-refresh.addEventListener('click', () => {
-    const results = bp.getResults();
-    const index = bp.getIndex();
-
-    callApi(results[index].endpoint, results[index].opts, false, true);
-});
-
-// Exit search button
-exitSearch.addEventListener('click', () => {
-    if (exitSearch.classList.contains('icon--inactive')) return;
-    bp.setResults(bp.defaultResults());
-    bp.setIndex(0);
-    updateTab();
-});
-
-// Avatar
-avatar.addEventListener('click', () => {
-    if (bp.getAuthorizedUser()) {
-        utils.openStream(bp.getAuthorizedUser().name);
-    }
-});
-
-// Login/logout
-// login.addEventListener('click', () => {
-//     if (bp.getAuthorizedUser()) {
-//         bp.deauthorize();
-//         initialize();
-//         updatePage(true);
-//     } else {
-//         bp.authorize();
-//     }
-// });
 
 const handleScrollEvent = (e) => {
     const scrollTop = contentArea.scrollTop;
@@ -474,12 +413,80 @@ const handleScrollEvent = (e) => {
     }
 }
 
-contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
+/*
+  Click events
+*/
+const initializeEvents = () => {
+    document.querySelectorAll('#menu .tab')
+        .forEach(tab => {
+            tab.addEventListener('click', selectTab);
+        });
 
-browser.runtime.onMessage.addListener((request) => {
-    if (request.content === 'INITIALIZE') {
+    // Settings page
+    settings.addEventListener('click', () => browser.runtime.openOptionsPage());
+
+    // Back button
+    back.addEventListener('click', () => {
+        if (back.classList.contains('icon--inactive')) return;
+        saveTabState();
+        bp.setIndex(bp.getIndex() - 1);
+        updatePage();
+    });
+
+    // Forward button
+    forward.addEventListener('click', () => {
+        if (forward.classList.contains('icon--inactive')) return;
+        saveTabState();
+        bp.setIndex(bp.getIndex() + 1);
+        updatePage();
+    });
+
+    // Search button
+    search.addEventListener('click', makeSearch);
+
+    // Enter key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') makeSearch();
+    });
+
+    // Search box
+    searchBox.addEventListener('input', filterContent);
+
+    // Refresh button
+    refresh.addEventListener('click', () => {
+        const results = bp.getResults();
+        const index = bp.getIndex();
+
+        callApi(results[index].endpoint, results[index].opts, false, true);
+    });
+
+    // Exit search button
+    exitSearch.addEventListener('click', () => {
+        if (exitSearch.classList.contains('icon--inactive')) return;
+        bp.setResults(bp.defaultResults());
+        bp.setIndex(0);
+        updateTab();
+    });
+
+    // Avatar
+    avatar.addEventListener('click', () => {
+        if (bp.getAuthorizedUser()) {
+            utils.openStream(bp.getAuthorizedUser().name);
+        }
+    });
+
+    logout.addEventListener('click', () => {
+        bp.deauthorize();
         initialize();
-    }
-});
+    })
+
+    contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
+
+    browser.runtime.onMessage.addListener((request) => {
+        if (request.content === 'INITIALIZE') {
+            initialize();
+        }
+    });
+}
 
 initialize();

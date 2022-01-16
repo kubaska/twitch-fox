@@ -106,12 +106,12 @@ export const tabInfo = {
         apiSearchable: true,
         refreshable: true,
     },
-    // [tabs.FOLLOWED_STREAMS]: {
-    //
-    // },
-    // [tabs.FOLLOWED_CHANNELS]: {
-    //
-    // },
+    [tabs.FOLLOWED_STREAMS]: {
+
+    },
+    [tabs.FOLLOWED_CHANNELS]: {
+
+    },
     [tabs.ABOUT]: {
         hideNavigation: true,
         staticContent: 'about-page'
