@@ -306,18 +306,16 @@ const deauthorize = () => {
  */
 const importFollowsLegacy = (json) => {
     const parsed = JSON.parse(json);
+    const currentTime = utils.getISODateStringNoMs();
 
     const follows = parsed.map(follow => {
         const id = parseInt(follow);
 
-        // todo resolve nicknames of streamers when we switch to Helix
-
-        if (id) return { id };
+        if (id) return { id, fd: currentTime };
         else    return false;
     }).filter(value => value);
 
     setStorage('localFollows', follows);
-
     rebuildFollowCache();
 }
 
@@ -328,12 +326,13 @@ const importFollowsLegacy = (json) => {
  */
 const importFollows = (json) => {
     const parsed = JSON.parse(json);
+    const currentTime = utils.getISODateStringNoMs();
 
     const follows = parsed.map(follow => {
         const { id, name } = follow;
 
-        if (id && name) return { id, name };
-        else if (id)    return { id };
+        if (id && name) return { id, name, fd: currentTime };
+        else if (id)    return { id, fd: currentTime };
         else            return false;
     }).filter(value => value);
 
@@ -497,9 +496,40 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
  * @return {Promise<*[]|*[]>}
  */
 const fetchUserFollows = async () => {
-    userFollows = await fetchPaginatedResource(
+    // Request follows of logged in user.
+    const twitchFollows = await fetchPaginatedResource(
         endpoints.GET_USER_FOLLOWS, { from_id: authorizedUser.id }, 100
     );
+
+    const follows = [
+        ...twitchFollows.map(follow => {
+            return { id: parseInt(follow.to_id), fd: follow.followed_at }
+        }),
+        ...getStorage('localFollows')
+    ];
+
+    let finalAccounts = [];
+
+    await Promise.allSettled(
+        chunk(follows, 100).map(followChunk => {
+            return twitchAPI(endpoints.GET_USERS, { id: followChunk.map(f => f.id) });
+        })
+    )
+        .then(allAccounts => {
+            allAccounts.forEach(accounts => {
+                if (accounts.status === 'fulfilled') {
+                    finalAccounts.push(...accounts.value.data);
+                } else {
+                    // rejected
+                    console.log('Fetching user follows failed', accounts.reason);
+                }
+            })
+        });
+
+    let followDates = {};
+    follows.map(follow => { followDates[follow.id] = follow.fd ?? '2020-01-01T20:00:00Z' });
+
+    userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
 }
 
 /**
@@ -527,9 +557,9 @@ const fetchLocalFollowedStreams = async () => {
     for (const chunk of follows) {
         const res = await twitchAPI(
             endpoints.GET_STREAMS,
-            { first: 100, channel: map(chunk, 'id').join(',') }
+            { first: 100, user_id: map(chunk, 'id') }
         )
-        result.push(...res.streams);
+        result.push(...res.data);
     }
 
     return result;
@@ -543,10 +573,10 @@ const fetchFollowedStreams = () => {
         fetchTwitchFollowedStreams(),
         fetchLocalFollowedStreams()
     ]).then(result => {
-        const total = orderBy(result[0].concat(result[1]), 'viewers', 'desc');
+        const total = orderBy(result[0].concat(result[1]), 'viewer_count', 'desc');
 
         // compute difference with current followed
-        const diff = differenceBy(total, userFollowedStreams, '_id');
+        const diff = differenceBy(total, userFollowedStreams, 'id');
 
         if (! isEmpty(diff)) {
             // display a notification if we have new stream
