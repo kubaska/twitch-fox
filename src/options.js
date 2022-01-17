@@ -40,28 +40,6 @@ document.querySelectorAll('[data-internal]').forEach(control => {
     control.addEventListener('change', saveOption);
 });
 
-// fill local follow list
-function displayLocalFollows() {
-    const html = bp.getStorage('localFollows').map(follow => {
-        return `<div class="follow">
-<span>[${follow.id}] ${follow.name || '(name unknown)'}</span>
-<span class="follow-remove" data-id="${follow.id}">remove</span>
-</div>`;
-    }).join('');
-
-    document.getElementById('localFollowsList').innerHTML = html ? html : '<span>None yet!</span>';
-
-    document.querySelectorAll('.follow-remove').forEach(btn => {
-        btn.addEventListener('click', removeFollow);
-    });
-}
-
-function removeFollow(e) {
-    bp.unfollow(parseInt(e.target.dataset['id']));
-    e.target.removeEventListener('click', removeFollow);
-    e.target.parentElement.remove();
-}
-
 function showImportError(message) {
     const err = document.querySelector('.error-message');
     err.innerText = 'Import error: ' + message;
@@ -118,7 +96,6 @@ document.getElementById('importFollows').addEventListener('change', (e) => {
             bp.importFollows(reader.result);
         }
 
-        displayLocalFollows();
         document.getElementById('importFollows').value = '';
     }
     reader.readAsText(file);
@@ -139,7 +116,6 @@ document.getElementById('exportFollows').addEventListener('click', () => {
     downloadLink.click();
 });
 
-displayLocalFollows();
 document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));
 
 // browser.runtime.onMessage.addListener(() => window.location.reload());
