@@ -183,10 +183,10 @@ const makeCard = (bp, type, content) => {
         card.id = `CHANNEL!${channel.id}`;
         card.dataset['id'] = channel.id;
         card.dataset['streamerId'] = channel.id;
-        card.dataset['name'] = channel.display_name;
+        card.dataset['name'] = channel.login;
         card.dataset['tag'] = channel.login + channel.display_name;
 
-        card.querySelector('.status').textContent = channel.display_name;
+        card.querySelector('.status').textContent = channel.login;
 
         // todo this endpoint does not return channel logo. remove if they wont add it back
         // also remove the default image url since Twitch returns it by default now

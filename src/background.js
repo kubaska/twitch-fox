@@ -283,9 +283,7 @@ const authorize = () => {
     const url = `https://id.twitch.tv/oauth2/authorize?client_id=${
         clientID}&redirect_uri=${redirectURI}&response_type=${
         responseType}&scope=${scope}`;
-    browser.tabs.create({
-        url,
-    });
+    browser.tabs.create({ url });
 };
 
 /**
@@ -329,11 +327,11 @@ const importFollows = (json) => {
     const currentTime = utils.getISODateStringNoMs();
 
     const follows = parsed.map(follow => {
-        const { id, name } = follow;
+        const { id, fd } = follow;
 
-        if (id && name) return { id, name, fd: currentTime };
-        else if (id)    return { id, fd: currentTime };
-        else            return false;
+        if (id && fd) return { id, fd };
+        else if (id)  return { id, fd: currentTime };
+        else          return false;
     }).filter(value => value);
 
     setStorage('localFollows', follows);
@@ -501,12 +499,17 @@ const fetchUserFollows = async () => {
         endpoints.GET_USER_FOLLOWS, { from_id: authorizedUser.id }, 100
     );
 
+    // Combine local & online follows with same data structure
     const follows = [
         ...twitchFollows.map(follow => {
             return { id: parseInt(follow.to_id), fd: follow.followed_at }
         }),
         ...getStorage('localFollows')
     ];
+
+    // Create associative object for easy follow date lookup
+    let followDates = {};
+    follows.forEach(follow => { followDates[follow.id] = follow.fd ?? '2020-01-01T20:00:00Z' });
 
     let finalAccounts = [];
 
@@ -525,9 +528,6 @@ const fetchUserFollows = async () => {
                 }
             })
         });
-
-    let followDates = {};
-    follows.map(follow => { followDates[follow.id] = follow.fd ?? '2020-01-01T20:00:00Z' });
 
     userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
 }
