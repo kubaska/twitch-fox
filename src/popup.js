@@ -86,7 +86,7 @@ const filterContent = (noScroll, scrollPos) => {
     // or results contentLength = 0
     if (tags.length - hidden === 0) {
         // contentArea.classList.add('no-results');
-        if (document.getElementById('noResults')) return;
+        if (document.getElementById('no-results')) return;
         const index = bp.getIndex();
 
         let noResults = document.createElement('div');
@@ -135,8 +135,6 @@ const updatePage = (noScroll) => {
     }
 
     mediaContainer.appendChild(cards);
-
-    mediaContainer.classList.add('media-container');
 
     // Add correct content CSS class to size content,
     // but only if there is something to display.
