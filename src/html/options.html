@@ -1,25 +1,23 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
     <meta charset="utf-8">
-
     <style>
         h3 {
             margin: 0.5em auto;
         }
 
         .row {
-            display: flex;
             padding: 10px;
+            display: flex;
+            justify-content: space-between;
         }
         .row:hover {
             background-color: rgba(0,0,0,.05);
             /*background-color: rgba(0,0,0,.075);*/
         }
         .row > .description {
-            width: 75%;
+            /*width: 75%;*/
         }
 
         .description > p {
@@ -33,7 +31,6 @@
         }
 
         .row > .control {
-            width: 25%;
             display: flex;
             align-items: center;
             justify-content: flex-end;
@@ -69,12 +66,12 @@
 <body>
 
 <form id="main-form">
-    <h3 data-i18n="userInterfaceSettings">User interface settings</h3>
+    <h3>User interface settings</h3>
     <hr/>
 
     <div class="row">
         <div class="description">
-            <p data-i18n="useDarkMode">Dark mode</p>
+            <p>Dark mode</p>
             <span>All cool kids use this.</span>
         </div>
 
@@ -85,7 +82,7 @@
 
     <div class="row">
         <div class="description">
-            <p data-i18n="enableTooltips">Tooltips</p>
+            <p>Tooltips</p>
             <span>Shows help text when you hover on stuff. Disable if icons are enough for you.</span>
         </div>
 
@@ -101,7 +98,7 @@
         </div>
 
         <div class="control">
-            <input type="number" min="1" max="60" data-internal="minutesBetweenCheck" required>
+            <input type="number" min="1" max="60" size="5" data-internal="minutesBetweenCheck" required>
         </div>
     </div>
 
@@ -136,7 +133,7 @@
         </div>
 
         <div class="control">
-            <input type="number" min="0" max="100" data-internal="notificationVolume" required>
+            <input type="number" min="0" max="100" size="5" data-internal="notificationVolume" required>
         </div>
     </div>
 
@@ -184,7 +181,7 @@
         </div>
     </div>
 
-    <h3 data-i18n="followsSettings">Follows Settings</h3>
+    <h3>Follows Settings</h3>
     <hr/>
 
     <div class="row">
