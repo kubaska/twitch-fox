@@ -4,16 +4,19 @@ const _VERSION = 1;
 
 const defaultState = {
     // Non-settings
+    version: _VERSION,
     token: null,
     localFollows: [],
-    version: _VERSION,
+    favorites: [],
+    favoritesMode: false,
 
     // global
     darkMode: false,
     tooltips: true,
 
     // notifications
-    desktopNotifications: true,
+    // text & audio for favorites, text for non-favorites
+    notifications: 13,
     notificationVolume: 20,
     openTwitchPage: false,
     openPopout: false,
@@ -22,6 +25,8 @@ const defaultState = {
     minutesBetweenCheck: 1,
     languageCodes: '',
 };
+
+const flagSettings = ['notifications'];
 
 let storage = {};
 
@@ -35,19 +40,35 @@ export default {
         storage = settings;
     },
 
-    get(key) {
-        return storage[key] !== undefined
+    get(key, flag = null) {
+        const setting = storage[key] !== undefined
             ? storage[key]
             : defaultState[key];
+
+        if (flagSettings.includes(key)) {
+            return (setting & flag) === flag;
+        }
+
+        return setting;
     },
 
-    set(key, value) {
+    set(key, value, addFlag = false) {
         // set in local storage if setting exists
         // no undefineds!!
         if (defaultState[key] !== undefined && value !== undefined) {
+            // handle flags
+            if (flagSettings.includes(key)) {
+                const currentFlags = storage[key] ?? defaultState[key];
+
+                if (addFlag) value = currentFlags | value;
+                else         value = currentFlags & ~value;
+            }
+
             storage[key] = value;
 
             browser.storage.sync.set({[key]: value});
         }
+
+         return false;
     }
 }

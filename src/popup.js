@@ -17,6 +17,7 @@ const forward = document.getElementById('forward');
 const searchBar = document.getElementById('navigation');
 const search = document.getElementById('search');
 const searchBox = document.getElementById('searchBox');
+const favorites = document.getElementById('favorite');
 const refresh = document.getElementById('refresh');
 const exitSearch = document.getElementById('exitSearch');
 const avatar = document.getElementById('avatar');
@@ -122,10 +123,13 @@ const updatePage = (noScroll) => {
         mediaContainer.removeChild(mediaContainer.firstChild);
     }
 
+    const favoriteMode = tabInfo[mode].favorites && bp.getStorage('favoritesMode');
+
     let cards = document.createDocumentFragment();
 
-    for (let i = 0; i < results[index].content.length; i += 1) {
-        const card = makeCard(bp, results[index].type, results[index].content[i]);
+    for (let i = 0; i < results[index].content.length; i++) {
+        const card = makeCard(bp, favoriteMode, results[index].type, results[index].content[i]);
+        if (! card) continue;
         card.addEventListener('click', cardClickHandler);
         cards.appendChild(card);
     }
@@ -162,6 +166,10 @@ const updatePage = (noScroll) => {
     back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
     forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
     exitSearch.classList[(index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+
+    if (tabInfo[mode].favorites) {
+        favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
+    }
 
     if (tabInfo[mode].refreshable) {
         refresh.classList.remove('icon--inactive');
@@ -204,7 +212,9 @@ const saveTabState = () => {
 
 const cardClickHandler = (e) => {
     const trigger = e.target.dataset['trigger'];
+
     if (! trigger) return;
+    if (e.target.classList.contains('icon--inactive')) return;
 
     const topElem = UI.getParentElement(e.target, 'media-object');
 
@@ -251,6 +261,14 @@ const cardClickHandler = (e) => {
             break;
         case 'unfollow':
             bp.unfollow(meta.streamerId, meta.name);
+            updatePage(true);
+            break;
+        case 'favorite':
+            bp.favorite(meta.streamerId);
+            updatePage(true);
+            break;
+        case 'unfavorite':
+            bp.unfavorite(meta.streamerId);
             updatePage(true);
             break;
         case 'browseVideosByChannel':
@@ -304,6 +322,14 @@ const updateTab = (newMode) => {
     } else {
         contentArea.classList.remove('d-none');
         searchBar.classList.remove('invisible');
+    }
+
+    if (tabInfo[mode].favorites) {
+        refresh.classList.add('d-none');
+        favorites.classList.remove('d-none');
+    } else {
+        refresh.classList.remove('d-none');
+        favorites.classList.add('d-none');
     }
 
     if (index !== 0) {
@@ -451,6 +477,12 @@ const initializeEvents = () => {
 
     // Search box
     searchBox.addEventListener('input', filterContent);
+
+    // Favorites switch
+    favorites.addEventListener('click', () => {
+        bp.setStorage('favoritesMode', ! bp.getStorage('favoritesMode'));
+        updatePage();
+    });
 
     // Refresh button
     refresh.addEventListener('click', () => {

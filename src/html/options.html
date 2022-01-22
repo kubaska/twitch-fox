@@ -40,23 +40,16 @@
             margin-left: 5px;
         }
 
+        table .text:not(:last-child) {
+            padding: 4px;
+        }
+        table .center {
+            text-align: center;
+        }
+
         .error-message {
             font-size: 1em !important;
             color: red !important;
-        }
-
-        .follow-list {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        .follow {
-            min-width: 50%;
-            padding: 4px 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .follow-remove {
-            cursor: pointer;
         }
 
         .d-none { display: none; }
@@ -122,7 +115,31 @@
         </div>
 
         <div class="control">
-            <input type="checkbox" data-internal="desktopNotifications">
+            <table>
+                <tr>
+                    <td></td>
+                    <td class="text">Non-Favorites</td>
+                    <td class="text">Favorites</td>
+                </tr>
+                <tr>
+                    <td class="text">Text notification</td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notifications" data-flag="1">
+                    </td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notifications" data-flag="4">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text">Audio notification</td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notifications" data-flag="2">
+                    </td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notifications" data-flag="8">
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
 

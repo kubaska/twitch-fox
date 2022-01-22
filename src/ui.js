@@ -24,7 +24,22 @@ const UI = {
     }
 }
 
-const makeCard = (bp, type, content) => {
+const handleFollowFavoriteBtns = (card, isFollowing, isFavorite) => {
+    card.querySelector('.icon__follow').classList[isFollowing ? 'add' : 'remove']('d-none');
+    card.querySelector('.icon__unfollow').classList[isFollowing ? 'remove' : 'add']('d-none');
+
+    const favoriteElement = card.querySelector('.icon__favorite');
+    if (isFollowing) {
+        favoriteElement.classList[isFavorite ? 'add' : 'remove']('d-none');
+        card.querySelector('.icon__unfavorite').classList[isFavorite ? 'remove' : 'add']('d-none');
+    } else {
+        favoriteElement.classList.add('d-none');
+        // favoriteElement.classList.add('icon--inactive');
+        // UI.setTooltip(favoriteElement, "You can't favorite this channel because you're not following them!");
+    }
+}
+
+const makeCard = (bp, favoriteMode, type, content) => {
     if (type === 'game') {
         let card = document.getElementById('stub-game').cloneNode(true);
 
@@ -58,6 +73,11 @@ const makeCard = (bp, type, content) => {
         return card;
     }
     else if (type === 'stream') {
+        const userId = parseInt(content.user_id);
+        const isFavorite = bp.isFavorite(userId);
+
+        if (favoriteMode && ! isFavorite) return;
+
         let card = document.getElementById('stub-stream').cloneNode(true);
 
         card.dataset['type'] = type;
@@ -66,7 +86,7 @@ const makeCard = (bp, type, content) => {
 
         card.id = `STREAM!${content.id}`;
         card.dataset['id'] = content.id;
-        card.dataset['streamerId'] = content.user_id;
+        card.dataset['streamerId'] = userId;
         card.dataset['name'] = content.user_login;
         card.dataset['gameId'] = content.game_id;
         card.dataset['tag'] = content.game_name + content.user_login + content.user_name + content.title;
@@ -96,9 +116,8 @@ const makeCard = (bp, type, content) => {
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.user_login);
         UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.user_login);
 
-        const following = bp.isFollowing(content.user_id);
-        // card.querySelector('.follow').style = following ? 'display:none' : '';
-        // card.querySelector('.unfollow').style = following ? '' : 'display:none';
+        const following = bp.isFollowing(userId);
+        handleFollowFavoriteBtns(card, following, isFavorite);
 
         // fixme Get channel images from cached follows?
         // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
@@ -109,7 +128,7 @@ const makeCard = (bp, type, content) => {
     else if (type === 'video' || type === 'clip') {
         let card = document.getElementById('stub-stream').cloneNode(true);
 
-        const streamerId = type === 'video' ? content.user_id : content.broadcaster_id;
+        const streamerId = parseInt(type === 'video' ? content.user_id : content.broadcaster_id);
         const streamerName = type === 'video' ? content.user_login : content.broadcaster_name;
 
         card.dataset['type'] = type;
@@ -151,9 +170,9 @@ const makeCard = (bp, type, content) => {
 
         card.querySelector('.viewer-count').textContent = utils.delimitNumber(content.view_count);
 
-        // const following = bp.isFollowing(streamerId);
-        // card.querySelector('.follow').style = following ? 'display:none' : '';
-        // card.querySelector('.unfollow').style = following ? '' : 'display:none';
+        const following = bp.isFollowing(streamerId);
+        const isFavorite = bp.isFavorite(streamerId);
+        handleFollowFavoriteBtns(card, following, isFavorite);
 
         card.querySelectorAll('.streamer-name').forEach(element => {
             element.textContent = streamerName;
@@ -174,37 +193,40 @@ const makeCard = (bp, type, content) => {
         return card;
     }
     else if (type === 'channel') {
-        const channel = content.channel ? content.channel : content; // todo remove?
+        const userId = parseInt(content.id);
+        const isFavorite = bp.isFavorite(userId);
 
-        // login = xqcow
-        // display_name = xQcOW
+        if (favoriteMode && ! isFavorite) return;
+
+        // Endpoint Inconsistencies
+        // Follows Endpoint  - Search Endpoint   - Value
+        // login             - broadcaster_login - xqcow
+        // display_name      - display_name      - xQcOW
+        // profile_image_url - thumbnail_url     - (some url)
+        // description       - (none)            - xqc desc
 
         let card = document.getElementById('stub-channel').cloneNode(true);
-        card.id = `CHANNEL!${channel.id}`;
-        card.dataset['id'] = channel.id;
-        card.dataset['streamerId'] = channel.id;
-        card.dataset['name'] = channel.login;
-        card.dataset['tag'] = channel.login + channel.display_name;
 
-        card.querySelector('.status').textContent = channel.login;
+        const login = content.login ?? content.broadcaster_login;
+        const profile_image = content.profile_image_url ?? content.thumbnail_url;
 
-        // todo this endpoint does not return channel logo. remove if they wont add it back
-        // also remove the default image url since Twitch returns it by default now
+        card.id = `CHANNEL!${content.id}`;
+        card.dataset['id'] = content.id;
+        card.dataset['streamerId'] = content.id;
+        card.dataset['name'] = login;
+        card.dataset['tag'] = login + content.display_name;
+
+        card.querySelector('.status').textContent = login;
+
         UI.insertBackground(
             card,
-            channel.profile_image_url
-                ? channel.profile_image_url
-                : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png'
+            profile_image ?? 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png'
         )
 
-        // const following = bp.isFollowing(channel._id);
-        // card.querySelectorAll('.follow').forEach(btn => btn.style = following ? 'display:none' : '');
-        // card.querySelector('.unfollow').style = following ? '' : 'display:none';
-        // if (! bp.getAuthorizedUser()) {
-        //     card.querySelector('.followTwitch').classList.add('noAccess');
-        // }
+        const following = bp.isFollowing(userId);
+        handleFollowFavoriteBtns(card, following, isFavorite);
 
-        card.querySelector('.description--text').textContent = channel.description;
+        card.querySelector('.description--text').textContent = content.description ?? '';
 
         // tooltip stuff
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.display_name);

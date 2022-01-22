@@ -100,6 +100,9 @@ body
         cursor: pointer
         opacity: 1
 
+    &--faded
+        opacity: 0.5
+
     &--inactive
         opacity: 0.5
         cursor: not-allowed !important
@@ -118,6 +121,8 @@ body
         background-image: url(../../assets/images/forward.png)
     &__search
         background-image: url(../../assets/images/search.png)
+    &__favorites
+        background-image: url(../../assets/images/favorites.png)
     &__refresh
         background-image: url(../../assets/images/refresh.png)
     &__exit
@@ -139,10 +144,26 @@ body
         background-image: url(../../assets/images/videos.png)
     &__clips
         background-image: url(../../assets/images/clips.png)
+
     &__follow
         background-image: url(../../assets/images/follow.png)
     &__unfollow
-        background-image: url(../../assets/images/unfollow.png)
+        background-image: url(../../assets/images/follow.png)
+        background-color: #14B866 !important
+
+        &:hover
+            background-image: url(../../assets/images/unfollow.png)
+            background-color: #E20303 !important
+
+    &__favorite
+        background-image: url(../../assets/images/favorite.png)
+    &__unfavorite
+        background-image: url(../../assets/images/favorite.png)
+        background-color: goldenrod !important
+
+        &:hover
+            background-image: url(../../assets/images/unfavorite.png)
+            background-color: #E20303 !important
 
 .navigation
     display: flex
@@ -180,10 +201,16 @@ body
     background-color: var(--twitch)
     padding: 8px
     border: none
+    text-decoration: none
 
     &:hover
         background-color: var(--twitch-dark)
         cursor: pointer
+
+.about-version
+    position: relative
+    left: 50%
+    top: 140px
 
 @import 'cards'
 @import 'utils'

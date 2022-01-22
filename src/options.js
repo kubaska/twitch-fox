@@ -19,7 +19,11 @@ function saveOption(event) {
             bp.setStorage(event.target.dataset['internal'], parseInt(event.target.value));
         }
         else if (type === 'checkbox') {
-            bp.setStorage(event.target.dataset['internal'], event.target.checked);
+            if (event.target.dataset['flag']) {
+                bp.setStorage(event.target.dataset['internal'], event.target.dataset['flag'], event.target.checked);
+            } else {
+                bp.setStorage(event.target.dataset['internal'], event.target.checked);
+            }
         }
     }
 }
@@ -33,7 +37,11 @@ document.querySelectorAll('[data-internal]').forEach(control => {
             control.value = bp.getStorage(control.dataset['internal']);
         }
         else if (type === 'checkbox') {
-            control.checked = !!bp.getStorage(control.dataset['internal']);
+            if (control.dataset['flag']) {
+                control.checked = bp.getStorage(control.dataset['internal'], parseInt(control.dataset['flag']));
+            } else {
+                control.checked = !!bp.getStorage(control.dataset['internal']);
+            }
         }
     }
 
@@ -42,6 +50,8 @@ document.querySelectorAll('[data-internal]').forEach(control => {
 
 function showImportError(message) {
     const err = document.querySelector('.error-message');
+    const progress = document.querySelector('.progress-message');
+    progress.classList.add('d-none');
     err.innerText = 'Import error: ' + message;
     err.classList.remove('d-none');
 }

@@ -17,6 +17,7 @@
             <span id="forward" class="icon icon--small icon__arrow-right tooltipped" data-tooltip="Go forward one search level"></span>
             <span id="search" class="icon icon--small icon__search tooltipped" data-tooltip="Enter text to filter results, and press this icon or the 'ENTER' key to search Twitch with your query."></span>
             <input id="searchBox" type="text" />
+            <span id="favorite" class="icon icon--small icon__favorites tooltipped" data-tooltip="Toggle favorites"></span>
             <span id="refresh" class="icon icon--small icon__refresh tooltipped" data-tooltip="Refresh the results"></span>
             <span id="exitSearch" class="icon icon--small icon__exit tooltipped" data-tooltip="Exit the search"></span>
         </div>
@@ -124,6 +125,10 @@
                         <span class="btn icon icon--medium icon__popout" data-trigger="openStreamPopout" data-tooltip="Open content in a popout window"></span>
                         <span class="btn icon icon--medium icon__chat" data-trigger="openChat" data-tooltip="Open chat in a popout window"></span>
                         <span class="btn icon icon--medium icon__enlarge" data-trigger="enlarge" data-tooltip="Enlarge the preview"></span>
+                        <span class="btn icon icon--medium icon__favorite" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>
+                        <span class="btn icon icon--medium icon__unfavorite d-none" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>
+                        <span class="btn icon icon--medium icon__follow" data-trigger="follow" data-tooltip="Follow channel locally"></span>
+                        <span class="btn icon icon--medium icon__unfollow" data-trigger="unfollow" data-tooltip="Unfollow channel locally"></span>
                     </div>
                     <div class="category tooltipped" data-tooltip="View the top live streams playing %MSG%">
                         <img data-trigger="browseGame" class="category-img" src="" />
@@ -169,7 +174,10 @@
                     <div class="lower--controls">
                         <span class="btn icon icon--medium icon__stream" data-tooltip="Open Twitch page" data-trigger="openStream"></span>
                         <span class="btn icon icon--medium icon__chat" data-tooltip="Open chat in a popout window" data-trigger="openChat"></span>
-                        <span class="btn icon icon--medium icon__follow"></span>
+                        <span class="btn icon icon--medium icon__favorite" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>
+                        <span class="btn icon icon--medium icon__unfavorite d-none" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>
+                        <span class="btn icon icon--medium icon__follow" data-trigger="follow" data-tooltip="Follow channel locally"></span>
+                        <span class="btn icon icon--medium icon__unfollow" data-trigger="unfollow" data-tooltip="Unfollow channel locally"></span>
                     </div>
                 </div>
             </div>
@@ -178,37 +186,38 @@
 
     <div id="about-page" class="about-page">
         <div class="logo-container" style="height: 150px">
-            <div class="logo hw-100 bg-contain"></div>
-            <span class="versionText fw-bold">Twitch Fox, version 5.0.0 (fork)</span>
+            <div class="logo hw-100 bg-contain">
+                <span class="about-version fw-bold">Twitch Fox, version 5.0.0 (fork)</span>
+            </div>
         </div>
 
         <div>
-            <p class="aboutText bold">Welcome to Twitch Fox!</p>
-            <p class="aboutText">You can browse Twitch by clicking the tabs on the left, and search Twitch for content relating to the current tab by using the (currently not visible) search bar above. Want to quickly view and receive notifications for followed content? Click 'Log In' in the top right corner to connect with Twitch! And don't forget to check out the settings by clicking the gear icon in the bottom left corner, where you can disable tooltips and much more.</p>
-            <p class="aboutText">Whether you have used Twitch Fox in the past or have downloaded it for the first time, I hope you enjoy my add-on!</p>
+            <p class="fs-5 fw-bold">Welcome to Twitch Fox!</p>
+            <p class="fs-6">You can browse Twitch by clicking the tabs on the left, and search Twitch for content relating to the current tab by using the (currently not visible) search bar above. Want to quickly view and receive notifications for followed content? Click 'Log In' in the top right corner to connect with Twitch! And don't forget to check out the settings by clicking the gear icon in the bottom left corner, where you can disable tooltips and much more.</p>
+            <p class="fs-6">Whether you have used Twitch Fox in the past or have downloaded it for the first time, I hope you enjoy my add-on!</p>
         </div>
         <hr>
         <div>
-            <p class="aboutText bold">About Twitch Fox</p>
+            <p class="fs-5 fw-bold">About Twitch Fox</p>
 
-            <p class="aboutText">Hey! You are using forked version of Twitch Fox. I used this addon for well over 2 years now and loved it however it lacked feature that i really wanted: ability to follow channels locally while also being logged into Twitch. So after inspecting the codebase few times in 2020 I decided to finally make it happen.</p>
-            <p class="aboutText">This fork is far from perfect and extension needs a full proper rewrite, preferably on some reactive framework. That being said I decided against it, because Twitch Kraken API is already deprecated and their new Helix API would make it much, much more difficult to port all the awesome features this extension has.</p>
-            <p class="aboutText">You can find original text below.</p>
-            <p class="aboutText italic">-kubaska</p>
+            <p class="fs-6">Hey! You are using forked version of Twitch Fox. I used this addon for well over 2 years now and loved it however it lacked feature that i really wanted: ability to follow channels locally while also being logged into Twitch. So after inspecting the codebase few times in 2020 I decided to finally make it happen.</p>
+            <p class="fs-6">This fork is far from perfect and extension needs a full proper rewrite, preferably on some reactive framework. That being said I decided against it, because Twitch Kraken API is already deprecated and their new Helix API would make it much, much more difficult to port all the awesome features this extension has.</p>
+            <p class="fs-6">You can find original text below.</p>
+            <p class="fs-6 italic">-kubaska</p>
 
             <p class="aboutText text-center">-----</p>
 
-            <p class="aboutText">What is Twitch Fox? This is a Firefox add-on I originally made in April 2015 under the name 'Twitch Alarm,' and it has grown from a simple followed stream notifier to a full-fledged Twitch browser. I've worked on it in small and dedicated spurts when I had free time throughout the years, and I've learned a lot from developing it.</p>
-            <p class="aboutText">Like Twitch Fox? Please leave a review on the add-on page! If you really really like it, please consider donating. Twitch Fox is the product of many hours of free time, and any contribution is greatly appreciated! Have a problem or suggestion? Leave an issue on the GitHub page or contact me directly, and I will try to get around to fixing it. Thank you for using my add-on!</p>
-            <p class="aboutText italic">-Hunter</p>
+            <p class="fs-6">What is Twitch Fox? This is a Firefox add-on I originally made in April 2015 under the name 'Twitch Alarm,' and it has grown from a simple followed stream notifier to a full-fledged Twitch browser. I've worked on it in small and dedicated spurts when I had free time throughout the years, and I've learned a lot from developing it.</p>
+            <p class="fs-6">Like Twitch Fox? Please leave a review on the add-on page! If you really really like it, please consider donating. Twitch Fox is the product of many hours of free time, and any contribution is greatly appreciated! Have a problem or suggestion? Leave an issue on the GitHub page or contact me directly, and I will try to get around to fixing it. Thank you for using my add-on!</p>
+            <p class="fs-6 italic">-Hunter</p>
 
             <div class="about-btn-group">
-                <a class="aboutButton small" href="https://addons.mozilla.org/en-US/firefox/addon/twitch-fox/" target="_blank">Visit the add-on page</a>
-                <a class="aboutButton small" href="https://github.com/Hunter5000/twitch-fox" target="_blank">Visit main GitHub repository</a>
-                <a class="aboutButton small" href="https://github.com/kubaska/twitch-fox" target="_blank">Visit fork GitHub repository</a>
+                <a class="twitch-btn" href="https://addons.mozilla.org/en-US/firefox/addon/twitch-fox/" target="_blank">Visit the add-on page</a>
+                <a class="twitch-btn" href="https://github.com/Hunter5000/twitch-fox" target="_blank">Visit main GitHub repository</a>
+                <a class="twitch-btn" href="https://github.com/kubaska/twitch-fox" target="_blank">Visit fork GitHub repository</a>
             </div>
 
-            <p class="aboutText">My DiscordTag: <span class="user-select-all">Hunter#3581</span></p>
+            <p class="fs-6">My DiscordTag: <span class="user-select-all">Hunter#3581</span></p>
         </div>
     </div>
 </div>

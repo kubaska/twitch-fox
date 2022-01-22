@@ -1,3 +1,10 @@
+export const ENotificationFlag = {
+    textNotification: 1 << 0,
+    audioNotification: 1 << 1,
+    favoritesTextNotification: 1 << 2,
+    favoritesAudioNotification: 1 << 3
+}
+
 export const tabs = {
     GAMES: 'games',
     STREAMS: 'streams',
@@ -89,6 +96,7 @@ export const endpointList = {
  *
  * apiSearchable - Ability to search API instead of displayed results.
  * endpoint      - What endpoint should we call when user selects the tab
+ * favorites     - Can user filter by favorites?
  * refreshable   - Is tab refreshable?
  * staticContent - Contains ID of HTML element to copy and display.
  */
@@ -107,10 +115,10 @@ export const tabInfo = {
         refreshable: true,
     },
     [tabs.FOLLOWED_STREAMS]: {
-
+        favorites: true
     },
     [tabs.FOLLOWED_CHANNELS]: {
-
+        favorites: true
     },
     [tabs.ABOUT]: {
         hideNavigation: true,
