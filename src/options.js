@@ -127,5 +127,8 @@ document.getElementById('exportFollows').addEventListener('click', () => {
 });
 
 document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));
+document.getElementById('importFollows').addEventListener('click', () => {
+    document.getElementById('importFollowsHandle').click();
+});
 
 // browser.runtime.onMessage.addListener(() => window.location.reload());
