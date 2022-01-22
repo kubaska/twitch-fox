@@ -309,6 +309,7 @@ const importFollowsLegacy = (json) => {
 
     setStorage('localFollows', follows);
     rebuildFollowCache();
+    fetchUserFollows();
 }
 
 /**
@@ -329,8 +330,8 @@ const importFollows = (json) => {
     }).filter(value => value);
 
     setStorage('localFollows', follows);
-
     rebuildFollowCache();
+    fetchUserFollows();
 }
 
 /**
@@ -339,9 +340,7 @@ const importFollows = (json) => {
  * @param id
  * @return {boolean}
  */
-const isFollowing = (id) => {
-    return userFollowsCache.has(id);
-}
+const isFollowing = (id) => userFollowsCache.has(id);
 
 /**
  * Follow Twitch channel

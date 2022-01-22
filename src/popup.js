@@ -157,8 +157,7 @@ const updatePage = (noScroll) => {
         search.classList.remove('icon--inactive');
     }
     else {
-        searchBox.placeholder =
-            `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
+        searchBox.placeholder = `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
 
         search.classList.add('icon--inactive');
     }
