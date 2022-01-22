@@ -2,8 +2,8 @@
 
 import axios from "axios";
 import _storage from './storage';
-import {chunk, differenceBy, find, isEmpty, map, orderBy, pullAllBy, take} from "lodash";
-import {endpointList, endpoints, tabs} from "./contants";
+import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
+import {endpointList, endpoints, ENotificationFlag, tabs} from "./contants";
 import utils from "./utils";
 
 // Variable declarations
@@ -12,6 +12,7 @@ let authorizedUser; // An object containing the data of the authorized user
 
 let userFollows = []; // Array with followed channels of authorized user
 let userFollowsCache = new Set();
+let userFavoritesCache = new Set();
 let userFollowedStreams = []; // Array with followed stream objects
 
 let lastNotificationStreamName = '';
@@ -86,11 +87,8 @@ const getResultsContentLength = () => {
 
 const setMode = newMode => { popupMode = newMode; }
 
-const getStorage = key => _storage.get(key);
-const setStorage = (key, value, callback) => {
-    _storage.set(key, value);
-    if (callback) callback();
-};
+const getStorage = (key, flag) => _storage.get(key, flag);
+const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
 
 /**
  * Call Twitch API from popup
@@ -259,12 +257,8 @@ const playAlarm = () => {
 
 const desktopNotification = (stream) => {
     const title = `${stream.user_name} streaming ${stream.game_name}`;
-
-    // fixme logo
-    // const logo = stream.channel.logo != null
-    //     ? stream.channel.logo
-    //     : 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
-    const logo = '/assets/twitch-fox.svg';
+    const channel = find(userFollows, { id: stream.user_id });
+    const logo = channel?.profile_image_url ?? '/assets/twitch-fox.svg';
 
     browser.notifications.create('follow-notification', {
         type: 'basic',
@@ -416,9 +410,40 @@ const unfollow = (id) => {
         pullAllBy(userFollows, [{ id }], 'id');
     }
 
+    // todo add unfavorite
     if (id) {
         userFollowsCache.delete(id);
     }
+}
+
+const isFavorite = (id) => userFavoritesCache.has(id);
+
+const favorite = (id) => {
+    id = parseInt(id);
+
+    // Reject non-follows
+    if (! isFollowing(id)) return false;
+
+    const favorites = _storage.get('favorites');
+
+    // Reject already existing favorite
+    if (find(favorites, { id })) return false;
+
+    favorites.push(id);
+
+    setStorage('favorites', favorites);
+    userFavoritesCache.add(id);
+}
+
+const unfavorite = (id) => {
+    id = parseInt(id);
+
+    const favorites = _storage.get('favorites');
+
+    pull(favorites, id);
+
+    _storage.set('favorites', favorites);
+    userFavoritesCache.delete(id);
 }
 
 const rebuildFollowCache = () => {
@@ -431,6 +456,12 @@ const rebuildFollowCache = () => {
         userFollowsCache.add(parseInt(follow.id));
     });
 };
+const rebuildFavoriteCache = () => {
+    const favorites = _storage.get('favorites');
+    favorites.forEach(favorite => {
+        userFavoritesCache.add(favorite);
+    })
+}
 
 /**
  * Fetch current user from Twitch API
@@ -579,19 +610,35 @@ const fetchFollowedStreams = () => {
         const diff = differenceBy(total, userFollowedStreams, 'id');
 
         if (! isEmpty(diff)) {
-            // display a notification if we have new stream
-            if (_storage.get('desktopNotifications')) {
-                desktopNotification(diff[0]);
-            }
+            // prefer favorite streams
+            const favoritesFirst = orderBy(diff, (stream) => isFavorite(parseInt(stream.user_id)), 'desc');
 
-            // and play alarm
-            Alarm.play();
+            const anyFavorites = favoritesFirst.some(stream => isFavorite(parseInt(stream.user_id)));
+
+            // display a notification if we have new stream
+            if (anyFavorites) {
+                if (_storage.get('notifications', ENotificationFlag.favoritesTextNotification)) {
+                    desktopNotification(favoritesFirst[0]);
+                }
+                if (_storage.get('notifications', ENotificationFlag.favoritesAudioNotification)) {
+                    Alarm.play();
+                }
+            } else {
+                if (_storage.get('notifications', ENotificationFlag.textNotification)) {
+                    desktopNotification(favoritesFirst[0]);
+                }
+                if (_storage.get('notifications', ENotificationFlag.audioNotification)) {
+                    Alarm.play();
+                }
+            }
         }
 
         userFollowedStreams = total;
 
         // also update badge
         updateBadge();
+    }).catch(err => {
+        console.log('Cannot fetch followed streams', err);
     });
 }
 
@@ -608,6 +655,7 @@ const initializeFollows = async () => {
     }
 
     rebuildFollowCache();
+    rebuildFavoriteCache();
 
     browser.runtime.sendMessage({ content: 'INITIALIZE' });
 
@@ -689,6 +737,7 @@ window.callApi = callApi;
 window.deauthorize = deauthorize;
 window.defaultContent = defaultContent;
 window.defaultResults = defaultResults;
+window.favorite = favorite;
 window.follow = follow;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
@@ -700,6 +749,7 @@ window.getUserFollows = getUserFollows;
 window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
 window.importFollowsLegacy = importFollowsLegacy;
+window.isFavorite = isFavorite;
 window.isFollowing = isFollowing;
 window.playAlarm = playAlarm;
 window.saveTabState = saveTabState;
@@ -709,5 +759,6 @@ window.setResults = setResults;
 window.setResultsToFollowedChannels = setResultsToFollowedChannels;
 window.setResultsToFollowedStreams = setResultsToFollowedStreams;
 window.setStorage = setStorage;
+window.unfavorite = unfavorite;
 window.unfollow = unfollow;
 window._storage = () => _storage;
