@@ -85,7 +85,10 @@ const getResultsContentLength = () => {
     return results[resultsIndex].content.length;
 }
 
-const setMode = newMode => { popupMode = newMode; }
+const setMode = newMode => {
+    popupMode = newMode;
+    setStorage('mode', newMode);
+}
 
 const getStorage = (key, flag) => _storage.get(key, flag);
 const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
@@ -641,6 +644,7 @@ const initializeFollows = async () => {
 }
 
 _storage.load().then(() => {
+    popupMode = getStorage('mode');
     Alarm.initialize();
 
     initializeFollows();

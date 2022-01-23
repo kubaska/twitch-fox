@@ -6,6 +6,7 @@ const defaultState = {
     // Non-settings
     version: _VERSION,
     token: null,
+    mode: 'about',
     localFollows: [],
     favorites: [],
     favoritesMode: false,
