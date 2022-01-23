@@ -346,40 +346,32 @@ const isFollowing = (id) => userFollowsCache.has(id);
  * Follow Twitch channel
  *
  * @param id
- * @param name
- * @param forceLocal
  * @return {Promise<boolean>}
  */
-const follow = async (id, name, forceLocal) => {
-    if (authorizedUser && ! forceLocal) {
-        const response = await twitchAPI('Follow Channel', { _id: id });
+const follow = async (id) => {
+    const allLocalFollows = _storage.get('localFollows');
 
-        const successful = id === response?.channel?._id;
+    const exists = find(allLocalFollows, { id });
 
-        if (successful) {
-            userFollows.push(...response);
-            userFollowsCache.add(response.channel._id);
-        }
-
-        return successful;
-    }
-    else {
-        // save in storage
-        const allLocalFollows = _storage.get('localFollows');
-
-        const exists = find(allLocalFollows, { id });
-
-        if (exists) {
-            console.log(`!!! Follow [${id}, ${name}] already exists, skipping`);
-            return true;
-        }
-
-        allLocalFollows.push({ id, name });
-        userFollowsCache.add(id);
-        _storage.set('localFollows', allLocalFollows);
-
+    if (exists) {
+        console.log(`!!! Follow [${id}] already exists, skipping`);
         return true;
     }
+
+    allLocalFollows.unshift({ id, fd: utils.getISODateStringNoMs() });
+    userFollowsCache.add(id);
+    _storage.set('localFollows', allLocalFollows);
+
+    // Add channel to userFollows
+    twitchAPI(endpoints.GET_USERS, { id })
+        .then(response => {
+            if (response?.data && response.data[0]) {
+                userFollows.unshift(response.data[0]);
+            }
+        })
+        .catch(err => { console.log(err); });
+
+    return true;
 };
 
 /**
@@ -388,31 +380,15 @@ const follow = async (id, name, forceLocal) => {
  * @param id
  */
 const unfollow = (id) => {
-    const existsLocally = find(_storage.get('localFollows'), { id });
+    const follows = _storage.get('localFollows');
 
-    if (existsLocally) {
-        const allLocalFollows = _storage.get('localFollows');
+    pullAllBy(follows, [{ id }], 'id');
+    pullAllBy(userFollows, [{ id: id.toString() }], 'id');
 
-        pullAllBy(allLocalFollows, [{ id }], 'id');
+    _storage.set('localFollows', follows);
+    userFollowsCache.delete(id);
 
-        _storage.set('localFollows', allLocalFollows);
-    }
-    else {
-        if (! _storage.get('token')) {
-            console.log('!!! Tried to unfollow online channel without being logged, skipping');
-            return;
-        }
-
-        twitchAPI('Unfollow Channel', { _id: id });
-
-        // remove from userFollows
-        pullAllBy(userFollows, [{ id }], 'id');
-    }
-
-    // todo add unfavorite
-    if (id) {
-        userFollowsCache.delete(id);
-    }
+    unfavorite(id);
 }
 
 const isFavorite = (id) => userFavoritesCache.has(id);
@@ -428,7 +404,7 @@ const favorite = (id) => {
     // Reject already existing favorite
     if (find(favorites, { id })) return false;
 
-    favorites.push(id);
+    favorites.unshift(id);
 
     setStorage('favorites', favorites);
     userFavoritesCache.add(id);
@@ -459,7 +435,7 @@ const rebuildFavoriteCache = () => {
     const favorites = _storage.get('favorites');
     favorites.forEach(favorite => {
         userFavoritesCache.add(favorite);
-    })
+    });
 }
 
 /**
