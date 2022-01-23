@@ -52,12 +52,12 @@ function showImportError(message) {
     const err = document.querySelector('.error-message');
     const progress = document.querySelector('.progress-message');
     progress.classList.add('d-none');
-    err.innerText = 'Import error: ' + message;
+    err.textContent = 'Import error: ' + message;
     err.classList.remove('d-none');
 }
 
 // import & export
-document.getElementById('importFollows').addEventListener('change', (e) => {
+document.getElementById('importFollowsHandle').addEventListener('change', (e) => {
     document.querySelector('.error-message').classList.add('d-none');
 
     const file = e.target.files[0];
@@ -72,7 +72,6 @@ document.getElementById('importFollows').addEventListener('change', (e) => {
         try {
             parsed = JSON.parse(reader.result);
         } catch (e) {
-            console.log(e);
             return showImportError('Error parsing file: invalid file');
         }
 
