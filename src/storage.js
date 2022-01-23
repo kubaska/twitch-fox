@@ -17,16 +17,14 @@ const defaultState = {
     // notifications
     // text & audio for favorites, text for non-favorites
     notifications: 13,
+    notificationClick: 0,
     notificationVolume: 20,
-    openTwitchPage: false,
-    openPopout: false,
-    openChat: false,
 
     minutesBetweenCheck: 1,
     languageCodes: '',
 };
 
-const flagSettings = ['notifications'];
+const flagSettings = ['notifications', 'notificationClick'];
 
 let storage = {};
 

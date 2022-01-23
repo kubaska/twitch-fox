@@ -5,6 +5,12 @@ export const ENotificationFlag = {
     favoritesAudioNotification: 1 << 3
 }
 
+export const ENotificationClickFlag = {
+    openStreamNewTab: 1 << 0,
+    openStreamPopout: 1 << 1,
+    openChatPopout: 1 << 2
+}
+
 export const tabs = {
     GAMES: 'games',
     STREAMS: 'streams',

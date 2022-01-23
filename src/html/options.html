@@ -145,45 +145,39 @@
 
     <div class="row">
         <div class="description">
+            <p>After clicking notification, open...</p>
+        </div>
+
+        <div class="control">
+            <table>
+                <tr>
+                    <td class="text">Stream in New Tab</td>
+                    <td class="text">Stream in Popout</td>
+                    <td class="text">Chat Popout</td>
+                </tr>
+                <tr>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notificationClick" data-flag="1" />
+                    </td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notificationClick" data-flag="2" />
+                    </td>
+                    <td class="center">
+                        <input type="checkbox" data-internal="notificationClick" data-flag="4" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="description">
             <p>Notification volume</p>
             <span>Play a sound alarm when new stream comes online. 0 to disable</span>
         </div>
 
         <div class="control">
             <input type="number" min="0" max="100" size="5" data-internal="notificationVolume" required>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="description">
-            <p>Open Twitch page when you click notification</p>
-            <span></span>
-        </div>
-
-        <div class="control">
-            <input type="checkbox" data-internal="openTwitchPage">
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="description">
-            <p>Open stream popout when you click notification</p>
-            <span></span>
-        </div>
-
-        <div class="control">
-            <input type="checkbox" data-internal="openPopout">
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="description">
-            <p>Open stream chat when you click notification</p>
-            <span></span>
-        </div>
-
-        <div class="control">
-            <input type="checkbox" data-internal="openChat">
         </div>
     </div>
 

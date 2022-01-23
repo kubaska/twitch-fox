@@ -3,7 +3,7 @@
 import axios from "axios";
 import _storage from './storage';
 import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
-import {endpointList, endpoints, ENotificationFlag, tabs} from "./contants";
+import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, tabs} from "./contants";
 import utils from "./utils";
 
 // Variable declarations
@@ -702,9 +702,12 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
 browser.notifications.onClicked.addListener(() => {
     if (! lastNotificationStreamName) return;
 
-    if (getStorage('openTwitchPage')) utils.openStream(lastNotificationStreamName);
-    if (getStorage('openPopout')) utils.openStreamPopout(lastNotificationStreamName);
-    if (getStorage('openChat')) utils.openChatPopout(lastNotificationStreamName);
+    if (getStorage('notificationClick', ENotificationClickFlag.openStreamNewTab))
+        utils.openStream(lastNotificationStreamName);
+    if (getStorage('notificationClick', ENotificationClickFlag.openStreamPopout))
+        utils.openStreamPopout(lastNotificationStreamName);
+    if (getStorage('notificationClick', ENotificationClickFlag.openChatPopout))
+        utils.openChatPopout(lastNotificationStreamName);
 
     lastNotificationStreamName = '';
 });
@@ -730,7 +733,6 @@ browser.contextMenus.create({
 })
 
 // Exports
-
 window.authorize = authorize;
 window.callApi = callApi;
 window.deauthorize = deauthorize;
