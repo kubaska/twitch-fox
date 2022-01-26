@@ -500,7 +500,7 @@ const initializeEvents = () => {
     // Avatar
     avatar.addEventListener('click', () => {
         if (bp.getAuthorizedUser()) {
-            utils.openStream(bp.getAuthorizedUser().name);
+            utils.openStream(bp.getAuthorizedUser().login);
         }
     });
 
