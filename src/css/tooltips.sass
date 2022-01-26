@@ -4,13 +4,14 @@
     &:before
         content: attr(data-tooltip)
         position: absolute
-        width: 140px
-        padding: 5px 0
+        width: 130px
+        padding: 5px 2px
         border-radius: 6px
         background-color: black
         color: white
         text-align: center
-        line-height: normal
+        font-size: 12px
+        line-height: 12px
         //display: none
         visibility: hidden
         z-index: 1
@@ -52,6 +53,21 @@
 .category.tooltipped:before
     top: 53px
     left: -100px
+
+.icon__stream.tooltipped:before,
+.icon__popout.tooltipped:before
+    top: 31px
+.icon__chat.tooltipped:before,
+.icon__enlarge.tooltipped:before,
+.icon__favorite.tooltipped:before,
+.icon__unfavorite.tooltipped:before
+    top: 31px
+    left: -45px
+.icon__follow.tooltipped:before,
+.icon__unfollow.tooltipped:before
+    top: 31px
+    left: -75px
+
 .icon__videos.tooltipped:before
     top: 31px
     left: -107px
