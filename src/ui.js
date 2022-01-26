@@ -12,8 +12,12 @@ const UI = {
         return element;
     },
 
+    // Supported URL formats:
+    // {width}x{height}
+    // %{width}x%{height}
+    // 52x72 (or other numbers)
     getImageUrl: (url, width, height) => {
-        return url.replace(/%?{width}x%?{height}/, `${width}x${height}`);
+        return url.replace(/(%?{width}x%?{height})|(\d+x\d+)/, `${width}x${height}`);
     },
 
     setTooltip: (element, tooltip) => {
