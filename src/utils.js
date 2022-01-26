@@ -29,8 +29,9 @@ export default {
         return ('0'+Math.floor(seconds/60)%60).slice(-2)+':'+('0'+(seconds%60)).slice(-2);
     },
     // Same as (new Date()).toISOString() but without ms part.
-    getISODateStringNoMs: () => {
-        return (new Date()).toISOString().replace(/\.\d{3}/, '');
+    getISODateStringNoMs: (date) => {
+        if (date) return (new Date(date)).toISOString().replace(/\.\d{3}/, '');
+        else return (new Date()).toISOString().replace(/\.\d{3}/, '');
     },
     cloneObj: (obj) => {
         return JSON.parse(JSON.stringify(obj));
