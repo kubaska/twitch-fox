@@ -301,16 +301,18 @@ const deauthorize = () => {
  */
 const importFollowsLegacy = (json) => {
     const parsed = JSON.parse(json);
-    const currentTime = utils.getISODateStringNoMs();
+    let date = (new Date()).getTime() - (parsed.length * 1000);
 
     const follows = parsed.map(follow => {
         const id = parseInt(follow);
 
-        if (id) return { id, fd: currentTime };
+        if (id) return { id, fd: utils.getISODateStringNoMs(date += 1000) };
         else    return false;
     }).filter(value => value);
 
-    setStorage('localFollows', follows);
+    const finalFollows = orderBy(follows, [(_) => new Date(_.fd)], ['desc']);
+
+    setStorage('localFollows', finalFollows);
     rebuildFollowCache();
     fetchUserFollows();
 }
@@ -322,17 +324,19 @@ const importFollowsLegacy = (json) => {
  */
 const importFollows = (json) => {
     const parsed = JSON.parse(json);
-    const currentTime = utils.getISODateStringNoMs();
+    let date = (new Date()).getTime() - (parsed.length * 1000);
 
     const follows = parsed.map(follow => {
         const { id, fd } = follow;
 
         if (id && fd) return { id, fd };
-        else if (id)  return { id, fd: currentTime };
+        else if (id)  return { id, fd: utils.getISODateStringNoMs(date += 1000) };
         else          return false;
     }).filter(value => value);
 
-    setStorage('localFollows', follows);
+    const finalFollows = orderBy(follows, [(_) => new Date(_.fd)], ['desc']);
+
+    setStorage('localFollows', finalFollows);
     rebuildFollowCache();
     fetchUserFollows();
 }
