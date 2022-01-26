@@ -259,7 +259,7 @@ const playAlarm = () => {
 };
 
 const desktopNotification = (stream) => {
-    const title = `${stream.user_name} streaming ${stream.game_name}`;
+    const title = `${stream.user_name ?? stream.user_login} streaming ${stream.game_name}`;
     const channel = find(userFollows, { id: stream.user_id });
     const logo = channel?.profile_image_url ?? '/assets/twitch-fox.svg';
 
@@ -270,7 +270,7 @@ const desktopNotification = (stream) => {
         message: stream.title,
     });
 
-    lastNotificationStreamName = stream.user_name;
+    lastNotificationStreamName = stream.user_login;
 };
 
 /**
