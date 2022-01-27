@@ -81,6 +81,11 @@ const setIndex = (newIndex) => {
     resultsIndex = newIndex;
 };
 
+const resetResults = () => {
+    resultsIndex = 0;
+    results = defaultResults();
+}
+
 const getResultsContentLength = () => {
     return results[resultsIndex].content.length;
 }
@@ -737,6 +742,7 @@ window.importFollowsLegacy = importFollowsLegacy;
 window.isFavorite = isFavorite;
 window.isFollowing = isFollowing;
 window.playAlarm = playAlarm;
+window.resetResults = resetResults;
 window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;

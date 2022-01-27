@@ -401,8 +401,7 @@ const initialize = () => {
 
 const selectTab = (e) => {
     if (e.target.classList.contains('tab') && e.target.id !== mode) {
-        bp.setResults(bp.defaultResults());
-        bp.setIndex(0);
+        bp.resetResults();
         updateTab(e.target.id);
     }
 }
@@ -492,8 +491,7 @@ const initializeEvents = () => {
     // Exit search button
     exitSearch.addEventListener('click', () => {
         if (exitSearch.classList.contains('icon--inactive')) return;
-        bp.setResults(bp.defaultResults());
-        bp.setIndex(0);
+        bp.resetResults();
         updateTab();
     });
 
