@@ -293,10 +293,12 @@ const authorize = () => {
  */
 const deauthorize = () => {
     _storage.set('token', null);
+    browser.alarms.clear(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS);
     authorizedUser = null;
     userFollows = [];
     userFollowedStreams = [];
     rebuildFollowCache();
+    updateBadge();
 };
 
 /**
