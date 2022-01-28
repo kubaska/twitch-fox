@@ -146,7 +146,9 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
 
     return twitchAPI(endpoint, opts)
         .then(response => {
-            results[resultsIndex].content.push(...response.data);
+            const ids = new Set(results[resultsIndex].content.map(content => content.id));
+
+            results[resultsIndex].content.push(...response.data.filter(content => !ids.has(content.id)));
             results[resultsIndex].type = endpointList[endpoint].contentType;
 
             results[resultsIndex].total = response.total;
