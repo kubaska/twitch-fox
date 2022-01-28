@@ -86,9 +86,7 @@ const resetResults = () => {
     results = defaultResults();
 }
 
-const getResultsContentLength = () => {
-    return results[resultsIndex].content.length;
-}
+const getResultsContentLength = () => results[resultsIndex].content.length;
 
 const setMode = newMode => {
     popupMode = newMode;
@@ -109,7 +107,6 @@ const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
  */
 const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
     const opts = utils.cloneObj(theOpts);
-    console.log('callApi', endpoint);
 
     if (newIndex) {
         resultsIndex += 1;
@@ -129,7 +126,7 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         delete opts.after;
     }
 
-    // Old "limit" field
+    // first = limit
     if (! opts.first) {
         opts.first = 100;
     }
@@ -138,7 +135,6 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         opts.language = getStorage('languageCodes').toString().split(',');
     }
 
-    // todo check
     // after = cursor
     if (results[resultsIndex].cursor) {
         opts.after = results[resultsIndex].cursor;
@@ -178,22 +174,13 @@ const twitchAPI = (endpoint, theOpts) => {
     }
 
     const opts = utils.cloneObj(theOpts);
-    const { url, method } = endpointList[endpoint];
+    const { url } = endpointList[endpoint];
 
-    // Check if url function takes arguments and feed it ID if it does
-    // const _url = url.length
-    //     ? url(opts.id)
-    //     : url();
-    //
-    // delete opts.id;
-    const _url = url();
+    // console.log('[REQ]', endpoint, opts);
 
-    console.log('[REQ]', endpoint, opts);
-
-    return _axios.request({ url: _url, method, params: opts })
+    return _axios.request({ url, method: 'GET', params: opts })
         .then(response => {
-            console.log('[RES]', endpoint, response);
-
+            // console.log('[RES]', endpoint, response);
             return response.data;
         });
 };

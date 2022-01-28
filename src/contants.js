@@ -42,55 +42,46 @@ const endpoints = {
 
 export const endpointList = {
     [endpoints.GET_TOP_GAMES]: {
-        url: () => 'games/top',
-        method: 'GET',
+        url: 'games/top',
         contentType: 'game'
     },
 
     [endpoints.GET_STREAMS]: {
-        url: () => 'streams',
-        method: 'GET',
+        url: 'streams',
         langCodesAllowed: true,
         contentType: 'stream'
     },
     [endpoints.GET_VIDEOS]: {
-        url: () => 'videos',
-        method: 'GET',
+        url: 'videos',
         // Apparently only one is allowed but passing multiple works as well
         langCodesAllowed: true,
         contentType: 'video'
     },
     [endpoints.GET_CLIPS]: {
-        url: () => 'clips',
-        method: 'GET',
+        url: 'clips',
         contentType: 'clip'
     },
 
     [endpoints.GET_FOLLOWED_STREAMS]: {
-        url: () => 'streams/followed',
-        method: 'GET',
+        url: 'streams/followed',
         contentType: 'stream'
     },
 
     [endpoints.SEARCH_GAMES]: {
-        url: () => 'search/categories',
-        method: 'GET',
+        url: 'search/categories',
         contentType: 'game'
     },
     [endpoints.SEARCH_CHANNELS]: {
-        url: () => 'search/channels',
-        method: 'GET',
+        url: 'search/channels',
         contentType: 'channel'
     },
 
     [endpoints.GET_USERS]: {
-        url: () => 'users',
-        method: 'GET',
+        url: 'users'
     },
 
     [endpoints.GET_USER_FOLLOWS]: {
-        url: () => `users/follows`,
-        method: 'GET',
+        url: `users/follows`
     }
 };
 
