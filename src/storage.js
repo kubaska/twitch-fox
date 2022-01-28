@@ -26,20 +26,36 @@ const defaultState = {
 };
 
 const flagSettings = ['notifications', 'notificationClick'];
+const hugeSettings = ['localFollows', 'favorites'];
 
 let storage = {};
+let engine = 'local';
 
 export default {
     async load() {
+        // check preferred engine
+        const localSettings = await browser.storage.local.get(['engine', ...hugeSettings]);
+        engine = localSettings?.engine === 'sync' ? 'sync' : 'local';
+        console.log('Preferred engine:', engine);
+
         // load all saved settings
-        const settings = await browser.storage.sync.get(null);
+        // todo set version here or in migrate
+        storage = await browser.storage.sync.get(null);
 
-        console.log('settings', settings);
+        if (engine === 'local') {
+            hugeSettings.forEach(settingKey => {
+                storage[settingKey] = localSettings[settingKey] ?? [];
+            });
+        }
 
-        storage = settings;
+        // console.log('settings', storage);
+
+        return storage;
     },
 
     get(key, flag = null) {
+        if (key === 'engine') return engine;
+
         const setting = storage[key] !== undefined
             ? storage[key]
             : defaultState[key];
@@ -51,9 +67,9 @@ export default {
         return setting;
     },
 
-    set(key, value, addFlag = false) {
-        // set in local storage if setting exists
-        // no undefineds!!
+    // set in local storage if setting exists
+    // no undefineds!!
+    async set(key, value, addFlag = false) {
         if (defaultState[key] !== undefined && value !== undefined) {
             // handle flags
             if (flagSettings.includes(key)) {
@@ -63,11 +79,42 @@ export default {
                 else         value = currentFlags & ~value;
             }
 
-            storage[key] = value;
+            if (hugeSettings.includes(key)) {
+                await browser.storage[engine].set({[key]: value});
+            } else {
+                await browser.storage.sync.set({[key]: value});
+            }
 
-            browser.storage.sync.set({[key]: value});
+            storage[key] = value;
+            return true;
         }
 
          return false;
+    },
+
+    async switchEngine(engine) {
+        const nextEngine = engine === 'sync' ? 'sync' : 'local';
+
+        let newSettings = {};
+        hugeSettings.forEach(key => {
+            newSettings[key] = storage[key];
+        });
+
+        try {
+            await browser.storage[nextEngine].set(newSettings);
+        } catch (e) {
+            console.log(e);
+            return e;
+        }
+
+        browser.storage.local.set({ engine: nextEngine });
+        engine = nextEngine;
+
+        return true;
+    },
+
+    async resetSettings() {
+        await browser.storage.local.clear();
+        await browser.storage.sync.clear();
     }
 }

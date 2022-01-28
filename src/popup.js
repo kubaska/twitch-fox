@@ -249,24 +249,20 @@ const cardClickHandler = (e) => {
             enlarge(topElem);
             break;
         case 'follow':
-            bp.follow(meta.streamerId, meta.name, false);
-            updatePage(true);
-            break;
-        case 'followLocal':
-            bp.follow(meta.streamerId, meta.name, true);
-            updatePage(true);
+            bp.follow(meta.streamerId)
+                .then(() => { updatePage(true); });
             break;
         case 'unfollow':
-            bp.unfollow(meta.streamerId, meta.name);
-            updatePage(true);
+            bp.unfollow(meta.streamerId)
+                .then(() => { updatePage(true); });
             break;
         case 'favorite':
-            bp.favorite(meta.streamerId);
-            updatePage(true);
+            bp.favorite(meta.streamerId)
+                .then(() => { updatePage(true); });
             break;
         case 'unfavorite':
-            bp.unfavorite(meta.streamerId);
-            updatePage(true);
+            bp.unfavorite(meta.streamerId)
+                .then(() => { updatePage(true); });
             break;
         case 'browseVideosByChannel':
             callApi(endpoints.GET_VIDEOS, { user_id: meta.streamerId }, true);
@@ -476,8 +472,8 @@ const initializeEvents = () => {
 
     // Favorites switch
     favorites.addEventListener('click', () => {
-        bp.setStorage('favoritesMode', ! bp.getStorage('favoritesMode'));
-        updatePage();
+        bp.setStorage('favoritesMode', ! bp.getStorage('favoritesMode'))
+            .then(() => { updatePage(); });
     });
 
     // Refresh button

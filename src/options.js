@@ -1,6 +1,7 @@
 /* global browser */
 
 const bp = browser.extension.getBackgroundPage();
+let resetSettingsCounter = 3;
 
 function getInputType(element) {
     return { tagName: element.tagName.toLowerCase(), type: element.type.toLowerCase() };
@@ -47,18 +48,18 @@ document.querySelectorAll('[data-internal]').forEach(control => {
 
     control.addEventListener('change', saveOption);
 });
+document.getElementById('switchStorageEngine').checked = bp.getStorage('engine') === 'sync';
 
 function showImportError(message) {
-    const err = document.querySelector('.error-message');
-    const progress = document.querySelector('.progress-message');
-    progress.classList.add('d-none');
+    const err = document.getElementById('importFollowsMessage');
     err.textContent = 'Import error: ' + message;
     err.classList.remove('d-none');
 }
 
 // import & export
 document.getElementById('importFollowsHandle').addEventListener('change', (e) => {
-    document.querySelector('.error-message').classList.add('d-none');
+    const message = document.getElementById('importFollowsMessage');
+    message.classList.add('d-none');
 
     const file = e.target.files[0];
 
@@ -98,11 +99,18 @@ document.getElementById('importFollowsHandle').addEventListener('change', (e) =>
 
         if (! result) return showImportError('Inconsistent file structure: is the file corrupted?');
 
+        const onError = (err) => {
+            message.textContent = `Error importing follows. Try turning off synchronization below and try again. (${err?.message ?? err})`;
+            message.classList.remove('d-none');
+        }
+
         if (entryType === 'string') {
-            bp.importFollowsLegacy(reader.result);
+            bp.importFollowsLegacy(reader.result)
+                .catch(onError);
         }
         else if (entryType === 'object') {
-            bp.importFollows(reader.result);
+            bp.importFollows(reader.result)
+                .catch(onError);
         }
 
         document.getElementById('importFollows').value = '';
@@ -123,6 +131,49 @@ document.getElementById('exportFollows').addEventListener('click', () => {
     downloadLink.style.display = 'none';
     document.body.appendChild(downloadLink);
     downloadLink.click();
+});
+
+document.getElementById('switchStorageEngine').addEventListener('change', (e) => {
+    e.target.disabled = 'disabled';
+    const message = document.getElementById('switchStorageEngineMessage');
+
+    bp._storage().switchEngine(e.target.checked ? 'sync' : 'local')
+        .then(result => {
+            if (result === true) {
+                message.classList.add('success-message');
+                message.textContent = 'Success!';
+                message.classList.remove('d-none');
+            } else {
+                message.classList.add('error-message');
+                message.textContent = result ? `There was an error moving data. (${result})` : 'Something went wrong.';
+                message.classList.remove('d-none');
+            }
+        })
+});
+
+document.getElementById('resetSettings').addEventListener('click', (e) => {
+    switch (resetSettingsCounter) {
+        case 3:
+            e.target.textContent = 'Are you sure?';
+            break;
+        case 2:
+            e.target.textContent = 'This action is permanent!';
+            break;
+        case 1:
+            e.target.textContent = 'Remove all settings';
+            break;
+        case 0:
+            e.target.disabled = 'disabled';
+
+            bp._storage().resetSettings()
+                .then(() => {
+                    bp.deauthorize();
+                    window.location.reload();
+                });
+            break;
+    }
+
+    resetSettingsCounter--;
 });
 
 document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));

@@ -319,9 +319,11 @@ const importFollowsLegacy = (json) => {
 
     const finalFollows = orderBy(follows, [(_) => new Date(_.fd)], ['desc']);
 
-    setStorage('localFollows', finalFollows);
-    rebuildFollowCache();
-    fetchUserFollows();
+    return setStorage('localFollows', finalFollows)
+        .then(() => {
+            rebuildFollowCache();
+            fetchUserFollows();
+        });
 }
 
 /**
@@ -343,9 +345,11 @@ const importFollows = (json) => {
 
     const finalFollows = orderBy(follows, [(_) => new Date(_.fd)], ['desc']);
 
-    setStorage('localFollows', finalFollows);
-    rebuildFollowCache();
-    fetchUserFollows();
+    return setStorage('localFollows', finalFollows)
+        .then(() => {
+            rebuildFollowCache();
+            fetchUserFollows();
+        });
 }
 
 /**
@@ -374,7 +378,7 @@ const follow = async (id) => {
 
     allLocalFollows.unshift({ id, fd: utils.getISODateStringNoMs() });
     userFollowsCache.add(id);
-    _storage.set('localFollows', allLocalFollows);
+    await setStorage('localFollows', allLocalFollows);
 
     // Add channel to userFollows
     twitchAPI(endpoints.GET_USERS, { id })
@@ -399,10 +403,11 @@ const unfollow = (id) => {
     pullAllBy(follows, [{ id }], 'id');
     pullAllBy(userFollows, [{ id: id.toString() }], 'id');
 
-    _storage.set('localFollows', follows);
-    userFollowsCache.delete(id);
-
-    unfavorite(id);
+    return setStorage('localFollows', follows)
+        .then(() => {
+            userFollowsCache.delete(id);
+            unfavorite(id);
+        });
 }
 
 const isFavorite = (id) => userFavoritesCache.has(id);
@@ -420,8 +425,10 @@ const favorite = (id) => {
 
     favorites.unshift(id);
 
-    setStorage('favorites', favorites);
-    userFavoritesCache.add(id);
+    return setStorage('favorites', favorites)
+        .then(() => {
+            userFavoritesCache.add(id);
+        });
 }
 
 const unfavorite = (id) => {
@@ -431,8 +438,10 @@ const unfavorite = (id) => {
 
     pull(favorites, id);
 
-    _storage.set('favorites', favorites);
-    userFavoritesCache.delete(id);
+    return setStorage('favorites', favorites)
+        .then(() => {
+            userFavoritesCache.delete(id);
+        });
 }
 
 const rebuildFollowCache = () => {
@@ -680,10 +689,11 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
             return;
         }
 
-        _storage.set('token', token);
-        browser.tabs.remove(tabId);
-
-        initializeFollows();
+        setStorage('token', token)
+            .then(() => {
+                browser.tabs.remove(tabId);
+                initializeFollows();
+            });
     }
 }, {
     // URL filter

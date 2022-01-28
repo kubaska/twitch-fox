@@ -47,8 +47,13 @@
             text-align: center;
         }
 
-        .error-message {
+        .message {
             font-size: 1em !important;
+        }
+        .success-message {
+            color: green !important;
+        }
+        .error-message {
             color: red !important;
         }
 
@@ -199,7 +204,7 @@
         <div class="description">
             <p>Import local follows</p>
             <span>This will overwrite your current follows.</span>
-            <p class="error-message d-none"></p>
+            <p id="importFollowsMessage" class="message error-message d-none"></p>
         </div>
 
         <div class="control">
@@ -216,6 +221,35 @@
 
         <div class="control">
             <input type="button" id="exportFollows" value="Export follows">
+        </div>
+    </div>
+
+    <h3>Advanced</h3>
+    <hr/>
+
+    <div class="row">
+        <div class="description">
+            <p>Synchronize follows & favorites</p>
+            <span>Starting from Twitch Fox v5 your local follows and favorites are saved in local storage instead of sync storage due to its hard limits.</span><br/>
+            <span>Turn this on to move data to sync storage. Turning off will move it back to local storage.</span><br/>
+            <span>If you follow a lot of channels locally and need to use synchronization, consider moving some follows to your Twitch account.</span><br/>
+            <span>Remember to export your follows first just to be safe.</span><br/>
+            <span id="switchStorageEngineMessage" class="message d-none"></span>
+        </div>
+
+        <div class="control">
+            <input type="checkbox" id="switchStorageEngine" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="description">
+            <p>Reset all settings</p>
+            <span>Removes all settings. Use with care!</span>
+        </div>
+
+        <div class="control">
+            <button type="button" id="resetSettings">Reset settings</button>
         </div>
     </div>
 </form>
