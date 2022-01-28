@@ -134,9 +134,8 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         opts.first = 100;
     }
 
-    // todo also check endpointList if language is allowed in next ver
     if (endpointList[endpoint].langCodesAllowed && getStorage('languageCodes')) {
-        opts.language = getStorage('languageCodes');
+        opts.language = getStorage('languageCodes').toString().split(',');
     }
 
     // todo check

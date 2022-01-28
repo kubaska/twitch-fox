@@ -60,7 +60,8 @@ export const endpointList = {
     [endpoints.GET_VIDEOS]: {
         url: () => 'videos',
         method: 'GET',
-        // langCodesAllowed: true, // Allowed, but only one
+        // Apparently only one is allowed but passing multiple works as well
+        langCodesAllowed: true,
         contentType: 'video'
     },
     [endpoints.GET_CLIPS]: {
