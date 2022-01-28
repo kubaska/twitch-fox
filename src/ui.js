@@ -136,13 +136,10 @@ const makeCard = (bp, favoriteMode, type, content) => {
                 : 'https://vod-secure.twitch.tv/_404/404_processing_640x360.png')
             : content.thumbnail_url;
 
-        // No game returned for videos, only ID returned for clips. fixme
-        if (content.game) {
-            //     card.querySelector('.game-name').textContent = content.game;
-            //     UI.insertBackgroundUrl(
-            //         card.querySelector('.cornerGame'),
-            //         `https://static-cdn.jtvnw.net/ttv-boxart/${content.game}-52x72.jpg`
-            //     );
+        // No game returned for videos, only ID returned for clips.
+        if (type === 'clip' && content.game_id) {
+            card.querySelector('.category-img').src = `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_id}-52x72.jpg`;
+            UI.fillTooltip(card.querySelector('.category.tooltipped'), 'this game');
         } else {
             card.querySelector('.category').classList.add('invisible');
         }
