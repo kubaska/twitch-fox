@@ -277,7 +277,7 @@ const cardClickHandler = (e) => {
             callApi(endpoints.GET_STREAMS, { game_id: meta.gameId }, true);
             break;
         case 'browseVideosByGame':
-            callApi(endpoints.GET_VIDEOS, { game_id: meta.gameId, period: 'month' }, true);
+            callApi(endpoints.GET_VIDEOS, { game_id: meta.gameId, period: 'month', sort: 'views' }, true);
             break;
         case 'browseClipsByGame':
             callApi(endpoints.GET_CLIPS, { game_id: meta.gameId }, true);
@@ -493,9 +493,7 @@ const initializeEvents = () => {
 
     // Avatar
     avatar.addEventListener('click', () => {
-        if (bp.getAuthorizedUser()) {
-            utils.openStream(bp.getAuthorizedUser().login);
-        }
+        utils.openStream(bp.getAuthorizedUser().login);
     });
 
     logout.addEventListener('click', () => {

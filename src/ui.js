@@ -147,7 +147,9 @@ const makeCard = (bp, favoriteMode, type, content) => {
         card.querySelector('.status').textContent = content.title;
 
         card.querySelector('.media-object__cover-inner').src = type === 'video'
-            ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+            ? (content.thumbnail_url
+                ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+                : 'https://vod-secure.twitch.tv/_404/404_processing_640x360.png')
             : content.thumbnail_url;
 
         // No game returned for videos, only ID returned for clips. fixme
