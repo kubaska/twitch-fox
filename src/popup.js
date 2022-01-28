@@ -183,7 +183,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
     if (! endpoint) return;
 
     refresh.classList.add('thinking');
-    searchBox.placeholder = browser.i18n.getMessage('loading');
+    searchBox.placeholder = 'Loading... please wait';
     saveTabState();
     // todo: lock navigation for the duration of api call
 

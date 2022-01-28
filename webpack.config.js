@@ -27,8 +27,7 @@ module.exports = {
             patterns: [
                 { from: 'manifest.json', to: 'manifest.json' },
                 { from: 'src/html', to: 'html' },
-                'assets/*',
-                '_locales/**/*'
+                'assets/*'
             ]
         })
     ],

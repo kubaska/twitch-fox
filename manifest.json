@@ -3,7 +3,6 @@
     "name": "Twitch Fox",
     "description": "(Fork) Quickly browse Twitch. Receive notifications for channels and games. Many customizable features.",
     "version": "5.0.0beta1",
-    "default_locale": "en",
 
     "incognito": "not_allowed",
 
