@@ -732,14 +732,12 @@ browser.contextMenus.create({
     contexts: ['browser_action'],
     onclick: () => { browser.tabs.create({ url: 'html/popup.html' })},
     title: 'Open Extended View'
-})
+});
 
 // Exports
 window.authorize = authorize;
 window.callApi = callApi;
 window.deauthorize = deauthorize;
-window.defaultContent = defaultContent;
-window.defaultResults = defaultResults;
 window.favorite = favorite;
 window.follow = follow;
 window.getAuthorizedUser = getAuthorizedUser;
@@ -748,8 +746,6 @@ window.getMode = getMode;
 window.getResults = getResults;
 window.getResultsContentLength = getResultsContentLength;
 window.getStorage = getStorage;
-window.getUserFollows = getUserFollows;
-window.getUserFollowedStreams = getUserFollowedStreams;
 window.importFollows = importFollows;
 window.importFollowsLegacy = importFollowsLegacy;
 window.isFavorite = isFavorite;
@@ -759,7 +755,6 @@ window.resetResults = resetResults;
 window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;
-window.setResults = setResults;
 window.setResultsToFollowedChannels = setResultsToFollowedChannels;
 window.setResultsToFollowedStreams = setResultsToFollowedStreams;
 window.setStorage = setStorage;

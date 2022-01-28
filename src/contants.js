@@ -14,13 +14,9 @@ export const ENotificationClickFlag = {
 export const tabs = {
     GAMES: 'games',
     STREAMS: 'streams',
-    VIDEOS: 'videos',
-    CLIPS: 'clips',
     SEARCH: 'channels',
 
     FOLLOWED_STREAMS: 'followedStreams',
-    FOLLOWED_VIDEOS: 'followedVideos',
-    FOLLOWED_CLIPS: 'followedClips', // Clips from followed games
     FOLLOWED_CHANNELS: 'followedChannels',
 
     ABOUT: 'about',

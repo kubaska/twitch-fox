@@ -62,14 +62,6 @@ const makeCard = (bp, favoriteMode, type, content) => {
 
         card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(game.box_art_url, 136, 190);
 
-        // TODO Top Games endpoint does not return viewer count anymore. Remove this if they wont add it back.
-        // if (content.viewers) {
-        //     card.querySelector('.viewer-count').textContent = delimitNumber(content.viewers);
-        // } else {
-        //     // Searching for game does not return the viewer count, hide it
-        //     card.querySelector('.viewer-count').classList.add('d-none');
-        // }
-
         // tooltip stuff
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), game.name);
         UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), game.name);
@@ -123,10 +115,6 @@ const makeCard = (bp, favoriteMode, type, content) => {
         const following = bp.isFollowing(userId);
         handleFollowFavoriteBtns(card, following, isFavorite);
 
-        // fixme Get channel images from cached follows?
-        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), content.channel.logo);
-        // card.querySelector('.cornerLogo').classList.add('d-none');
-
         return card;
     }
     else if (type === 'video' || type === 'clip') {
@@ -142,7 +130,6 @@ const makeCard = (bp, favoriteMode, type, content) => {
         card.dataset['streamerId'] = streamerId;
         card.dataset['name'] = streamerName;
         card.dataset['tag'] = streamerName + content.title;
-        // card.dataset['game'] = content.game;
 
         card.querySelector('.status').textContent = content.title;
 
@@ -192,9 +179,6 @@ const makeCard = (bp, favoriteMode, type, content) => {
         card.querySelector('.icon__chat').classList.add('d-none');
         card.querySelector('.lang__stream').classList.add('d-none');
         card.querySelector('.lang__videos').classList.remove('d-none');
-
-        // UI.insertBackgroundUrl(card.querySelector('.cornerLogo'), channel.logo);
-        // card.querySelector('.cornerLogo').classList.add('d-none');
 
         return card;
     }
