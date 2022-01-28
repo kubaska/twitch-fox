@@ -47,24 +47,21 @@ const makeCard = (bp, favoriteMode, type, content) => {
     if (type === 'game') {
         let card = document.getElementById('stub-game').cloneNode(true);
 
-        // fixme do we need this?
-        const game = content.game ? content.game : content;
-
-        card.id = `GAME!${game.id}`;
-        card.dataset['id'] = game.id;
-        card.dataset['gameId'] = game.id;
-        card.dataset['game'] = game.name; // todo remove?
-        card.dataset['tag'] = game.name;
+        card.id = `GAME!${content.id}`;
+        card.dataset['id'] = content.id;
+        card.dataset['gameId'] = content.id;
+        card.dataset['game'] = content.name;
+        card.dataset['tag'] = content.name;
 
         card.querySelectorAll('.title').forEach(element => {
-            element.textContent = game.name;
+            element.textContent = content.name;
         });
 
-        card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(game.box_art_url, 136, 190);
+        card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(content.box_art_url, 188, 250);
 
         // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), game.name);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), game.name);
+        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.name);
+        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.name);
 
         return card;
     }
