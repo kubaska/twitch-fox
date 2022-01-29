@@ -189,11 +189,10 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
 
     bp.callApi(endpoint, opts, newIndex, reset)
         .then(() => {
-            console.log('done popup');
-
+            // console.log('done popup');
         })
         .catch(error => {
-            console.log('popup callApi error', error);
+            // console.log('popup callApi error', error);
             // show error screen
         })
         .finally(() => {

@@ -16,17 +16,15 @@
             background-color: rgba(0,0,0,.05);
             /*background-color: rgba(0,0,0,.075);*/
         }
-        .row > .description {
-            /*width: 75%;*/
-        }
 
         .description > p {
-            font-weight: bold;
-            margin: 4px 0;
+            font-size: 1.05em;
+            font-weight: 600;
+            margin: 0 0 4px 0;
         }
         .description > span {
-            font-size: 0.8em;
-            color: #808080;
+            font-size: 0.9em;
+            color: #6c757d;
             font-style: italic;
         }
 
@@ -34,17 +32,17 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding: 5px;
+            padding: 6px;
         }
         .control > :not(:only-child) {
             margin-left: 5px;
         }
 
+        table td {
+            text-align: center;
+        }
         table .text:not(:last-child) {
             padding: 4px;
-        }
-        table .center {
-            text-align: center;
         }
 
         .message {
@@ -131,19 +129,19 @@
                 </tr>
                 <tr>
                     <td class="text">Text notification</td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notifications" data-flag="1">
                     </td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notifications" data-flag="4">
                     </td>
                 </tr>
                 <tr>
                     <td class="text">Audio notification</td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notifications" data-flag="2">
                     </td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notifications" data-flag="8">
                     </td>
                 </tr>
@@ -164,13 +162,13 @@
                     <td class="text">Chat Popout</td>
                 </tr>
                 <tr>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notificationClick" data-flag="1" />
                     </td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notificationClick" data-flag="2" />
                     </td>
-                    <td class="center">
+                    <td>
                         <input type="checkbox" data-internal="notificationClick" data-flag="4" />
                     </td>
                 </tr>
