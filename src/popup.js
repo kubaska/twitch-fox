@@ -374,7 +374,7 @@ const initialize = () => {
 
     // Tooltips & avatar specific
     if (bp.getStorage('tooltips')) {
-        document.getElementById('tooltips-stylesheet').href = 'tooltips.css';
+        document.getElementById('tooltips-stylesheet').href = 'css/tooltips.css';
         UI.fillTooltip(avatar, user.display_name);
     } else {
         avatar.title = user.display_name;

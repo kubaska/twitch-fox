@@ -16,7 +16,7 @@ module.exports = {
 
     plugins: [
         new MiniCssExtractPlugin({
-            filename: 'html/[name].css'
+            filename: 'html/css/[name].css'
         }),
         new WebExtPlugin({
             browserConsole: true,

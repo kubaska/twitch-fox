@@ -67,8 +67,15 @@ body
             background: url(../../assets/images/settings.svg?inline) no-repeat center / 100%
         &__about
             background: url(../../assets/images/about.svg?inline) no-repeat center / 85%
+        &__avatar
+            background-repeat: no-repeat
+            background-position: center
+            background-size: 30px 30px
+            cursor: pointer
         &__exit
-            background: url(../../assets/images/exit.svg?inline) no-repeat center / 75%
+            background: url(../../assets/images/exit.svg?inline) no-repeat center
+            background-size: 30px 30px
+            cursor: pointer
 
 .tab--selected
     background-color: #53505B
@@ -168,7 +175,7 @@ body
 .navigation
     display: flex
     flex-grow: 1
-    margin: 4px 0
+    margin: 4px 2px 4px 0
     padding: 0 4px
     gap: 4px
     align-items: center
