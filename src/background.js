@@ -388,6 +388,12 @@ const follow = async (id) => {
 const unfollow = (id) => {
     const follows = _storage.get('localFollows');
 
+    // Skip unfollowing if follow is missing in storage.
+    // This may happen if user tries to unfollow channel followed through their Twitch account.
+    if (! find(follows, { id })) {
+        return Promise.resolve();
+    }
+
     pullAllBy(follows, [{ id }], 'id');
     pullAllBy(userFollows, [{ id: id.toString() }], 'id');
 
