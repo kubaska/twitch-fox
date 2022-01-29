@@ -39,7 +39,6 @@ export default {
         console.log('Preferred engine:', engine);
 
         // load all saved settings
-        // todo set version here or in migrate
         storage = await browser.storage.sync.get(null);
 
         if (engine === 'local') {
@@ -47,6 +46,9 @@ export default {
                 storage[settingKey] = localSettings[settingKey] ?? [];
             });
         }
+
+        // Stamp current schema version
+        browser.storage.sync.set({ version: _VERSION });
 
         // console.log('settings', storage);
 
