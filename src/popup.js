@@ -1,6 +1,6 @@
 /* global browser */
 
-import {endpoints, tabInfo, tabs} from "./contants";
+import {endpoints, tabInfo, tabs} from "./constants";
 import {makeCard, UI} from "./ui";
 import utils from "./utils";
 import {debounce} from "lodash";

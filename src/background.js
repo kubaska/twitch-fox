@@ -3,7 +3,7 @@
 import axios from "axios";
 import _storage from './storage';
 import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
-import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, tabs} from "./contants";
+import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, tabs} from "./constants";
 import utils from "./utils";
 
 // Variable declarations
