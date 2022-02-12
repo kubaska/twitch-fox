@@ -238,8 +238,16 @@ const cardClickHandler = (e) => {
         case 'openGame':
             utils.openGameDirectory(meta.game);
             break;
-        case 'openStreamPopout':
-            utils.openStreamPopout(meta.name);
+        case 'openPopout':
+            if (meta.type === 'video') {
+                utils.openPopout('video', meta.id);
+            }
+            else if (meta.type === 'clip') {
+                utils.openPopout('clip', meta.id);
+            }
+            else {
+                utils.openPopout('channel', meta.name);
+            }
             break;
         case 'openChat':
             utils.openChatPopout(meta.name);

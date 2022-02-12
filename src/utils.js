@@ -43,11 +43,13 @@ export default {
             url: 'https://twitch.tv/'+streamer
         });
     },
-    openStreamPopout: (streamer) => {
+    openPopout: (type, id) => {
         browser.windows.create({
-            url: 'https://player.twitch.tv/?parent=localhost&channel='+streamer,
+            url: type === 'clip'
+                ? 'https://clips.twitch.tv/embed?parent=localhost&clip=' + id
+                : `https://player.twitch.tv/?parent=localhost&${type}=${id}`,
             width: 1280,
-            height: 720,
+            height: 740,
             type: 'popup'
         });
     },
@@ -56,7 +58,7 @@ export default {
             url: `https:/twitch.tv/${streamer}/chat?popout`,
             height: 600,
             width: 340,
-            type: 'popup',
+            type: 'popup'
         });
     },
     openGameDirectory: (game) => {
@@ -66,12 +68,12 @@ export default {
     },
     openClip: (id) => {
         browser.tabs.create({
-            url: 'https://clips.twitch.tv/'+id,
+            url: 'https://clips.twitch.tv/'+id
         });
     },
     openVideo: (id) => {
         browser.tabs.create({
-            url: 'https://twitch.tv/videos/'+id,
+            url: 'https://twitch.tv/videos/'+id
         });
     }
 }
