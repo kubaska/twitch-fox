@@ -38,7 +38,10 @@
             margin-left: 5px;
         }
 
-        table td {
+        table .text {
+            text-align: right;
+        }
+        table .control--input {
             text-align: center;
         }
         table .text:not(:last-child) {
@@ -103,7 +106,7 @@
         <div class="description">
             <p>Language codes filter</p>
             <span>
-                <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO-639-1 compliant</a>&nbsp;<span>language codes to filter streams by (e.g. 'en' for English) or "other" for all other languages, comma separated.</span>
+                <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO-639-1 compliant</a>&nbsp;<span>language codes to filter streams by (e.g. 'en' for English) or "other" for all other languages without the code; comma separated.</span>
             </span>
         </div>
 
@@ -129,19 +132,19 @@
                 </tr>
                 <tr>
                     <td class="text">Text notification</td>
-                    <td>
+                    <td class="control--input">
                         <input type="checkbox" data-internal="notifications" data-flag="1">
                     </td>
-                    <td>
+                    <td class="control--input">
                         <input type="checkbox" data-internal="notifications" data-flag="4">
                     </td>
                 </tr>
                 <tr>
                     <td class="text">Audio notification</td>
-                    <td>
+                    <td class="control--input">
                         <input type="checkbox" data-internal="notifications" data-flag="2">
                     </td>
-                    <td>
+                    <td class="control--input">
                         <input type="checkbox" data-internal="notifications" data-flag="8">
                     </td>
                 </tr>
@@ -157,19 +160,27 @@
         <div class="control">
             <table>
                 <tr>
-                    <td class="text">Stream in New Tab</td>
-                    <td class="text">Stream in Popout</td>
-                    <td class="text">Chat Popout</td>
+                    <td class="text">
+                        <label for="notificationClick1">Stream in New Tab</label>
+                    </td>
+                    <td class="control--input">
+                        <input id="notificationClick1" type="checkbox" data-internal="notificationClick" data-flag="1" />
+                    </td>
                 </tr>
                 <tr>
-                    <td>
-                        <input type="checkbox" data-internal="notificationClick" data-flag="1" />
+                    <td class="text">
+                        <label for="notificationClick2">Stream in Popout</label>
                     </td>
-                    <td>
-                        <input type="checkbox" data-internal="notificationClick" data-flag="2" />
+                    <td class="control--input">
+                        <input id="notificationClick2" type="checkbox" data-internal="notificationClick" data-flag="2" />
                     </td>
-                    <td>
-                        <input type="checkbox" data-internal="notificationClick" data-flag="4" />
+                </tr>
+                <tr>
+                    <td class="text">
+                        <label for="notificationClick4">Chat Popout</label>
+                    </td>
+                    <td class="control--input">
+                        <input id="notificationClick4" type="checkbox" data-internal="notificationClick" data-flag="4" />
                     </td>
                 </tr>
             </table>
