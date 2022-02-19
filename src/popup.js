@@ -156,12 +156,12 @@ const updatePage = (noScroll) => {
     }
     else {
         searchBox.placeholder = `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
-
         search.classList.add('icon--inactive');
     }
 
     back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
     forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+    searchBox.value = results[index].filter;
     exitSearch.classList[(index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
 
     if (tabInfo[mode].favorites) {
@@ -494,6 +494,12 @@ const initializeEvents = () => {
     // Exit search button
     exitSearch.addEventListener('click', () => {
         if (exitSearch.classList.contains('icon--inactive')) return;
+
+        if (searchBox.value) {
+            searchBox.value = '';
+            return filterContent();
+        }
+
         bp.resetResults();
         updateTab();
     });
