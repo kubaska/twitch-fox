@@ -516,6 +516,10 @@ const initializeEvents = () => {
 
     contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
 
+    window.addEventListener('blur', () => {
+        saveTabState();
+    });
+
     browser.runtime.onMessage.addListener((request) => {
         if (request.content === 'INITIALIZE') {
             initialize();
