@@ -1,5 +1,5 @@
 # Twitch Fox
-Quickly browse Twitch. Receive notifications for channels and games. Many customizable features.
+Quickly browse Twitch. Receive notifications for followed channels. Many customizable features.
 
 ## About this fork
 Hey! This is a forked version of Twitch Fox. I used this addon for well over 2 years now and loved it however it lacked feature that I really wanted: ability to follow channels locally while also being logged into Twitch. So after inspecting the codebase few times in 2020 I decided to finally make it happen.
@@ -16,8 +16,12 @@ Hey! This is a forked version of Twitch Fox. I used this addon for well over 2 y
 - Removed onboarding
 - Fixed some issues
 
+## Planned features
+- Following games
+- More options to filter content
+- Bring back followed videos view
+
 ## Installing
-You can give this fork a try without needing to uninstall the old version.  
 Download a signed release from [here](https://github.com/kubaska/twitch-fox/releases), then drag-and-drop file on extensions page in Firefox.
 
 ## Boring stuff
