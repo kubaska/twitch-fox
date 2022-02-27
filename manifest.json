@@ -2,12 +2,13 @@
     "manifest_version": 2,
     "name": "Twitch Fox",
     "description": "(Fork) Quickly browse Twitch. Receive notifications for channels and games. Many customizable features.",
-    "version": "5.0.0beta2",
+    "version": "5.0.0",
     "incognito": "not_allowed",
 
-    "applications": {
+    "browser_specific_settings": {
         "gecko": {
-            "id": "{d4a70149-47b3-42dd-8849-19ac63a7047c}"
+            "id": "{d4a70149-47b3-42dd-8849-19ac63a7047c}",
+            "update_url": "https://raw.githubusercontent.com/kubaska/twitch-fox-updates/master/updates.json"
         }
     },
 
