@@ -48,7 +48,9 @@ export default {
         }
 
         // Stamp current schema version
-        browser.storage.sync.set({ version: _VERSION });
+        if (! storage.version) {
+            browser.storage.sync.set({ version: _VERSION });
+        }
 
         // console.log('settings', storage);
 
