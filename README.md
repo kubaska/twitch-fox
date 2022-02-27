@@ -5,6 +5,7 @@ Quickly browse Twitch. Receive notifications for followed channels. Many customi
 Hey! This is a forked version of Twitch Fox. I used this addon for well over 2 years now and loved it however it lacked feature that I really wanted: ability to follow channels locally while also being logged into Twitch. So after inspecting the codebase few times in 2020 I decided to finally make it happen.
 
 ## Differences between original and this fork
+- Removed stuff not supported by new API. See [MISSING_FEATURES.md](MISSING_FEATURES.md)
 - Switched to new Twitch API
 - Added ability to follow channels locally while being logged into Twitch, since they removed follow/unfollow endpoints.
 - Added Extended View: now you can use Twitch Fox from a separate browser tab.
