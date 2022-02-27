@@ -12,3 +12,4 @@ Below is the list of user submitted ideas that community can vote for in order f
 * [Ordering results by date](https://twitch.uservoice.com/forums/310213-developers/suggestions/38051917-ordering-by-date-of-helix-endpoints)
 * [Stream count in Get Streams](https://twitch.uservoice.com/forums/310213-developers/suggestions/38764963-add-total-count-to-streams-endpoint)
 * [Relevant game sorting in Search Categories](https://twitch.uservoice.com/forums/310213-developers/suggestions/41252092-search-categories-relevance)
+* [Top Clips](https://twitch.uservoice.com/forums/310213-developers/suggestions/40719169-new-twitch-api-get-top-clips-endpoint)
