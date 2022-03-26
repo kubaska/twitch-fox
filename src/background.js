@@ -192,6 +192,10 @@ const twitchAPI = (endpoint, theOpts) => {
         });
 };
 
+const refreshResults = async () => {
+    await callApi(results[resultsIndex].endpoint, results[resultsIndex].opts, false, true);
+}
+
 const setResultsToFollowedStreams = () => {
     let results = defaultResults();
     results[0].content = getUserFollowedStreams();
@@ -751,6 +755,7 @@ window.importFollowsLegacy = importFollowsLegacy;
 window.isFavorite = isFavorite;
 window.isFollowing = isFollowing;
 window.playAlarm = playAlarm;
+window.refreshResults = refreshResults;
 window.resetResults = resetResults;
 window.saveTabState = saveTabState;
 window.setIndex = setIndex;

@@ -177,13 +177,28 @@ const updatePage = (noScroll) => {
     filterContent(noScroll, results[index].scroll);
 };
 
+/**
+ * Set loading state.
+ * This updates visual indicator that content is loading.
+ *
+ * @param {boolean} state
+ */
+const setLoadingState = (state = false) => {
+    if (state) {
+        refresh.classList.add('thinking');
+        searchBox.placeholder = 'Loading... please wait';
+    } else {
+        refresh.classList.remove('thinking');
+        searchBox.value = '';
+    }
+}
+
 const callApi = (endpoint, opts = {}, newIndex, reset) => {
     // we dont have endpoint when we change popup mode and all content gets removed
     // scroll handler fires and results is reset to default values
     if (! endpoint) return;
 
-    refresh.classList.add('thinking');
-    searchBox.placeholder = 'Loading... please wait';
+    setLoadingState(true);
     saveTabState();
     // todo: lock navigation for the duration of api call
 
@@ -196,8 +211,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
             // show error screen
         })
         .finally(() => {
-            refresh.classList.remove('thinking');
-            searchBox.value = '';
+            setLoadingState(false);
             updatePage();
         });
 }
@@ -485,10 +499,11 @@ const initializeEvents = () => {
 
     // Refresh button
     refresh.addEventListener('click', () => {
-        const results = bp.getResults();
-        const index = bp.getIndex();
 
-        callApi(results[index].endpoint, results[index].opts, false, true);
+        setLoadingState(true);
+        bp.refreshResults().then(() => {
+            setLoadingState(false);
+        })
     });
 
     // Exit search button
