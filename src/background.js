@@ -14,6 +14,7 @@ let userFollows = []; // Array with followed channels of authorized user
 let userFollowsCache = new Set();
 let userFavoritesCache = new Set();
 let userFollowedStreams = []; // Array with followed stream objects
+let followedVideos = []; // Cached results of followed videos
 
 let lastNotificationStreamName = '';
 let results;
@@ -208,6 +209,14 @@ const setResultsToFollowedChannels = () => {
     let results = defaultResults();
     results[0].content = getUserFollows();
     results[0].type = 'channel';
+    setResults(results);
+    setIndex(0);
+}
+
+const setResultsToFollowedVideos = () => {
+    let results = defaultResults();
+    results[0].content = followedVideos;
+    results[0].type = 'video';
     setResults(results);
     setIndex(0);
 }
@@ -523,6 +532,36 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
 }
 
 /**
+ * Fetch resource for each value in values array.
+ * Note: this function will rapidly exhaust rate limits. Just how Twitch wanted it to be.
+ *
+ * @param endpoint    {endpointList}
+ * @param resourceKey {string}
+ * @param values      {array}
+ * @returns {Promise<*[]>}
+ */
+const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
+    let resource = [];
+
+    await Promise.allSettled(
+        values.map(value => {
+            return twitchAPI(endpoint, { [resourceKey]: value });
+        })
+    ).then(allResults => {
+        allResults.forEach(results => {
+            if (results.status === 'fulfilled') {
+                resource.push(...results.value.data);
+            } else {
+                // rejected
+                console.log('Failed to fetch singular resource', endpoint, results.reason);
+            }
+        });
+    });
+
+    return resource;
+}
+
+/**
  * Fetch follows of logged in user.
  *
  * @return {Promise<*[]|*[]>}
@@ -547,21 +586,11 @@ const fetchUserFollows = async () => {
 
     let finalAccounts = [];
 
-    await Promise.allSettled(
-        chunk(follows, 100).map(followChunk => {
-            return twitchAPI(endpoints.GET_USERS, { id: followChunk.map(f => f.id) });
-        })
+    finalAccounts = await fetchArrayOfSingularResource(
+        endpoints.GET_USERS,
+        'id',
+        chunk(follows, 100).map(chunk => chunk.map(f => f.id))
     )
-        .then(allAccounts => {
-            allAccounts.forEach(accounts => {
-                if (accounts.status === 'fulfilled') {
-                    finalAccounts.push(...accounts.value.data);
-                } else {
-                    // rejected
-                    console.log('Fetching user follows failed', accounts.reason);
-                }
-            })
-        });
 
     userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
 }
@@ -643,6 +672,25 @@ const fetchFollowedStreams = () => {
     }).catch(err => {
         console.log('Cannot fetch followed streams', err);
     });
+}
+
+/**
+ * Fetch and cache videos from followed/favorite channels.
+ *
+ * @return {Promise<void>}
+ */
+const fetchFollowedVideos = async () => {
+    const videos = await fetchArrayOfSingularResource(
+        endpoints.GET_VIDEOS,
+        'user_id',
+        _storage.get('favorites')
+    )
+
+    followedVideos = orderBy(
+        videos.slice(0, 1000), // hard cap of 1000 results
+        [video => new Date(video.created_at)],
+        ['desc']
+    );
 }
 
 /**
@@ -743,6 +791,7 @@ window.authorize = authorize;
 window.callApi = callApi;
 window.deauthorize = deauthorize;
 window.favorite = favorite;
+window.fetchFollowedVideos = fetchFollowedVideos;
 window.follow = follow;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
@@ -762,6 +811,7 @@ window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResultsToFollowedChannels = setResultsToFollowedChannels;
 window.setResultsToFollowedStreams = setResultsToFollowedStreams;
+window.setResultsToFollowedVideos = setResultsToFollowedVideos;
 window.setStorage = setStorage;
 window.unfavorite = unfavorite;
 window.unfollow = unfollow;

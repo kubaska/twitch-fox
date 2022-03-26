@@ -17,6 +17,7 @@ export const tabs = {
     SEARCH: 'channels',
 
     FOLLOWED_STREAMS: 'followedStreams',
+    FOLLOWED_VIDEOS: 'followedVideos',
     FOLLOWED_CHANNELS: 'followedChannels',
 
     ABOUT: 'about',
@@ -110,6 +111,9 @@ export const tabInfo = {
     },
     [tabs.FOLLOWED_STREAMS]: {
         favorites: true
+    },
+    [tabs.FOLLOWED_VIDEOS]: {
+        refreshable: true
     },
     [tabs.FOLLOWED_CHANNELS]: {
         favorites: true

@@ -216,6 +216,22 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
         });
 }
 
+const handleFollowedVideosTab = (forceRefresh = false) => {
+    bp.setResultsToFollowedVideos();
+
+    if (forceRefresh || ! bp.getResultsContentLength()) {
+        // No results cached, update immediately
+        setLoadingState(true);
+        bp.fetchFollowedVideos().then(r => {
+            bp.setResultsToFollowedVideos();
+            setLoadingState(false);
+            updatePage();
+        });
+    } else {
+        updatePage();
+    }
+}
+
 const saveTabState = () => {
     bp.saveTabState(searchBox.value, contentArea.scrollTop);
 }
@@ -365,6 +381,9 @@ const updateTab = (newMode) => {
             bp.setResultsToFollowedStreams();
             updatePage();
         }
+        else if (mode === tabs.FOLLOWED_VIDEOS) {
+            handleFollowedVideosTab();
+        }
         else if (mode === tabs.FOLLOWED_CHANNELS) {
             bp.setResultsToFollowedChannels();
             updatePage();
@@ -499,6 +518,9 @@ const initializeEvents = () => {
 
     // Refresh button
     refresh.addEventListener('click', () => {
+        if (mode === tabs.FOLLOWED_VIDEOS) {
+            return handleFollowedVideosTab(true);
+        }
 
         setLoadingState(true);
         bp.refreshResults().then(() => {
