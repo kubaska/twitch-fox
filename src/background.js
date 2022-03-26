@@ -93,6 +93,13 @@ const setMode = newMode => {
     setStorage('mode', newMode);
 }
 
+/**
+ * Get item from persistent storage.
+ *
+ * @param key
+ * @param flag
+ * @return {string|boolean|array|object}
+ */
 const getStorage = (key, flag) => _storage.get(key, flag);
 const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
 
@@ -290,7 +297,7 @@ const deauthorize = () => {
 };
 
 /**
- * Import follows using 4.3.0 schema
+ * Import follows using 4.2.3 schema
  *
  * @param json
  */
@@ -476,7 +483,7 @@ const fetchCurrentUser = async () => {
 
 /**
  * Fetch entire resource.
- * Endpoint must have data and pagination keys.
+ * Response root must have data and pagination keys.
  *
  * @param endpoint       API Endpoint
  * @param requestOptions Additional request options
