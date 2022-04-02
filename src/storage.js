@@ -14,6 +14,7 @@ const defaultState = {
     // global
     darkMode: false,
     tooltips: true,
+    fetchAllFollowedVideos: false,
 
     // notifications
     // text & audio for favorites, text for non-favorites

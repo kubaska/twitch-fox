@@ -683,7 +683,9 @@ const fetchFollowedVideos = async () => {
     const videos = await fetchArrayOfSingularResource(
         endpoints.GET_VIDEOS,
         'user_id',
-        _storage.get('favorites')
+        _storage.get('fetchAllFollowedVideos')
+            ? [...userFollowsCache]
+            : _storage.get('favorites')
     )
 
     followedVideos = orderBy(
