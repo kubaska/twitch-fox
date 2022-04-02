@@ -26,10 +26,12 @@ const defaultState = {
     languageCodes: '',
 };
 
+const deferredSettingsKeys = ['mode'];
 const flagSettings = ['notifications', 'notificationClick'];
 const hugeSettings = ['localFollows', 'favorites'];
 
 let storage = {};
+let deferredSettings = {};
 let engine = 'local';
 
 export default {
@@ -84,6 +86,12 @@ export default {
                 else         value = currentFlags & ~value;
             }
 
+            if (deferredSettingsKeys.includes(key)) {
+                deferredSettings[key] = value;
+                storage[key] = value;
+                return true;
+            }
+
             if (hugeSettings.includes(key)) {
                 await browser.storage[engine].set({[key]: value});
             } else {
@@ -95,6 +103,14 @@ export default {
         }
 
          return false;
+    },
+
+    saveDeferred() {
+        if (Object.keys(deferredSettings).length) {
+            // This assumes all deferred settings belong to sync storage engine
+            browser.storage.sync.set(deferredSettings);
+            deferredSettings = {};
+        }
     },
 
     async switchEngine(engine) {

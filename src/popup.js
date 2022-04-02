@@ -554,6 +554,7 @@ const initializeEvents = () => {
     contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
 
     window.addEventListener('blur', () => {
+        bp._storage().saveDeferred();
         saveTabState();
     });
 
