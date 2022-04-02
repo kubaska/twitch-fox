@@ -11,6 +11,10 @@ export const ENotificationClickFlag = {
     openChatPopout: 1 << 2
 }
 
+export const ERuntimeMessage = {
+    INITIALIZE: 'initialize'
+}
+
 export const tabs = {
     GAMES: 'games',
     STREAMS: 'streams',

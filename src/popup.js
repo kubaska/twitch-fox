@@ -1,6 +1,6 @@
 /* global browser */
 
-import {endpoints, tabInfo, tabs} from "./constants";
+import {endpoints, ERuntimeMessage, tabInfo, tabs} from "./constants";
 import {makeCard, UI} from "./ui";
 import utils from "./utils";
 import {debounce} from "lodash";
@@ -558,7 +558,7 @@ const initializeEvents = () => {
     });
 
     browser.runtime.onMessage.addListener((request) => {
-        if (request.content === 'INITIALIZE') {
+        if (request.content === ERuntimeMessage.INITIALIZE) {
             initialize();
         }
     });

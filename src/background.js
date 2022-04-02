@@ -3,7 +3,7 @@
 import axios from "axios";
 import _storage from './storage';
 import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
-import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, tabs} from "./constants";
+import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, ERuntimeMessage, tabs} from "./constants";
 import utils from "./utils";
 
 // Variable declarations
@@ -710,7 +710,7 @@ const initializeFollows = async () => {
     rebuildFollowCache();
     rebuildFavoriteCache();
 
-    browser.runtime.sendMessage({ content: 'INITIALIZE' });
+    browser.runtime.sendMessage({ content: ERuntimeMessage.INITIALIZE });
 
     browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
         delayInMinutes: 0.02, // ~ 1-2 sec
