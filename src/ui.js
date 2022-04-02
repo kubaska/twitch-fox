@@ -32,20 +32,14 @@ const handleFollowFavoriteBtns = (card, isFollowing, isFavorite) => {
     card.querySelector('.icon__follow').classList[isFollowing ? 'add' : 'remove']('d-none');
     card.querySelector('.icon__unfollow').classList[isFollowing ? 'remove' : 'add']('d-none');
 
-    const favoriteElement = card.querySelector('.icon__favorite');
-    if (isFollowing) {
-        favoriteElement.classList[isFavorite ? 'add' : 'remove']('d-none');
-        card.querySelector('.icon__unfavorite').classList[isFavorite ? 'remove' : 'add']('d-none');
-    } else {
-        favoriteElement.classList.add('d-none');
-        // favoriteElement.classList.add('icon--inactive');
-        // UI.setTooltip(favoriteElement, "You can't favorite this channel because you're not following them!");
-    }
+    card.querySelector('.icon__favorite')?.classList[isFavorite && isFollowing ? 'add' : 'remove']('d-none');
+    card.querySelector('.icon__unfavorite')?.classList[isFavorite && isFollowing ? 'remove' : 'add']('d-none');
 }
 
 const makeCard = (bp, favoriteMode, type, content) => {
     if (type === 'game') {
         let card = document.getElementById('stub-game').cloneNode(true);
+        const id = parseInt(content.id);
 
         card.id = `GAME!${content.id}`;
         card.dataset['id'] = content.id;
@@ -58,6 +52,8 @@ const makeCard = (bp, favoriteMode, type, content) => {
         });
 
         card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(content.box_art_url, 188, 250);
+
+        handleFollowFavoriteBtns(card, bp.isFollowingGame(id), false);
 
         // tooltip stuff
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.name);

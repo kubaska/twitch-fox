@@ -8,6 +8,7 @@ const defaultState = {
     token: null,
     mode: 'about',
     localFollows: [],
+    followedGames: [],
     favorites: [],
     favoritesMode: false,
 
@@ -28,7 +29,7 @@ const defaultState = {
 
 const deferredSettingsKeys = ['mode'];
 const flagSettings = ['notifications', 'notificationClick'];
-const hugeSettings = ['localFollows', 'favorites'];
+const hugeSettings = ['localFollows', 'followedGames', 'favorites'];
 
 let storage = {};
 let deferredSettings = {};

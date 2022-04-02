@@ -12,8 +12,10 @@ let authorizedUser; // An object containing the data of the authorized user
 
 let userFollows = []; // Array with followed channels of authorized user
 let userFollowsCache = new Set();
+let followedGamesCache = new Set();
 let userFavoritesCache = new Set();
 let userFollowedStreams = []; // Array with followed stream objects
+let userFollowedGames = [];
 let followedVideos = []; // Cached results of followed videos
 
 let lastNotificationStreamName = '';
@@ -197,6 +199,13 @@ const refreshResults = async () => {
     await callApi(results[resultsIndex].endpoint, results[resultsIndex].opts, false, true);
 }
 
+const setResultsToFollowedGames = () => {
+    let results = defaultResults();
+    results[0].content = userFollowedGames;
+    results[0].type = 'game';
+    setResults(results);
+    setIndex(0);
+}
 const setResultsToFollowedStreams = () => {
     let results = defaultResults();
     results[0].content = getUserFollowedStreams();
@@ -204,7 +213,6 @@ const setResultsToFollowedStreams = () => {
     setResults(results);
     setIndex(0);
 }
-
 const setResultsToFollowedChannels = () => {
     let results = defaultResults();
     results[0].content = getUserFollows();
@@ -363,10 +371,31 @@ const importFollows = (json) => {
 /**
  * Check if channel with specified ID is followed by user.
  *
- * @param id
+ * @param id {int}
  * @return {boolean}
  */
 const isFollowing = (id) => userFollowsCache.has(id);
+/**
+ * Check if game is followed by user.
+ *
+ * @param id {int}
+ * @returns {boolean}
+ */
+const isFollowingGame = (id) => followedGamesCache.has(id);
+
+const baseFollow = async (storageKey, id) => {
+    const allFollows = _storage.get(storageKey);
+
+    const exists = find(allFollows, { id });
+
+    if (exists) {
+        console.log(`! Follow [${id}] on [${storageKey}] already exists, skipping`);
+        return true;
+    }
+
+    allFollows.unshift({ id, fd: utils.getISODateStringNoMs() });
+    await setStorage(storageKey, allFollows);
+}
 
 /**
  * Follow Twitch channel
@@ -375,18 +404,8 @@ const isFollowing = (id) => userFollowsCache.has(id);
  * @return {Promise<boolean>}
  */
 const follow = async (id) => {
-    const allLocalFollows = _storage.get('localFollows');
-
-    const exists = find(allLocalFollows, { id });
-
-    if (exists) {
-        console.log(`!!! Follow [${id}] already exists, skipping`);
-        return true;
-    }
-
-    allLocalFollows.unshift({ id, fd: utils.getISODateStringNoMs() });
+    await baseFollow('localFollows', id);
     userFollowsCache.add(id);
-    await setStorage('localFollows', allLocalFollows);
 
     // Add channel to userFollows
     twitchAPI(endpoints.GET_USERS, { id })
@@ -400,13 +419,31 @@ const follow = async (id) => {
     return true;
 };
 
+const followGame = async (id) => {
+    await baseFollow('followedGames', id);
+    followedGamesCache.add(id);
+
+    // Add game to userFollowedGames
+    twitchAPI(endpoints.GET_GAMES, { id })
+        .then(response => {
+            if (response?.data && response.data[0]) {
+                userFollowedGames.unshift(response.data[0]);
+            }
+        })
+        .catch(err => { console.log(err); });
+
+    return true;
+}
+
 /**
- * Unfollows Twitch channel
+ * Base unfollow implementation
  *
- * @param id
+ * @param storageKey {string}
+ * @param id {int}
+ * @returns {Promise<boolean>|Promise<void>}
  */
-const unfollow = (id) => {
-    const follows = _storage.get('localFollows');
+const baseUnfollow = (storageKey, id) => {
+    const follows = _storage.get(storageKey);
 
     // Skip unfollowing if follow is missing in storage.
     // This may happen if user tries to unfollow channel followed through their Twitch account.
@@ -415,12 +452,30 @@ const unfollow = (id) => {
     }
 
     pullAllBy(follows, [{ id }], 'id');
-    pullAllBy(userFollows, [{ id: id.toString() }], 'id');
 
-    return setStorage('localFollows', follows)
+    return setStorage(storageKey, follows);
+}
+
+/**
+ * Unfollows Twitch channel
+ *
+ * @param id
+ * @returns {Promise<T>}
+ */
+const unfollow = (id) => {
+    return baseUnfollow('localFollows', id)
         .then(() => {
+            pullAllBy(userFollows, [{ id: id.toString() }], 'id');
             userFollowsCache.delete(id);
             unfavorite(id);
+        })
+}
+
+const unfollowGame = (id) => {
+    return baseUnfollow('followedGames', id)
+        .then(() => {
+            pullAllBy(userFollowedGames, [{ id: id.toString() }], 'id');
+            followedGamesCache.delete(id);
         });
 }
 
@@ -459,20 +514,15 @@ const unfavorite = (id) => {
 }
 
 const rebuildFollowCache = () => {
-    const local = _storage.get('localFollows');
-    local.forEach(follow => {
-        userFollowsCache.add(follow.id);
-    });
+    userFollowsCache = new Set([
+        ..._storage.get('localFollows').map(follow => follow.id),
+        ...userFollows.map(follow => parseInt(follow.id))
+    ]);
 
-    userFollows.forEach(follow => {
-        userFollowsCache.add(parseInt(follow.id));
-    });
+    followedGamesCache = new Set(_storage.get('followedGames').map(follow => follow.id));
 };
 const rebuildFavoriteCache = () => {
-    const favorites = _storage.get('favorites');
-    favorites.forEach(favorite => {
-        userFavoritesCache.add(favorite);
-    });
+    userFavoritesCache = new Set(_storage.get('favorites'));
 }
 
 /**
@@ -541,6 +591,10 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
  * @returns {Promise<*[]>}
  */
 const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
+    if (values.length === 0) {
+        return [];
+    }
+
     let resource = [];
 
     await Promise.allSettled(
@@ -584,15 +638,29 @@ const fetchUserFollows = async () => {
     let followDates = {};
     follows.forEach(follow => { followDates[follow.id] = follow.fd ?? '2020-01-01T20:00:00Z' });
 
-    let finalAccounts = [];
-
-    finalAccounts = await fetchArrayOfSingularResource(
+    const finalAccounts = await fetchArrayOfSingularResource(
         endpoints.GET_USERS,
         'id',
         chunk(follows, 100).map(chunk => chunk.map(f => f.id))
     )
 
     userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
+}
+
+const fetchFollowedGames = async () => {
+    const allGames = _storage.get('followedGames');
+
+    // Create associative object for easy follow date lookup
+    let followDates = {};
+    allGames.forEach(follow => { followDates[follow.id] = follow.fd ?? '2020-01-01T20:00:00Z' });
+
+    const onlineGames = await fetchArrayOfSingularResource(
+        endpoints.GET_GAMES,
+        'id',
+        chunk(allGames.map(game => game.id), 100)
+    );
+
+    userFollowedGames = orderBy(onlineGames, [(_) => new Date(followDates[_.id])], ['desc']);
 }
 
 /**
@@ -704,7 +772,7 @@ const fetchFollowedVideos = async () => {
 const initializeFollows = async () => {
     if (_storage.get('token')) {
         await fetchCurrentUser();
-        await fetchUserFollows();
+        await Promise.allSettled([fetchUserFollows(), fetchFollowedGames()])
     }
 
     rebuildFollowCache();
@@ -795,6 +863,7 @@ window.deauthorize = deauthorize;
 window.favorite = favorite;
 window.fetchFollowedVideos = fetchFollowedVideos;
 window.follow = follow;
+window.followGame = followGame;
 window.getAuthorizedUser = getAuthorizedUser;
 window.getIndex = getIndex;
 window.getMode = getMode;
@@ -805,6 +874,7 @@ window.importFollows = importFollows;
 window.importFollowsLegacy = importFollowsLegacy;
 window.isFavorite = isFavorite;
 window.isFollowing = isFollowing;
+window.isFollowingGame = isFollowingGame;
 window.playAlarm = playAlarm;
 window.refreshResults = refreshResults;
 window.resetResults = resetResults;
@@ -812,9 +882,11 @@ window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;
 window.setResultsToFollowedChannels = setResultsToFollowedChannels;
+window.setResultsToFollowedGames = setResultsToFollowedGames;
 window.setResultsToFollowedStreams = setResultsToFollowedStreams;
 window.setResultsToFollowedVideos = setResultsToFollowedVideos;
 window.setStorage = setStorage;
 window.unfavorite = unfavorite;
 window.unfollow = unfollow;
+window.unfollowGame = unfollowGame;
 window._storage = () => _storage;

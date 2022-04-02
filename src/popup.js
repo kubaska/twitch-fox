@@ -250,7 +250,7 @@ const cardClickHandler = (e) => {
         streamerId: parseInt(topElem.dataset['streamerId']),
         name: topElem.dataset['name'],
         game: topElem.dataset['game'],
-        gameId: topElem.dataset['gameId'],
+        gameId: parseInt(topElem.dataset['gameId']),
     }
 
     switch (trigger) {
@@ -284,6 +284,14 @@ const cardClickHandler = (e) => {
             break;
         case 'enlarge':
             enlarge(topElem);
+            break;
+        case 'followGame':
+            bp.followGame(meta.gameId)
+                .then(() => { updatePage(true); });
+            break;
+        case 'unfollowGame':
+            bp.unfollowGame(meta.gameId)
+                .then(() => { updatePage(true); });
             break;
         case 'follow':
             bp.follow(meta.streamerId)
@@ -375,6 +383,10 @@ const updateTab = (newMode) => {
     }
     else {
         if (mode === tabs.SEARCH) {
+            updatePage();
+        }
+        else if (mode === tabs.FOLLOWED_GAMES) {
+            bp.setResultsToFollowedGames();
             updatePage();
         }
         else if (mode === tabs.FOLLOWED_STREAMS) {

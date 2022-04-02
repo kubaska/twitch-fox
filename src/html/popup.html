@@ -33,6 +33,7 @@
         </div>
 
         <div>
+            <div class="menu-button menu-button__followed-games tab tooltipped" id="followedGames" data-tooltip="View your followed games"></div>
             <div class="menu-button menu-button__followed-streams tab tooltipped" id="followedStreams" data-tooltip="View streams of currently live followed channels"></div>
             <div class="menu-button menu-button__followed-videos tab tooltipped" id="followedVideos" data-tooltip="View recent videos from favorite channels"></div>
             <div class="menu-button menu-button__followed-channels tab tooltipped" id="followedChannels" data-tooltip="View all followed channels"></div>
@@ -86,6 +87,8 @@
 
                 <div class="h-50 lower" data-trigger="browseGame">
                     <div class="btn icon icon--medium icon__stream tooltipped" data-trigger="openGame" data-tooltip="Open Twitch page"></div>
+                    <span class="btn icon icon--medium icon__follow tooltipped" data-trigger="followGame" data-tooltip="Follow game locally"></span>
+                    <span class="btn icon icon--medium icon__unfollow tooltipped" data-trigger="unfollowGame" data-tooltip="Unfollow game locally"></span>
                 </div>
             </div>
         </div>

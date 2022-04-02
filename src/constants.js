@@ -20,6 +20,7 @@ export const tabs = {
     STREAMS: 'streams',
     SEARCH: 'channels',
 
+    FOLLOWED_GAMES: 'followedGames',
     FOLLOWED_STREAMS: 'followedStreams',
     FOLLOWED_VIDEOS: 'followedVideos',
     FOLLOWED_CHANNELS: 'followedChannels',
@@ -32,6 +33,7 @@ export const tabs = {
 const endpoints = {
     GET_TOP_GAMES: 'Get Top Games',
 
+    GET_GAMES: 'Get Games',
     GET_STREAMS: 'Get Live Streams',
     GET_VIDEOS: 'Get Videos',
     GET_CLIPS: 'Get Clips',
@@ -51,6 +53,10 @@ export const endpointList = {
         contentType: 'game'
     },
 
+    [endpoints.GET_GAMES]: {
+        url: 'games',
+        contentType: 'game'
+    },
     [endpoints.GET_STREAMS]: {
         url: 'streams',
         langCodesAllowed: true,
@@ -112,6 +118,9 @@ export const tabInfo = {
     [tabs.SEARCH]: {
         apiSearchable: true,
         refreshable: true,
+    },
+    [tabs.FOLLOWED_GAMES]: {
+
     },
     [tabs.FOLLOWED_STREAMS]: {
         favorites: true
