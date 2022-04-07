@@ -25,5 +25,8 @@ Hey! This is a forked version of Twitch Fox. I used this addon for well over 2 y
 ## Installing
 Download a signed release from [here](https://github.com/kubaska/twitch-fox/releases), then drag-and-drop file on extensions page in Firefox.
 
+## Disclaimer
+This project is in no way affiliated with Twitch Interactive, Inc. or Amazon.com, Inc.
+
 ## Boring stuff
 This project uses icons from 'Material Design' set by Templarian.
