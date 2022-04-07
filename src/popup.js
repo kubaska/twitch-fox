@@ -222,7 +222,7 @@ const handleFollowedVideosTab = (forceRefresh = false) => {
     if (forceRefresh || ! bp.getResultsContentLength()) {
         // No results cached, update immediately
         setLoadingState(true);
-        bp.fetchFollowedVideos().then(r => {
+        bp.fetchFollowedVideos().then(() => {
             bp.setResultsToFollowedVideos();
             setLoadingState(false);
             updatePage();

@@ -152,11 +152,11 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
 
     return twitchAPI(endpoint, opts)
         .then(response => {
+            // deduplicate current results against new results
             const ids = new Set(results[resultsIndex].content.map(content => content.id));
-
             results[resultsIndex].content.push(...response.data.filter(content => !ids.has(content.id)));
-            results[resultsIndex].type = endpointList[endpoint].contentType;
 
+            results[resultsIndex].type = endpointList[endpoint].contentType;
             results[resultsIndex].total = response.total;
             results[resultsIndex].endpoint = endpoint;
             results[resultsIndex].opts = opts;
@@ -220,7 +220,6 @@ const setResultsToFollowedChannels = () => {
     setResults(results);
     setIndex(0);
 }
-
 const setResultsToFollowedVideos = () => {
     let results = defaultResults();
     results[0].content = followedVideos;
@@ -642,7 +641,7 @@ const fetchUserFollows = async () => {
         endpoints.GET_USERS,
         'id',
         chunk(follows, 100).map(chunk => chunk.map(f => f.id))
-    )
+    );
 
     userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
 }
@@ -754,7 +753,7 @@ const fetchFollowedVideos = async () => {
         _storage.get('fetchAllFollowedVideos')
             ? [...userFollowsCache]
             : _storage.get('favorites')
-    )
+    );
 
     followedVideos = orderBy(
         videos.slice(0, 1000), // hard cap of 1000 results

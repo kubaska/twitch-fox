@@ -33,6 +33,8 @@ export default {
         if (date) return (new Date(date)).toISOString().replace(/\.\d{3}/, '');
         else return (new Date()).toISOString().replace(/\.\d{3}/, '');
     },
+    // A cheap way to solve JS DeadObject issues when communicating
+    // between background and UI tabs
     cloneObj: (obj) => {
         return JSON.parse(JSON.stringify(obj));
     },
