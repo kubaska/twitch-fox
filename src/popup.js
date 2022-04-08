@@ -68,7 +68,7 @@ const filterContent = (noScroll, scrollPos) => {
     const tags = document.querySelectorAll('.media-container > .media-object[data-tag]');
     let hidden = 0;
     tags.forEach(element => {
-        if (element.dataset['tag'].includes(filter)) {
+        if (element.dataset['tag'].toLowerCase().includes(filter)) {
             element.classList.remove('d-none');
         }
         else {

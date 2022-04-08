@@ -91,22 +91,20 @@ const makeCard = (bp, favoriteMode, type, content) => {
         }
 
         const startDate = new Date(content.started_at);
-        const now = Date.now();
-        card.querySelector('.uptime--time').textContent = utils.timeSince(startDate, now);
+        card.querySelector('.uptime--time').textContent = utils.timeSince(startDate, Date.now());
         UI.setTooltip(card.querySelector('.uptime'), 'Stream started at ' + startDate.toLocaleString());
 
         card.querySelector('.viewer-count').textContent = utils.delimitNumber(content.viewer_count);
 
-        card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = content.user_login;
-        });
+        card.querySelector('.streamer-name').textContent = content.user_login === content.user_name.toLowerCase()
+            ? content.user_name
+            : content.user_login;
 
         // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.user_login);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.user_login);
+        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.user_name);
+        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.user_name);
 
-        const following = bp.isFollowing(userId);
-        handleFollowFavoriteBtns(card, following, isFavorite);
+        handleFollowFavoriteBtns(card, bp.isFollowing(userId), isFavorite);
 
         return card;
     }
@@ -146,9 +144,7 @@ const makeCard = (bp, favoriteMode, type, content) => {
             : utils.secondsToMMSS(content.duration);
         UI.setTooltip(
             card.querySelector('.uptime'),
-            (type === 'video')
-                ? 'Video saved at ' + createdAt.toLocaleString()
-                : 'Clip made at ' + createdAt.toLocaleString()
+            (type === 'video' ? 'Video saved at ' : 'Clip made at ') + createdAt.toLocaleString()
         )
 
         card.querySelector('.viewer-count').textContent = utils.delimitNumber(content.view_count);
@@ -196,7 +192,9 @@ const makeCard = (bp, favoriteMode, type, content) => {
         card.dataset['name'] = login;
         card.dataset['tag'] = login + content.display_name;
 
-        card.querySelector('.status').textContent = login;
+        card.querySelector('.status').textContent = login === content.display_name.toLowerCase()
+            ? content.display_name
+            : login;
 
         UI.insertBackground(
             card,
