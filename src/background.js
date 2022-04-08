@@ -199,31 +199,26 @@ const refreshResults = async () => {
     await callApi(results[resultsIndex].endpoint, results[resultsIndex].opts, false, true);
 }
 
-const setResultsToFollowedGames = () => {
+const setResultsToFollowedTab = (tab) => {
     let results = defaultResults();
-    results[0].content = userFollowedGames;
-    results[0].type = 'game';
-    setResults(results);
-    setIndex(0);
-}
-const setResultsToFollowedStreams = () => {
-    let results = defaultResults();
-    results[0].content = getUserFollowedStreams();
-    results[0].type = 'stream';
-    setResults(results);
-    setIndex(0);
-}
-const setResultsToFollowedChannels = () => {
-    let results = defaultResults();
-    results[0].content = getUserFollows();
-    results[0].type = 'channel';
-    setResults(results);
-    setIndex(0);
-}
-const setResultsToFollowedVideos = () => {
-    let results = defaultResults();
-    results[0].content = followedVideos;
-    results[0].type = 'video';
+    switch (tab) {
+        case tabs.FOLLOWED_GAMES:
+            results[0].content = userFollowedGames;
+            results[0].type = 'game';
+            break;
+        case tabs.FOLLOWED_STREAMS:
+            results[0].content = getUserFollowedStreams();
+            results[0].type = 'stream';
+            break;
+        case tabs.FOLLOWED_VIDEOS:
+            results[0].content = followedVideos;
+            results[0].type = 'video';
+            break;
+        case tabs.FOLLOWED_CHANNELS:
+            results[0].content = getUserFollows();
+            results[0].type = 'channel';
+            break;
+    }
     setResults(results);
     setIndex(0);
 }
@@ -880,10 +875,7 @@ window.resetResults = resetResults;
 window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;
-window.setResultsToFollowedChannels = setResultsToFollowedChannels;
-window.setResultsToFollowedGames = setResultsToFollowedGames;
-window.setResultsToFollowedStreams = setResultsToFollowedStreams;
-window.setResultsToFollowedVideos = setResultsToFollowedVideos;
+window.setResultsToFollowedTab = setResultsToFollowedTab;
 window.setStorage = setStorage;
 window.unfavorite = unfavorite;
 window.unfollow = unfollow;

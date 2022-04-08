@@ -217,13 +217,13 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
 }
 
 const handleFollowedVideosTab = (forceRefresh = false) => {
-    bp.setResultsToFollowedVideos();
+    bp.setResultsToFollowedTab(tabs.FOLLOWED_VIDEOS);
 
     if (forceRefresh || ! bp.getResultsContentLength()) {
         // No results cached, update immediately
         setLoadingState(true);
         bp.fetchFollowedVideos().then(() => {
-            bp.setResultsToFollowedVideos();
+            bp.setResultsToFollowedTab(tabs.FOLLOWED_VIDEOS);
             setLoadingState(false);
             updatePage();
         });
@@ -386,18 +386,18 @@ const updateTab = (newMode) => {
             updatePage();
         }
         else if (mode === tabs.FOLLOWED_GAMES) {
-            bp.setResultsToFollowedGames();
+            bp.setResultsToFollowedTab(tabs.FOLLOWED_GAMES);
             updatePage();
         }
         else if (mode === tabs.FOLLOWED_STREAMS) {
-            bp.setResultsToFollowedStreams();
+            bp.setResultsToFollowedTab(tabs.FOLLOWED_STREAMS);
             updatePage();
         }
         else if (mode === tabs.FOLLOWED_VIDEOS) {
             handleFollowedVideosTab();
         }
         else if (mode === tabs.FOLLOWED_CHANNELS) {
-            bp.setResultsToFollowedChannels();
+            bp.setResultsToFollowedTab(tabs.FOLLOWED_CHANNELS);
             updatePage();
         }
     }
