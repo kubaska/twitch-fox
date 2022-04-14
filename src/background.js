@@ -751,7 +751,7 @@ const fetchFollowedVideos = async () => {
     );
 
     followedVideos = orderBy(
-        videos.slice(0, 1000), // hard cap of 1000 results
+        videos.slice(0, 500), // hard cap of 500 results
         [video => new Date(video.created_at)],
         ['desc']
     );
