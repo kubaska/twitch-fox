@@ -153,9 +153,7 @@ const makeCard = (bp, favoriteMode, type, content) => {
         const isFavorite = bp.isFavorite(streamerId);
         handleFollowFavoriteBtns(card, following, isFavorite);
 
-        card.querySelectorAll('.streamer-name').forEach(element => {
-            element.textContent = streamerName;
-        });
+        card.querySelector('.streamer-name').textContent = streamerName;
 
         // tooltip stuff
         UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), streamerName);

@@ -145,7 +145,9 @@ document.getElementById('switchStorageEngine').addEventListener('change', (e) =>
                 message.classList.remove('d-none');
             } else {
                 message.classList.add('error-message');
-                message.textContent = result ? `There was an error moving data. (${result})` : 'Something went wrong.';
+                message.textContent = result
+                    ? `There was an error moving data. (${result})`
+                    : 'Something went wrong.';
                 message.classList.remove('d-none');
             }
         })
