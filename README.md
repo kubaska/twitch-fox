@@ -18,9 +18,11 @@ Hey! This is a forked version of Twitch Fox. I used this addon for well over 2 y
 - Fixed some issues
 
 ## Planned features
-- Following games
+- Exporting all settings
+- Rewrite of the rendering logic
 - More options to filter content
-- Bring back followed videos view
+- Key bind for enlarging preview
+- Automatic content refreshing
 
 ## Installing
 Download a signed release from [here](https://github.com/kubaska/twitch-fox/releases), then drag-and-drop file on extensions page in Firefox.
