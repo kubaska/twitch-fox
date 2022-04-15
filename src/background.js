@@ -200,26 +200,37 @@ const refreshResults = async () => {
 }
 
 const setResultsToFollowedTab = (tab) => {
-    let results = defaultResults();
+    let newResults;
+
+    // Check if currently saved results belong to newly switched tab.
+    // If it does, do not create new results, but use existing instead.
+    // This preserves users search query and scroll position.
+    if (results[0].followedTab && results[0].followedTab === tab) {
+        newResults = results;
+    } else {
+        newResults = defaultResults();
+    }
+
     switch (tab) {
         case tabs.FOLLOWED_GAMES:
-            results[0].content = userFollowedGames;
-            results[0].type = 'game';
+            newResults[0].content = userFollowedGames;
+            newResults[0].type = 'game';
             break;
         case tabs.FOLLOWED_STREAMS:
-            results[0].content = getUserFollowedStreams();
-            results[0].type = 'stream';
+            newResults[0].content = getUserFollowedStreams();
+            newResults[0].type = 'stream';
             break;
         case tabs.FOLLOWED_VIDEOS:
-            results[0].content = followedVideos;
-            results[0].type = 'video';
+            newResults[0].content = followedVideos;
+            newResults[0].type = 'video';
             break;
         case tabs.FOLLOWED_CHANNELS:
-            results[0].content = getUserFollows();
-            results[0].type = 'channel';
+            newResults[0].content = getUserFollows();
+            newResults[0].type = 'channel';
             break;
     }
-    setResults(results);
+    newResults[0].followedTab = tab;
+    setResults(newResults);
     setIndex(0);
 }
 
