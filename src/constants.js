@@ -119,9 +119,7 @@ export const tabInfo = {
         apiSearchable: true,
         refreshable: true,
     },
-    [tabs.FOLLOWED_GAMES]: {
-
-    },
+    [tabs.FOLLOWED_GAMES]: {},
     [tabs.FOLLOWED_STREAMS]: {
         favorites: true
     },

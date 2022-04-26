@@ -530,6 +530,8 @@ const initializeEvents = () => {
 
     // Refresh button
     refresh.addEventListener('click', () => {
+        if (refresh.classList.contains('icon--inactive')) return;
+
         if (mode === tabs.FOLLOWED_VIDEOS) {
             return handleFollowedVideosTab(true);
         }
