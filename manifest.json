@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Twitch Fox",
     "description": "(Fork) Quickly browse Twitch. Receive notifications for followed channels. Many customizable features.",
-    "version": "5.1.1",
+    "version": "5.1.2",
     "incognito": "not_allowed",
 
     "browser_specific_settings": {
