@@ -401,6 +401,8 @@ const updateTab = (newMode) => {
             updatePage();
         }
     }
+
+    mediaContainer.focus();
 };
 
 /**
