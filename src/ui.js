@@ -47,9 +47,9 @@ const makeCard = (bp, favoriteMode, type, content) => {
         card.dataset['game'] = content.name;
         card.dataset['tag'] = content.name;
 
-        card.querySelectorAll('.title').forEach(element => {
-            element.textContent = content.name;
-        });
+        const titleElement = card.querySelector('.title');
+        titleElement.textContent = content.name;
+        titleElement.title = content.name;
 
         card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(content.box_art_url, 188, 250);
 
