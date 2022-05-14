@@ -62,6 +62,18 @@ previewElement.addEventListener('click', () => {
     previewElement.classList.remove('enabled');
 });
 
+const getSearchBoxPlaceholderText = () => {
+    if (tabInfo[mode].apiSearchable) {
+        if (mediaContainer.children.length) {
+            return `Search Twitch or filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
+        }
+        else return 'Search Twitch';
+    }
+    else {
+        return `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
+    }
+}
+
 const filterContent = (noScroll, scrollPos) => {
     const filter = searchBox.value.toLowerCase();
 
@@ -143,19 +155,11 @@ const updatePage = (noScroll) => {
     }
     else mediaContainer.className = 'media-container';
 
+    searchBox.placeholder = getSearchBoxPlaceholderText();
     if (tabInfo[mode].apiSearchable) {
-        // Adjust placeholder if there is content displayed.
-        if (results[index].content.length) {
-            searchBox.placeholder =
-                `Search Twitch or filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
-        } else {
-            searchBox.placeholder = 'Search Twitch';
-        }
-
         search.classList.remove('icon--inactive');
     }
     else {
-        searchBox.placeholder = `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
         search.classList.add('icon--inactive');
     }
 
@@ -189,6 +193,7 @@ const setLoadingState = (state = false) => {
         searchBox.placeholder = 'Loading... please wait';
     } else {
         refresh.classList.remove('thinking');
+        searchBox.placeholder = getSearchBoxPlaceholderText();
         searchBox.value = '';
     }
 }
@@ -541,6 +546,7 @@ const initializeEvents = () => {
         setLoadingState(true);
         bp.refreshResults().then(() => {
             setLoadingState(false);
+            updatePage();
         })
     });
 
