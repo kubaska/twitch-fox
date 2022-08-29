@@ -167,6 +167,7 @@ const updatePage = (noScroll) => {
     forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
     searchBox.value = results[index].filter;
     exitSearch.classList[(index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+    exitSearch[(index > 0 || index < (results.length - 1)) ? 'setAttribute' : 'removeAttribute']('exitable', 'exitable');
 
     if (tabInfo[mode].favorites) {
         favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
@@ -528,6 +529,14 @@ const initializeEvents = () => {
 
     // Search box
     searchBox.addEventListener('input', filterContent);
+    searchBox.addEventListener('input', () => {
+        // update exit search icon
+        if (searchBox.value === '' && ! searchBox.hasAttribute('exitable')) {
+            exitSearch.classList.add('icon--inactive');
+        } else {
+            exitSearch.classList.remove('icon--inactive');
+        }
+    })
 
     // Favorites switch
     favorites.addEventListener('click', () => {
@@ -556,6 +565,11 @@ const initializeEvents = () => {
 
         if (searchBox.value) {
             searchBox.value = '';
+
+            if (! exitSearch.hasAttribute('exitable')) {
+                exitSearch.classList.add('icon--inactive');
+            }
+
             return filterContent();
         }
 
