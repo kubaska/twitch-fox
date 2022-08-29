@@ -1,6 +1,6 @@
 /* global browser */
 
-import {endpoints, ERuntimeMessage, tabInfo, tabs} from "./constants";
+import {endpointList, endpoints, ERuntimeMessage, tabInfo, tabs} from "./constants";
 import {makeCard, UI} from "./ui";
 import utils from "./utils";
 import {debounce} from "lodash";
@@ -172,7 +172,7 @@ const updatePage = (noScroll) => {
         favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
     }
 
-    if (tabInfo[mode].refreshable) {
+    if (tabInfo[mode].refreshable || (results[index].endpoint && endpointList[results[index].endpoint].contentType)) {
         refresh.classList.remove('icon--inactive');
     } else {
         refresh.classList.add('icon--inactive');
