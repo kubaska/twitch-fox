@@ -92,7 +92,7 @@ export const endpointList = {
     },
 
     [endpoints.GET_USER_FOLLOWS]: {
-        url: `users/follows`
+        url: `channels/followed`
     }
 };
 

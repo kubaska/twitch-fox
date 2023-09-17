@@ -628,13 +628,13 @@ const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
 const fetchUserFollows = async () => {
     // Request follows of logged in user.
     const twitchFollows = await fetchPaginatedResource(
-        endpoints.GET_USER_FOLLOWS, { from_id: authorizedUser.id }, 100
+        endpoints.GET_USER_FOLLOWS, { user_id: authorizedUser.id }, 100
     );
 
     // Combine local & online follows with same data structure
     const follows = [
         ...twitchFollows.map(follow => {
-            return { id: parseInt(follow.to_id), fd: follow.followed_at }
+            return { id: parseInt(follow.broadcaster_id), fd: follow.followed_at }
         }),
         ...getStorage('localFollows')
     ];
