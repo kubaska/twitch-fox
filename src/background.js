@@ -289,14 +289,14 @@ const desktopNotification = (stream) => {
     const channel = find(userFollows, { id: stream.user_id });
     const logo = channel?.profile_image_url ?? '/assets/twitch-fox.svg';
 
-    browser.notifications.create('follow-notification', {
+    lastNotificationStreamName = stream.user_login;
+
+    return browser.notifications.create('follow-notification', {
         type: 'basic',
         iconUrl: logo,
         title,
         message: stream.title,
     });
-
-    lastNotificationStreamName = stream.user_login;
 };
 
 /**
@@ -723,17 +723,29 @@ const fetchFollowedStreams = () => {
             // display a notification if we have new stream
             if (anyFavorites) {
                 if (_storage.get('notifications', ENotificationFlag.favoritesTextNotification)) {
-                    desktopNotification(favoritesFirst[0]);
-                }
-                if (_storage.get('notifications', ENotificationFlag.favoritesAudioNotification)) {
-                    Alarm.play();
+                    desktopNotification(favoritesFirst[0])
+                        .then(() => {
+                            if (_storage.get('notifications', ENotificationFlag.favoritesAudioNotification)) {
+                                Alarm.play();
+                            }
+                        });
+                } else {
+                    if (_storage.get('notifications', ENotificationFlag.favoritesAudioNotification)) {
+                        Alarm.play();
+                    }
                 }
             } else {
                 if (_storage.get('notifications', ENotificationFlag.textNotification)) {
-                    desktopNotification(favoritesFirst[0]);
-                }
-                if (_storage.get('notifications', ENotificationFlag.audioNotification)) {
-                    Alarm.play();
+                    desktopNotification(favoritesFirst[0])
+                        .then(() => {
+                            if (_storage.get('notifications', ENotificationFlag.audioNotification)) {
+                                Alarm.play();
+                            }
+                        });
+                } else {
+                    if (_storage.get('notifications', ENotificationFlag.audioNotification)) {
+                        Alarm.play();
+                    }
                 }
             }
         }
