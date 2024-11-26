@@ -136,6 +136,13 @@ body
         background-image: url(../../assets/images/favorites.png)
     &__refresh
         background-image: url(../../assets/images/refresh.png)
+
+        &.thinking
+            animation-name: rotate
+            animation-duration: 1s
+            animation-iteration-count: infinite
+            animation-timing-function: linear
+
     &__exit
         background-image: url(../../assets/images/exit.png)
 
@@ -236,6 +243,12 @@ body
 
     & *
         flex: 1 1 0
+
+@keyframes rotate
+    from
+        transform: rotate(0deg)
+    to
+        transform: rotate(360deg)
 
 @import 'cards'
 @import 'utils'

@@ -1,6 +1,10 @@
 .tooltipped
     position: relative
 
+    &.thinking
+        &:before
+            display: none
+
     &:before
         content: attr(data-tooltip)
         position: absolute

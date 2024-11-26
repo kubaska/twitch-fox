@@ -1,4 +1,7 @@
 import utils from "./utils";
+import {html} from "lit-html";
+import {tabs, twitch404ThumbnailUrl} from "./constants";
+import {when} from "lit-html/directives/when.js";
 
 const UI = {
     insertBackground: (card, url) => {
@@ -17,6 +20,11 @@ const UI = {
     // %{width}x%{height}
     // 52x72 (or other numbers)
     getImageUrl: (url, width, height) => {
+        // For some reason 404 thumbnail is only served in 320x180, despite it being served in template format
+        if (url.includes('404_processing')) {
+            width = 320;
+            height = 180;
+        }
         return url.replace(/(%?{width}x%?{height})|(\d+x\d+)/, `${width}x${height}`);
     },
 
@@ -36,142 +44,144 @@ const handleFollowFavoriteBtns = (card, isFollowing, isFavorite) => {
     card.querySelector('.icon__unfavorite')?.classList[isFavorite && isFollowing ? 'remove' : 'add']('d-none');
 }
 
-const makeCard = (bp, favoriteMode, type, content) => {
+const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
+    let message;
+
+    if (mode === tabs.SEARCH && index === 0) {
+        message = 'Use the search bar above to search for channels on Twitch.';
+    } else if (mode === tabs.FOLLOWED_GAMES && index === 0) {
+        message = "You don't follow any games!";
+    } else if (mode === tabs.FOLLOWED_STREAMS && index === 0) {
+        message = 'No followed results found. Please wait for potential loading results.';
+    } else if (mode === tabs.FOLLOWED_CHANNELS && index === 0) {
+        message = "You don't follow any channels!";
+    } else if (hasSearch) {
+        message = 'No search results found.';
+    } else {
+        message = 'No results found.';
+    }
+
+    return html`<div class="media-object__message"><h1>${message}</h1></div>`;
+};
+
+const makeCardTemplate = (content, type, bp, cardClickHandler) => {
     if (type === 'game') {
-        let card = document.getElementById('stub-game').cloneNode(true);
-        const id = parseInt(content.id);
+        return html`
+<div id="GAME!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-game-id="${content.id}" data-game="${content.name}" data-tag="${content.name}">
+    <div class="media-object__cover category">
+        <div class="media-object__cover-wrap">
+            <div>
+                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${UI.getImageUrl(content.box_art_url, 188, 250)}" />
+            </div>
+        </div>
 
-        card.id = `GAME!${content.id}`;
-        card.dataset['id'] = content.id;
-        card.dataset['gameId'] = content.id;
-        card.dataset['game'] = content.name;
-        card.dataset['tag'] = content.name;
+        <div class="on-top background background--darken"></div>
 
-        const titleElement = card.querySelector('.title');
-        titleElement.textContent = content.name;
-        titleElement.title = content.name;
+        <div class="on-top overlay overlay--game">
+            <div class="h-50 upper" data-trigger="browseGame">
+                <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByGame" data-tooltip="View the top videos from channels playing ${content.name}"></div>
+                <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByGame" data-tooltip="View the top clips from streams playing ${content.name}"></div>
+            </div>
 
-        card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(content.box_art_url, 188, 250);
-
-        handleFollowFavoriteBtns(card, bp.isFollowingGame(id), false);
-
-        // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.name);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.name);
-
-        return card;
+            <div class="h-50 lower" data-trigger="browseGame">
+                <div class="btn icon icon--medium icon__stream tooltipped" data-trigger="openGame" data-tooltip="Open Twitch page"></div>
+                ${when(bp.isFollowingGame(parseInt(content.id)),
+                    () => html`<span class="btn icon icon--medium icon__unfollow tooltipped tooltip--follow-game" data-trigger="unfollowGame" data-tooltip="Unfollow game locally"></span>`,
+                    () => html`<span class="btn icon icon--medium icon__follow tooltipped tooltip--follow-game" data-trigger="followGame" data-tooltip="Follow game locally"></span>`
+                )}
+            </div>
+        </div>
+    </div>
+    <div class="media-object__info">
+        <div class="media-object__name title text-truncate-clamp" title="${content.name}">${content.name}</div>
+    </div>
+</div>`;
     }
-    else if (type === 'stream') {
-        const userId = parseInt(content.user_id);
-        const isFavorite = bp.isFavorite(userId);
+    else if (type === 'stream' || type === 'video' || type === 'clip') {
+        const streamerId = parseInt(type === 'clip' ? content.broadcaster_id : content.user_id);
+        const streamerName = type === 'clip' ? content.broadcaster_name : content.user_login;
+        const streamerDisplayName = type === 'clip'
+            ? content.broadcaster_name
+            : (content.user_login === content.user_name.toLowerCase()) ? content.user_name : content.user_login;
+        const tag = type === 'stream'
+            ? content.game_name + content.user_login + content.user_name + content.title
+            : streamerName + content.title;
+        const thumbnailUrl = type === 'stream' ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+            : type === 'video'
+                ? (content.thumbnail_url
+                    ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+                    : twitch404ThumbnailUrl)
+                : content.thumbnail_url;
+        // No game returned for videos, only ID returned for clips, both ID and name for streams.
+        const categoryThumbnail = content.game_thumb
+            ? UI.getImageUrl(content.game_thumb, 52, 72)
+            : `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name ?? content.game_id}-52x72.jpg`;
+        const createdAt = new Date(type === 'stream' ? content.started_at : content.created_at);
+        const formattedTime = type === 'stream' ? utils.timeSince(createdAt, Date.now())
+            : (type === 'video' ? utils.formattedTimeToHHMMSS(content.duration)
+            : utils.secondsToMMSS(content.duration));
+        const viewsOrViewers = utils.delimitNumber(type === 'stream' ? content.viewer_count : content.view_count);
 
-        if (favoriteMode && ! isFavorite) return;
+        return html`
+<div id="${type.toUpperCase()}!${content.id}" class="media-object" @click="${cardClickHandler}" data-type="${type}" data-id="${content.id}" data-streamer-id="${streamerId}" data-name="${streamerName}" data-game-id="${content.game_id ?? ''}" data-tag="${tag}">
+    <div class="media-object__cover stream">
+        <div class="media-object__cover-wrap">
+            <div>
+                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${thumbnailUrl}" />
+            </div>
+        </div>
 
-        let card = document.getElementById('stub-stream').cloneNode(true);
+        <div class="on-top background background--slide-down"></div>
 
-        card.dataset['type'] = type;
-        // user_login = xqcow
-        // user_name = xQcOW
+        <div class="on-top overlay overlay--stream">
+            <div class="title">
+                <span class="status text-truncate">${content.title}</span>
+            </div>
 
-        card.id = `STREAM!${content.id}`;
-        card.dataset['id'] = content.id;
-        card.dataset['streamerId'] = userId;
-        card.dataset['name'] = content.user_login;
-        card.dataset['gameId'] = content.game_id;
-        card.dataset['tag'] = content.game_name + content.user_login + content.user_name + content.title;
+            <div class="uptime tooltipped" data-tooltip="${type === 'stream' ? 'Stream started' : type === 'video' ? 'Video saved' : 'Clip made'} at ${createdAt.toLocaleString()}">
+                <span class="icon icon--small icon__uptime"></span>
+                <span class="uptime--time">${formattedTime}</span>
+            </div>
 
-        card.querySelector('.status').textContent = content.title;
+            <div class="upper">
+                <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByChannel" data-tooltip="View videos uploaded by ${streamerName}"></div>
+                <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByChannel" data-tooltip="View clips made from ${streamerName}'s streams"></div>
+            </div>
 
-        card.querySelector('.media-object__cover-inner').src = UI.getImageUrl(content.thumbnail_url, 640, 360);
-        if (content.game_name) {
-            card.querySelector('.category-img').src = `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_name}-52x72.jpg`;
-            UI.fillTooltip(card.querySelector('.category.tooltipped'), content.game_name);
-        } else {
-            card.querySelector('.category').classList.add('d-none');
-        }
-
-        const startDate = new Date(content.started_at);
-        card.querySelector('.uptime--time').textContent = utils.timeSince(startDate, Date.now());
-        UI.setTooltip(card.querySelector('.uptime'), 'Stream started at ' + startDate.toLocaleString());
-
-        card.querySelector('.viewer-count').textContent = utils.delimitNumber(content.viewer_count);
-
-        card.querySelector('.streamer-name').textContent = content.user_login === content.user_name.toLowerCase()
-            ? content.user_name
-            : content.user_login;
-
-        // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.user_name);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.user_name);
-
-        handleFollowFavoriteBtns(card, bp.isFollowing(userId), isFavorite);
-
-        return card;
-    }
-    else if (type === 'video' || type === 'clip') {
-        let card = document.getElementById('stub-stream').cloneNode(true);
-
-        const streamerId = parseInt(type === 'video' ? content.user_id : content.broadcaster_id);
-        const streamerName = type === 'video' ? content.user_login : content.broadcaster_name;
-        const streamerDisplayName = type === 'video' ? content.user_name : content.broadcaster_name;
-
-        card.dataset['type'] = type;
-
-        card.id = `${type.toUpperCase()}!${content.id}`;
-        card.dataset['id'] = content.id;
-        card.dataset['streamerId'] = streamerId;
-        card.dataset['name'] = streamerName;
-        card.dataset['tag'] = streamerName + content.title;
-
-        card.querySelector('.status').textContent = content.title;
-
-        card.querySelector('.media-object__cover-inner').src = type === 'video'
-            ? (content.thumbnail_url
-                ? UI.getImageUrl(content.thumbnail_url, 640, 360)
-                : 'https://vod-secure.twitch.tv/_404/404_processing_640x360.png')
-            : content.thumbnail_url;
-
-        // No game returned for videos, only ID returned for clips.
-        if (type === 'clip' && content.game_id) {
-            card.querySelector('.category-img').src = `https://static-cdn.jtvnw.net/ttv-boxart/${content.game_id}-52x72.jpg`;
-            UI.fillTooltip(card.querySelector('.category.tooltipped'), 'this game');
-        } else {
-            card.querySelector('.category').classList.add('invisible');
-        }
-
-        const createdAt = new Date(content.created_at);
-        card.querySelector('.uptime--time').textContent = (type === 'video')
-            ? utils.formattedTimeToHHMMSS(content.duration)
-            : utils.secondsToMMSS(content.duration);
-        UI.setTooltip(
-            card.querySelector('.uptime'),
-            (type === 'video' ? 'Video saved at ' : 'Clip made at ') + createdAt.toLocaleString()
-        )
-
-        card.querySelector('.viewer-count').textContent = utils.delimitNumber(content.view_count);
-
-        const following = bp.isFollowing(streamerId);
-        const isFavorite = bp.isFavorite(streamerId);
-        handleFollowFavoriteBtns(card, following, isFavorite);
-
-        card.querySelector('.streamer-name').textContent = streamerDisplayName;
-
-        // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), streamerName);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), streamerName);
-
-        // Video/Clip specific
-        card.querySelector('.icon__chat').classList.add('d-none');
-        card.querySelector('.lang__stream').classList.add('d-none');
-        card.querySelector('.lang__videos').classList.remove('d-none');
-
-        return card;
+            <div class="lower">
+                <!--                    <div class="logo" style="width: 45px; height: 45px; background-color:lightgreen;"></div>-->
+                <div class="lower--controls">
+                    <span class="btn icon icon--medium icon__stream tooltipped" data-trigger="openStream" data-tooltip="Open Twitch page"></span>
+                    <span class="btn icon icon--medium icon__popout tooltipped" data-trigger="openPopout" data-tooltip="Open content in a popout window"></span>
+                    <span class="btn icon icon--medium icon__chat tooltipped ${type === 'stream' ? '' : 'd-none'}" data-trigger="openChat" data-tooltip="Open chat in a popout window"></span>
+                    <span class="btn icon icon--medium icon__enlarge tooltipped" data-trigger="enlarge" data-tooltip="Enlarge the preview"></span>
+                    ${when(bp.isFavorite(streamerId),
+                        () => html`<span class="btn icon icon--medium icon__unfavorite tooltipped" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>`,
+                        () => html`<span class="btn icon icon--medium icon__favorite tooltipped" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>`
+                    )}
+                    ${when(bp.isFollowing(streamerId),
+                        () => html`<span class="btn icon icon--medium icon__unfollow tooltipped tooltip--follow-stream" data-trigger="unfollow" data-tooltip="Unfollow channel locally"></span>`,
+                        () => html`<span class="btn icon icon--medium icon__follow tooltipped tooltip--follow-stream" data-trigger="follow" data-tooltip="Follow channel locally"></span>`
+                    )}
+                </div>
+                <div class="category tooltipped ${content.game_id ? '' : 'd-none'}" data-tooltip="View the top live streams playing ${content.game_name ?? 'this game'}">
+                    <img data-trigger="browseGame" class="category-img" src="${categoryThumbnail}" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="media-object__info">
+        <div class="media-object__name text-truncate">
+            <span class="viewer-count">${viewsOrViewers}</span>
+            <span> ${type === 'stream' ? 'viewers' : 'views'} on </span>
+            <span class="streamer-name">${streamerDisplayName}</span>
+        </div>
+    </div>
+</div>
+        `;
     }
     else if (type === 'channel') {
         const userId = parseInt(content.id);
-        const isFavorite = bp.isFavorite(userId);
-
-        if (favoriteMode && ! isFavorite) return;
 
         // Endpoint Inconsistencies
         // Follows Endpoint  - Search Endpoint   - Value
@@ -180,37 +190,88 @@ const makeCard = (bp, favoriteMode, type, content) => {
         // profile_image_url - thumbnail_url     - (some url)
         // description       - (none)            - xqc desc
 
-        let card = document.getElementById('stub-channel').cloneNode(true);
-
         const login = content.login ?? content.broadcaster_login;
         const profile_image = content.profile_image_url ?? content.thumbnail_url;
 
-        card.id = `CHANNEL!${content.id}`;
-        card.dataset['id'] = content.id;
-        card.dataset['streamerId'] = content.id;
-        card.dataset['name'] = login;
-        card.dataset['tag'] = login + content.display_name;
+        return html`
+<div id="CHANNEL!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-streamer-id="${content.id}" data-name="${login}" data-tag="${login + content.display_name}">
+    <div class="media-object__cover channel">
+        <div class="media-object__cover-wrap">
+            <div>
+                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${profile_image ?? 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png'}" />
+            </div>
+        </div>
 
-        card.querySelector('.status').textContent = login === content.display_name.toLowerCase()
-            ? content.display_name
-            : login;
+        <div class="on-top background background--slide-down"></div>
 
-        UI.insertBackground(
-            card,
-            profile_image ?? 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png'
-        )
+        <div class="on-top overlay overlay--channel">
+            <div class="title">
+                <span class="status text-truncate">${login === content.display_name.toLowerCase() ? content.display_name : login}</span>
+            </div>
 
-        const following = bp.isFollowing(userId);
-        handleFollowFavoriteBtns(card, following, isFavorite);
+            <div class="description">
+                <span class="description--text text-truncate">${content.description ?? ''}</span>
+            </div>
 
-        card.querySelector('.description--text').textContent = content.description ?? '';
+            <div class="upper">
+                <div class="btn icon icon--medium icon__videos tooltipped" data-trigger="browseVideosByChannel" data-tooltip="View videos uploaded by ${content.display_name}"></div>
+                <div class="btn icon icon--medium icon__clips tooltipped" data-trigger="browseClipsByChannel" data-tooltip="View clips made from ${content.display_name}'s streams"></div>
+            </div>
 
-        // tooltip stuff
-        UI.fillTooltip(card.querySelector('.icon__videos.tooltipped'), content.display_name);
-        UI.fillTooltip(card.querySelector('.icon__clips.tooltipped'), content.display_name);
-
-        return card;
+            <div class="lower">
+                <div class="lower--controls">
+                    <span class="btn icon icon--medium icon__stream tooltipped" data-tooltip="Open Twitch page" data-trigger="openStream"></span>
+                    <span class="btn icon icon--medium icon__chat tooltipped" data-tooltip="Open chat in a popout window" data-trigger="openChat"></span>
+                    ${when(bp.isFavorite(userId),
+                        () => html`<span class="btn icon icon--medium icon__unfavorite tooltipped" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>`,
+                        () => html`<span class="btn icon icon--medium icon__favorite tooltipped" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>`
+                    )}
+                    ${when(bp.isFollowing(userId),
+                        () => html`<span class="btn icon icon--medium icon__unfollow tooltipped tooltip--follow-stream" data-trigger="unfollow" data-tooltip="Unfollow channel LOCALLY"></span>`,
+                        () => html`<span class="btn icon icon--medium icon__follow tooltipped tooltip--follow-stream" data-trigger="follow" data-tooltip="Follow channel LOCALLY"></span>`
+                    )}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        `;
     }
+    else return html`<h1>Invalid card type: ${type}!</h1>`;
 };
 
-export { makeCard, UI };
+const makeStaticContent = (tab) => {
+    if (tab === 'about') {
+        return html`
+<div id="about-page" class="about-page">
+    <div class="logo-container" style="height: 120px">
+        <div class="logo hw-100 bg-contain">
+            <span class="about-version fw-bold">Twitch Fox, version 5.1.5 (fork)</span>
+        </div>
+    </div>
+
+    <div>
+        <p class="fs-5 fw-bold">Welcome to Twitch Fox!</p>
+        <p class="fs-6">You can browse Twitch by clicking the tabs on the left, and search Twitch for content relating to the current tab by using the (currently not visible) search bar above. And don't forget to check out the settings by clicking the gear icon in the bottom left corner, where you can disable tooltips and much more.</p>
+        <p class="fs-6">Whether you have used Twitch Fox in the past or have downloaded it for the first time, I hope you enjoy my add-on!</p>
+    </div>
+    <div>
+        <p class="fs-5 fw-bold">New update - Twitch Fox 5</p>
+        <p class="fs-6">Hey! You are using forked version of Twitch Fox. You might have noticed that a few features are missing. The reason is that Twitch crippled their new API - many features that made this addon so awesome are now missing. I tried my best to port everything I could so Twitch Fox can still live.</p>
+        <p class="fs-6">You can help bring missing features back! Click <a href="https://github.com/kubaska/twitch-fox/blob/master/MISSING_FEATURES.md" target="_blank">here</a> to see how.</p>
+        <p class="fs-5 fw-bold">New feature - Extended View</p>
+        <p class="fs-6">Now you can use Twitch Fox from a separate tab. To do so, left-click the popup icon and choose the new option.</p>
+    </div>
+    <div>
+        <div class="about-btn-group">
+            <a class="twitch-btn" href="https://github.com/kubaska/twitch-fox" target="_blank">Visit GitHub repository</a>
+            <a class="twitch-btn" href="https://github.com/kubaska/twitch-fox/issues/new" target="_blank">Report an issue</a>
+        </div>
+    </div>
+</div>
+        `;
+    }
+    else return html`<div><h1>Invalid static tab: ${tab}!</h1></div>`;
+}
+
+export { makeNoResultsMessageTemplate, makeCardTemplate, makeStaticContent, UI };

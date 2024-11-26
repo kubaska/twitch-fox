@@ -1,10 +1,18 @@
 /* global browser */
 
-import axios from "axios";
 import _storage from './storage';
 import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
-import {endpointList, endpoints, ENotificationClickFlag, ENotificationFlag, ERuntimeMessage, tabs} from "./constants";
+import {
+    endpointList,
+    endpoints,
+    ENotificationClickFlag,
+    ENotificationFlag, EResultState,
+    ERuntimeMessage,
+    tabs,
+    twitchClientId
+} from "./constants";
 import utils from "./utils";
+import api from "./api/api";
 
 // Variable declarations
 
@@ -17,13 +25,13 @@ let userFavoritesCache = new Set();
 let userFollowedStreams = []; // Array with followed stream objects
 let userFollowedGames = [];
 let followedVideos = []; // Cached results of followed videos
+let pendingApiCalls = new Map();
 
 let lastNotificationStreamName = '';
 let results;
 let resultsIndex = 0;
 let popupMode = tabs.STREAMS; // default mode is streams
 
-const clientID = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
 const redirectURI = 'https://hunter5000.github.io/twitchfox.html';
 const scope = 'user:read:email user:read:follows user:edit:follows';
 const responseType = 'token';
@@ -33,26 +41,6 @@ const audio = new Audio();
 const BROWSER_ALARM_TYPE = {
     FETCH_FOLLOWED_STREAMS: 'fetchFollowedStreams'
 }
-
-// axios
-const _axios = axios.create({
-    baseURL: 'https://api.twitch.tv/helix/',
-    headers: {
-        'Client-ID': clientID
-    }
-});
-_axios.interceptors.request.use(function (request) {
-    const token = _storage.get('token');
-
-    if (token) {
-        request.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // This prevents Twitch from returning results for user region.
-    request.headers['Accept-Language'] = undefined;
-
-    return request;
-})
 
 // Function declarations
 
@@ -68,6 +56,7 @@ const defaultContent = () => [];
 const defaultResults = () => [{
     content: defaultContent(),
     type: '',
+    state: EResultState.IDLE,
     endpoint: '',
     opts: {},
     scroll: 0,
@@ -94,6 +83,8 @@ const getResultsContentLength = () => results[resultsIndex].content.length;
 const setMode = newMode => {
     popupMode = newMode;
     setStorage('mode', newMode);
+    resetResults();
+    setResultsToFollowedTab(newMode);
 }
 
 /**
@@ -105,6 +96,8 @@ const setMode = newMode => {
  */
 const getStorage = (key, flag) => _storage.get(key, flag);
 const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
+
+const sendMessageToPopup = (content) => browser.runtime.sendMessage({ content }).catch(err => {});
 
 /**
  * Call Twitch API from popup
@@ -122,7 +115,8 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         resultsIndex += 1;
         // Remove elements after the new one
         results.splice(
-            resultsIndex, results.length - resultsIndex,
+            resultsIndex,
+            results.length - resultsIndex,
             defaultResults()[0],
         );
     }
@@ -150,49 +144,48 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         opts.after = results[resultsIndex].cursor;
     }
 
-    return twitchAPI(endpoint, opts)
-        .then(response => {
-            // deduplicate current results against new results
-            const ids = new Set(results[resultsIndex].content.map(content => content.id));
-            results[resultsIndex].content.push(...response.data.filter(content => !ids.has(content.id)));
+    results[resultsIndex].endpoint = endpoint;
+    results[resultsIndex].state = EResultState.LOADING;
 
-            results[resultsIndex].type = endpointList[endpoint].contentType;
-            results[resultsIndex].total = response.total;
-            results[resultsIndex].endpoint = endpoint;
-            results[resultsIndex].opts = opts;
-            results[resultsIndex].cursor = response.pagination.cursor;
+    const callForIndex = resultsIndex;
+    const requestId = resultsIndex;
+
+    if (pendingApiCalls.has(requestId)) {
+        console.log(`Aborting request: [${requestId}]`);
+        pendingApiCalls.get(requestId).abort();
+        pendingApiCalls.delete(requestId);
+    }
+
+    const abortController = new AbortController();
+
+    const request = api.twitch.request(endpoint, opts, abortController.signal)
+        .then(response => {
+            if (! results[callForIndex] || results[callForIndex].endpoint !== endpoint)
+                return;
+
+            // deduplicate current results against new results
+            const ids = new Set(results[callForIndex].content.map(content => content.id));
+
+            results[callForIndex].content.push(...response.data.filter(content => !ids.has(content.id)));
+            results[callForIndex].type = endpointList[endpoint].contentType;
+            results[callForIndex].state = EResultState.IDLE;
+            results[callForIndex].total = response.total;
+            results[callForIndex].opts = opts;
+            results[callForIndex].cursor = response.pagination.cursor;
 
             return response;
         })
         .catch(error => {
             console.log(error);
-            return error;
+            throw error;
+        })
+        .finally(() => {
+            pendingApiCalls.delete(requestId);
         });
-};
 
-/**
- * Calls Twitch API
- *
- * @param endpoint  Endpoint
- * @param theOpts   Request options
- * @return {Promise<AxiosResponse<any>>|*[]|*}
- */
-const twitchAPI = (endpoint, theOpts) => {
-    if (! endpointList[endpoint]) {
-        console.log('Invalid endpoint: ', endpoint);
-        return;
-    }
+    pendingApiCalls.set(requestId, abortController);
 
-    const opts = utils.cloneObj(theOpts);
-    const { url } = endpointList[endpoint];
-
-    // console.log('[REQ]', endpoint, opts);
-
-    return _axios.request({ url, method: 'GET', params: opts })
-        .then(response => {
-            // console.log('[RES]', endpoint, response);
-            return response.data;
-        });
+    return request;
 };
 
 const refreshResults = async () => {
@@ -200,38 +193,28 @@ const refreshResults = async () => {
 }
 
 const setResultsToFollowedTab = (tab) => {
-    let newResults;
-
-    // Check if currently saved results belong to newly switched tab.
-    // If it does, do not create new results, but use existing instead.
-    // This preserves users search query and scroll position.
-    if (results[0].followedTab && results[0].followedTab === tab) {
-        newResults = results;
-    } else {
-        newResults = defaultResults();
+    if (tab !== popupMode) {
+        return console.error(`Tried to set followed results on ${tab} when current tab is ${popupMode}`);
     }
 
     switch (tab) {
         case tabs.FOLLOWED_GAMES:
-            newResults[0].content = userFollowedGames;
-            newResults[0].type = 'game';
+            results[0].content = userFollowedGames;
+            results[0].type = 'game';
             break;
         case tabs.FOLLOWED_STREAMS:
-            newResults[0].content = getUserFollowedStreams();
-            newResults[0].type = 'stream';
+            results[0].content = getUserFollowedStreams();
+            results[0].type = 'stream';
             break;
         case tabs.FOLLOWED_VIDEOS:
-            newResults[0].content = followedVideos;
-            newResults[0].type = 'video';
+            results[0].content = followedVideos;
+            results[0].type = 'video';
             break;
         case tabs.FOLLOWED_CHANNELS:
-            newResults[0].content = getUserFollows();
-            newResults[0].type = 'channel';
+            results[0].content = getUserFollows();
+            results[0].type = 'channel';
             break;
     }
-    newResults[0].followedTab = tab;
-    setResults(newResults);
-    setIndex(0);
 }
 
 const saveTabState = (searchQuery, scrollPos) => {
@@ -263,7 +246,7 @@ const updateBadge = () => {
 
 const Alarm = {
     initialize: () => {
-        audio.src = 'assets/alarm.ogg';
+        audio.src = 'assets/alarm.mp3';
     },
     play: () => {
         const volumePercent = _storage.get('notificationVolume');
@@ -304,7 +287,7 @@ const desktopNotification = (stream) => {
  */
 const authorize = () => {
     const url = `https://id.twitch.tv/oauth2/authorize?client_id=${
-        clientID}&redirect_uri=${redirectURI}&response_type=${
+        twitchClientId}&redirect_uri=${redirectURI}&response_type=${
         responseType}&scope=${scope}`;
     browser.tabs.create({ url });
 };
@@ -413,10 +396,11 @@ const follow = async (id) => {
     userFollowsCache.add(id);
 
     // Add channel to userFollows
-    twitchAPI(endpoints.GET_USERS, { id })
+    api.twitch.getUsers({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
                 userFollows.unshift(response.data[0]);
+                fetchFollowedStreams();
             }
         })
         .catch(err => { console.log(err); });
@@ -429,7 +413,7 @@ const followGame = async (id) => {
     followedGamesCache.add(id);
 
     // Add game to userFollowedGames
-    twitchAPI(endpoints.GET_GAMES, { id })
+    api.twitch.getGames({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
                 userFollowedGames.unshift(response.data[0]);
@@ -471,9 +455,10 @@ const unfollow = (id) => {
     return baseUnfollow('localFollows', id)
         .then(() => {
             pullAllBy(userFollows, [{ id: id.toString() }], 'id');
+            pullAllBy(userFollowedStreams, [{ user_id: id.toString() }], 'user_id');
             userFollowsCache.delete(id);
             unfavorite(id);
-        })
+        });
 }
 
 const unfollowGame = (id) => {
@@ -536,7 +521,7 @@ const rebuildFavoriteCache = () => {
  * @return {Promise<{}>}
  */
 const fetchCurrentUser = async () => {
-    const user = await twitchAPI(endpoints.GET_USERS, {});
+    const user = await api.twitch.getUsers({});
     // todo make this retryable
 
     if (user?.data && user.data[0]) {
@@ -567,7 +552,7 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
         let response;
 
         try {
-            response = await twitchAPI(
+            response = await api.twitch.request(
                 endpoint,
                 { first: limit, after: pagination, ...requestOptions }
             );
@@ -604,7 +589,7 @@ const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
 
     await Promise.allSettled(
         values.map(value => {
-            return twitchAPI(endpoint, { [resourceKey]: value });
+            return api.twitch.request(endpoint, { [resourceKey]: value });
         })
     ).then(allResults => {
         allResults.forEach(results => {
@@ -691,8 +676,7 @@ const fetchLocalFollowedStreams = async () => {
     let result = [];
 
     for (const chunk of follows) {
-        const res = await twitchAPI(
-            endpoints.GET_STREAMS,
+        const res = await api.twitch.getStreams(
             { first: 100, user_id: map(chunk, 'id') }
         )
         result.push(...res.data);
@@ -713,6 +697,8 @@ const fetchFollowedStreams = () => {
 
         // compute difference with current followed
         const diff = differenceBy(total, userFollowedStreams, 'id');
+
+        userFollowedStreams = total;
 
         if (! isEmpty(diff)) {
             // prefer favorite streams
@@ -748,9 +734,9 @@ const fetchFollowedStreams = () => {
                     }
                 }
             }
-        }
 
-        userFollowedStreams = total;
+            sendMessageToPopup(ERuntimeMessage.NEW_FOLLOWED_STREAMS);
+        }
 
         // also update badge
         updateBadge();
@@ -795,7 +781,7 @@ const initializeFollows = async () => {
     rebuildFollowCache();
     rebuildFavoriteCache();
 
-    browser.runtime.sendMessage({ content: ERuntimeMessage.INITIALIZE });
+    sendMessageToPopup(ERuntimeMessage.INITIALIZE);
 
     browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
         delayInMinutes: 0.02, // ~ 1-2 sec

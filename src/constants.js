@@ -1,3 +1,10 @@
+export const twitchClientId = 'dzawctbciav48ou6hyv0sxbgflvfdpp';
+
+export const EResultState = {
+    IDLE: 0,
+    LOADING: 1,
+};
+
 export const ENotificationFlag = {
     textNotification: 1 << 0,
     audioNotification: 1 << 1,
@@ -12,8 +19,11 @@ export const ENotificationClickFlag = {
 }
 
 export const ERuntimeMessage = {
-    INITIALIZE: 'initialize'
+    INITIALIZE: 'initialize',
+    NEW_FOLLOWED_STREAMS: 'newFollowedStreams'
 }
+
+export const twitch404ThumbnailUrl = 'https://vod-secure.twitch.tv/_404/404_processing_320x180.png'
 
 export const tabs = {
     GAMES: 'games',

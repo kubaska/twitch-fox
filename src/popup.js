@@ -1,8 +1,9 @@
 /* global browser */
 
-import {endpointList, endpoints, ERuntimeMessage, tabInfo, tabs} from "./constants";
-import {makeCard, UI} from "./ui";
+import {endpointList, endpoints, EResultState, ERuntimeMessage, tabInfo, tabs} from "./constants";
+import {makeCardTemplate, makeNoResultsMessageTemplate, makeStaticContent, UI} from "./ui";
 import utils from "./utils";
+import {html, render} from "lit-html";
 import {debounce} from "lodash";
 import './css/popup.sass';
 
@@ -31,7 +32,6 @@ const settings = document.getElementById('settings');
 
 let mode;
 
-
 /**
  * Set the popup mode in both the script and the storage
  *
@@ -41,7 +41,6 @@ const setMode = (newMode) => {
     mode = newMode;
     bp.setMode(newMode);
 };
-
 
 const enlarge = (element) => {
     const cover = element.querySelector('.media-object__cover-inner');
@@ -62,140 +61,15 @@ previewElement.addEventListener('click', () => {
     previewElement.classList.remove('enabled');
 });
 
-const getSearchBoxPlaceholderText = () => {
-    if (tabInfo[mode].apiSearchable) {
+const getSearchBoxPlaceholderText = (currentIndex) => {
+    if (currentIndex === 0 && tabInfo[mode].apiSearchable) {
         if (mediaContainer.children.length) {
-            return `Search Twitch or filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
+            return `Search Twitch or filter ${utils.delimitNumber(mediaContainer.querySelectorAll('.media-object').length)} results`;
         }
         else return 'Search Twitch';
     }
     else {
-        return `Filter ${utils.delimitNumber(mediaContainer.children.length)} results`;
-    }
-}
-
-const filterContent = (noScroll, scrollPos) => {
-    const filter = searchBox.value.toLowerCase();
-
-    const tags = document.querySelectorAll('.media-container > .media-object[data-tag]');
-    let hidden = 0;
-    tags.forEach(element => {
-        if (element.dataset['tag'].toLowerCase().includes(filter)) {
-            element.classList.remove('d-none');
-        }
-        else {
-            element.classList.add('d-none');
-            hidden += 1;
-        }
-    });
-
-    if (! filter && ! noScroll) {
-        contentArea.scrollTop = scrollPos;
-    }
-
-    // todo display svg or image in css class
-    // add it to media-container when there is no results here
-    // or results contentLength = 0
-    if (tags.length - hidden === 0) {
-        // contentArea.classList.add('no-results');
-        if (document.getElementById('no-results')) return;
-        const index = bp.getIndex();
-
-        let noResults = document.createElement('div');
-        noResults.id = 'no-results';
-        noResults.classList.add('no-results');
-        if (bp.getResultsContentLength()) {
-            noResults.textContent = 'No results found.';
-        } else if (index === 0 && mode === tabs.SEARCH) {
-            noResults.textContent = 'Use the search bar above to search for channels on Twitch.';
-        } else if (tabs.isFollowedTab(mode)) {
-            noResults.textContent = 'No followed results found. Please wait for potential loading results.';
-        } else {
-            noResults.textContent = 'No search results found.';
-        }
-
-        mediaContainer.appendChild(noResults);
-    }
-    else {
-        // contentArea.classList.remove('no-results');
-        document.getElementById('no-results')?.remove();
-    }
-};
-
-/**
- * Render Twitch content
- *
- * @param noScroll Keep scroll position in place
- */
-const updatePage = (noScroll) => {
-    const results = bp.getResults();
-    const index = bp.getIndex();
-
-    while (mediaContainer.hasChildNodes()) {
-        mediaContainer.removeChild(mediaContainer.firstChild);
-    }
-
-    const favoriteMode = tabInfo[mode].favorites && bp.getStorage('favoritesMode');
-
-    let cards = document.createDocumentFragment();
-
-    for (let i = 0; i < results[index].content.length; i++) {
-        const card = makeCard(bp, favoriteMode, results[index].type, results[index].content[i]);
-        if (! card) continue;
-        card.addEventListener('click', cardClickHandler);
-        cards.appendChild(card);
-    }
-
-    mediaContainer.appendChild(cards);
-
-    // Add correct content CSS class to size content,
-    // but only if there is something to display.
-    if (results[index].content.length) {
-        mediaContainer.className = 'media-container ' + results[index].type;
-    }
-    else mediaContainer.className = 'media-container';
-
-    searchBox.placeholder = getSearchBoxPlaceholderText();
-    if (tabInfo[mode].apiSearchable) {
-        search.classList.remove('icon--inactive');
-    }
-    else {
-        search.classList.add('icon--inactive');
-    }
-
-    back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
-    forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
-    searchBox.value = results[index].filter;
-    exitSearch.classList[(index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
-    exitSearch[(index > 0 || index < (results.length - 1)) ? 'setAttribute' : 'removeAttribute']('exitable', 'exitable');
-
-    if (tabInfo[mode].favorites) {
-        favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
-    }
-
-    if (tabInfo[mode].refreshable || (results[index].endpoint && endpointList[results[index].endpoint].contentType)) {
-        refresh.classList.remove('icon--inactive');
-    } else {
-        refresh.classList.add('icon--inactive');
-    }
-
-    filterContent(noScroll, results[index].scroll);
-};
-
-/**
- * Set loading state.
- * This updates visual indicator that content is loading.
- *
- * @param {boolean} state
- */
-const setLoadingState = (state = false) => {
-    if (state) {
-        refresh.classList.add('thinking');
-        searchBox.placeholder = 'Loading... please wait';
-    } else {
-        refresh.classList.remove('thinking');
-        searchBox.placeholder = getSearchBoxPlaceholderText();
-        searchBox.value = '';
+        return `Filter ${utils.delimitNumber(mediaContainer.querySelectorAll('.media-object').length)} results`;
     }
 }
 
@@ -204,22 +78,20 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
     // scroll handler fires and results is reset to default values
     if (! endpoint) return;
 
-    setLoadingState(true);
     saveTabState();
-    // todo: lock navigation for the duration of api call
 
     bp.callApi(endpoint, opts, newIndex, reset)
         .then(() => {
             // console.log('done popup');
+            renderPage();
         })
         .catch(error => {
             // console.log('popup callApi error', error);
-            // show error screen
-        })
-        .finally(() => {
-            setLoadingState(false);
-            updatePage();
+            if (error.message === 'cancelled') return;
+            // TODO show error screen
         });
+
+    renderPage();
 }
 
 const handleFollowedVideosTab = (forceRefresh = false) => {
@@ -227,14 +99,13 @@ const handleFollowedVideosTab = (forceRefresh = false) => {
 
     if (forceRefresh || ! bp.getResultsContentLength()) {
         // No results cached, update immediately
-        setLoadingState(true);
+        renderLoading(true, true);
         bp.fetchFollowedVideos().then(() => {
             bp.setResultsToFollowedTab(tabs.FOLLOWED_VIDEOS);
-            setLoadingState(false);
-            updatePage();
+            renderPage();
         });
     } else {
-        updatePage();
+        renderPage();
     }
 }
 
@@ -293,27 +164,27 @@ const cardClickHandler = (e) => {
             break;
         case 'followGame':
             bp.followGame(meta.gameId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'unfollowGame':
             bp.unfollowGame(meta.gameId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'follow':
             bp.follow(meta.streamerId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'unfollow':
             bp.unfollow(meta.streamerId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'favorite':
             bp.favorite(meta.streamerId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'unfavorite':
             bp.unfavorite(meta.streamerId)
-                .then(() => { updatePage(true); });
+                .then(() => { renderPage(); });
             break;
         case 'browseVideosByChannel':
             callApi(endpoints.GET_VIDEOS, { user_id: meta.streamerId }, true);
@@ -336,6 +207,94 @@ const cardClickHandler = (e) => {
     }
 }
 
+const renderLoading = (state = false, shouldRerender = false) => {
+    if (state) {
+        refresh.classList.add('thinking');
+        searchBox.placeholder = 'Loading... please wait';
+        if (shouldRerender) render(html`<div class="media-object__message"><h1>Loading!</h1></div>`, mediaContainer);
+    } else {
+        refresh.classList.remove('thinking');
+    }
+}
+
+const renderPage = (updateSearchBoxValue = true) => {
+    mediaContainer.className = 'media-container';
+
+    if (tabInfo[mode].staticContent) {
+        render(makeStaticContent(mode), mediaContainer);
+        searchBar.classList.add('invisible');
+        return;
+    }
+    else {
+        contentArea.classList.remove('d-none');
+        searchBar.classList.remove('invisible');
+    }
+
+    const index = bp.getIndex();
+    const results = bp.getResults();
+
+    if (tabInfo[mode].favorites && index === 0) {
+        refresh.classList.add('d-none');
+        favorites.classList.remove('d-none');
+    } else {
+        refresh.classList.remove('d-none');
+        favorites.classList.add('d-none');
+    }
+
+    const favoriteMode = tabInfo[mode].favorites && index === 0 && results[index].type !== 'game' && bp.getStorage('favoritesMode');
+
+    // Add correct content CSS class to size content, but only if there is something to display.
+    if (results[index].content.length)
+        mediaContainer.classList.add(results[index].type);
+
+    if (index === 0 && tabInfo[mode].apiSearchable) {
+        search.classList.remove('icon--inactive');
+    }
+    else {
+        search.classList.add('icon--inactive');
+    }
+
+    back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
+    forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+    if (updateSearchBoxValue) searchBox.value = results[index].filter;
+    exitSearch.classList[searchBox.value !== '' || (index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
+    exitSearch[(index > 0 || index < (results.length - 1)) ? 'setAttribute' : 'removeAttribute']('exitable', 'exitable');
+
+    if (tabInfo[mode].favorites) {
+        favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
+    }
+
+    if (tabInfo[mode].refreshable || (results[index].endpoint && endpointList[results[index].endpoint].contentType)) {
+        refresh.classList.remove('icon--inactive');
+    } else {
+        refresh.classList.add('icon--inactive');
+    }
+
+    if (results[index].state === EResultState.LOADING) {
+        return renderLoading(true, results[index].content.length === 0);
+    }
+    else renderLoading(false);
+
+    const streamerIdKey = results[index].type === 'channel' ? 'id' : (results[index].type === 'clip' ? 'broadcaster_id' : 'user_id');
+
+    let resultsToRender = results[index].content;
+    if (searchBox.value)
+        resultsToRender = resultsToRender.filter(result => result.__tag.toLowerCase().includes(searchBox.value.toLowerCase()));
+    if (favoriteMode)
+        resultsToRender = resultsToRender.filter(result => bp.isFavorite(parseInt(result[streamerIdKey])));
+
+    if (resultsToRender.length) {
+        render(
+            html`${resultsToRender.map(result => makeCardTemplate(result, results[index].type, bp, cardClickHandler))}`,
+            mediaContainer
+        );
+    } else {
+        render(makeNoResultsMessageTemplate(mode, index, searchBox.value !== ''), mediaContainer);
+    }
+
+    searchBox.placeholder = getSearchBoxPlaceholderText(index);
+}
+
 /**
  * Update the current selected tab and the mode
  *
@@ -344,70 +303,26 @@ const cardClickHandler = (e) => {
 const updateTab = (newMode) => {
     mode = bp.getMode();
 
-    let index = bp.getIndex();
-
     if (newMode) {
         document.getElementById(mode).classList.remove('tab--selected');
         setMode(newMode);
         document.getElementById(newMode).classList.add('tab--selected');
     }
 
-    while (mediaContainer.hasChildNodes()) {
-        mediaContainer.removeChild(mediaContainer.firstChild);
+    if (mode === tabs.FOLLOWED_VIDEOS) {
+        return handleFollowedVideosTab();
     }
 
-    if (tabInfo[mode].staticContent) {
-        const content = document.getElementById(tabInfo[mode].staticContent).cloneNode(true);
-        content.id = '';
-        mediaContainer.appendChild(content);
-        mediaContainer.className = 'media-container';
-        searchBar.classList.add('invisible');
-        return;
-    } else {
-        contentArea.classList.remove('d-none');
-        searchBar.classList.remove('invisible');
-    }
-
-    if (tabInfo[mode].favorites) {
-        refresh.classList.add('d-none');
-        favorites.classList.remove('d-none');
-    } else {
-        refresh.classList.remove('d-none');
-        favorites.classList.add('d-none');
-    }
-
-    if (index !== 0) {
-        return updatePage();
+    if (bp.getIndex() !== 0) {
+        return renderPage();
     }
 
     const endpoint = tabInfo[mode].endpoint;
-    if (endpoint) {
-        if (! bp.getResultsContentLength()) {
-            callApi(endpoint);
-        }
-        else updatePage();
-    }
-    else {
-        if (mode === tabs.SEARCH) {
-            updatePage();
-        }
-        else if (mode === tabs.FOLLOWED_GAMES) {
-            bp.setResultsToFollowedTab(tabs.FOLLOWED_GAMES);
-            updatePage();
-        }
-        else if (mode === tabs.FOLLOWED_STREAMS) {
-            bp.setResultsToFollowedTab(tabs.FOLLOWED_STREAMS);
-            updatePage();
-        }
-        else if (mode === tabs.FOLLOWED_VIDEOS) {
-            handleFollowedVideosTab();
-        }
-        else if (mode === tabs.FOLLOWED_CHANNELS) {
-            bp.setResultsToFollowedTab(tabs.FOLLOWED_CHANNELS);
-            updatePage();
-        }
+    if (endpoint && ! bp.getResultsContentLength()) {
+        return callApi(endpoint);
     }
 
+    renderPage();
     mediaContainer.focus();
 };
 
@@ -417,6 +332,7 @@ const updateTab = (newMode) => {
  */
 const initialize = () => {
     mode = bp.getMode();
+    bp.setResultsToFollowedTab(mode);
     const user = bp.getAuthorizedUser();
 
     if (bp.getStorage('darkMode')) {
@@ -508,7 +424,7 @@ const initializeEvents = () => {
         if (back.classList.contains('icon--inactive')) return;
         saveTabState();
         bp.setIndex(bp.getIndex() - 1);
-        updatePage();
+        renderPage();
     });
 
     // Forward button
@@ -516,7 +432,7 @@ const initializeEvents = () => {
         if (forward.classList.contains('icon--inactive')) return;
         saveTabState();
         bp.setIndex(bp.getIndex() + 1);
-        updatePage();
+        renderPage();
     });
 
     // Search button
@@ -528,20 +444,14 @@ const initializeEvents = () => {
     });
 
     // Search box
-    searchBox.addEventListener('input', filterContent);
     searchBox.addEventListener('input', () => {
-        // update exit search icon
-        if (searchBox.value === '' && ! searchBox.hasAttribute('exitable')) {
-            exitSearch.classList.add('icon--inactive');
-        } else {
-            exitSearch.classList.remove('icon--inactive');
-        }
-    })
+        renderPage(false);
+    });
 
     // Favorites switch
     favorites.addEventListener('click', () => {
         bp.setStorage('favoritesMode', ! bp.getStorage('favoritesMode'))
-            .then(() => { updatePage(); });
+            .then(() => { renderPage(); });
     });
 
     // Refresh button
@@ -552,11 +462,11 @@ const initializeEvents = () => {
             return handleFollowedVideosTab(true);
         }
 
-        setLoadingState(true);
         bp.refreshResults().then(() => {
-            setLoadingState(false);
-            updatePage();
-        })
+            renderPage();
+        });
+
+        renderPage();
     });
 
     // Exit search button
@@ -566,11 +476,7 @@ const initializeEvents = () => {
         if (searchBox.value) {
             searchBox.value = '';
 
-            if (! exitSearch.hasAttribute('exitable')) {
-                exitSearch.classList.add('icon--inactive');
-            }
-
-            return filterContent();
+            return renderPage(false);
         }
 
         bp.resetResults();
@@ -585,7 +491,7 @@ const initializeEvents = () => {
     logout.addEventListener('click', () => {
         bp.deauthorize();
         initialize();
-    })
+    });
 
     contentArea.addEventListener('scroll', debounce(handleScrollEvent, 200, { maxWait: 200 }));
 
@@ -594,9 +500,16 @@ const initializeEvents = () => {
         saveTabState();
     });
 
-    browser.runtime.onMessage.addListener((request) => {
-        if (request.content === ERuntimeMessage.INITIALIZE) {
-            initialize();
+    browser.runtime.onMessage.addListener(request => {
+        switch (request.content) {
+            case ERuntimeMessage.INITIALIZE:
+                return initialize();
+            case ERuntimeMessage.NEW_FOLLOWED_STREAMS:
+                if (mode === tabs.FOLLOWED_STREAMS && bp.getIndex() === 0) {
+                    bp.setResultsToFollowedTab(mode);
+                    return renderPage(false);
+                }
+                break;
         }
     });
 }

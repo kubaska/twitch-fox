@@ -13,6 +13,7 @@
     "private": true,
     "dependencies": {
         "axios": "^0.24.0",
+        "lit-html": "^3.2.1",
         "lodash": "^4.17.21"
     },
     "devDependencies": {
