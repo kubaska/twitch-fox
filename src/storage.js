@@ -114,8 +114,10 @@ export default {
         }
     },
 
-    async switchEngine(engine) {
-        const nextEngine = engine === 'sync' ? 'sync' : 'local';
+    async switchEngine(nextEngine) {
+        if (! ['local', 'sync'].includes(nextEngine)) return 'Invalid engine';
+        if (engine === nextEngine) return 'Cannot switch to same engine';
+        console.log(`Switching storage engine: ${engine} -> ${nextEngine}`);
 
         let newSettings = {};
         hugeSettings.forEach(key => {
