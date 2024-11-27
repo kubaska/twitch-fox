@@ -71,16 +71,24 @@ export default {
     async _addCategories(data, gameIdKey) {
         if (! data || ! data.length) return [];
 
+        if (categoryCache.size > 5000) {
+            Array.from(categoryCache).slice(0, categoryCache.size - 5000).forEach(el => categoryCache.delete(el[0]));
+        }
+
         const categoryIds = uniq(data.map(entity => entity[gameIdKey])).filter(v => v);
         const needsFetching = categoryIds.filter(id => ! categoryCache.has(id));
         if (needsFetching.length) {
             const games = await this.getGames({ id: needsFetching });
-            games.data?.forEach(game => categoryCache.set(game.id, { n: game.name, u: game.box_art_url }));
+            games.data?.forEach(game => categoryCache.set(game.id, `${game.box_art_url};${game.name}`));
         }
 
         return data.map(entity => {
-            const cat = categoryCache.get(entity[gameIdKey]);
-            return { game_name: cat?.n, game_thumb: cat?.u, ...entity }
+            const cat = categoryCache.get(entity[gameIdKey])?.split(';', 2);
+            return {
+                game_name: cat ? cat[1] : null,
+                game_thumb: cat ? cat[0] : null,
+                ...entity
+            }
         });
     },
 
