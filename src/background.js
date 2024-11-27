@@ -78,6 +78,12 @@ const resetResults = () => {
     results = defaultResults();
 }
 
+const resetResultsToZeroIndex = () => {
+    if (resultsIndex === 0) return;
+    results.splice(1, results.length - 1);
+    resultsIndex = 0;
+}
+
 const getResultsContentLength = () => results[resultsIndex].content.length;
 
 const setMode = newMode => {
@@ -881,6 +887,7 @@ window.isFollowingGame = isFollowingGame;
 window.playAlarm = playAlarm;
 window.refreshResults = refreshResults;
 window.resetResults = resetResults;
+window.resetResultsToZeroIndex = resetResultsToZeroIndex;
 window.saveTabState = saveTabState;
 window.setIndex = setIndex;
 window.setMode = setMode;

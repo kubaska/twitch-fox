@@ -91,7 +91,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
             // TODO show error screen
         });
 
-    renderPage();
+    renderPage(true);
 }
 
 const handleFollowedVideosTab = (forceRefresh = false) => {
@@ -105,7 +105,7 @@ const handleFollowedVideosTab = (forceRefresh = false) => {
             renderPage();
         });
     } else {
-        renderPage();
+        renderPage(true);
     }
 }
 
@@ -217,7 +217,7 @@ const renderLoading = (state = false, shouldRerender = false) => {
     }
 }
 
-const renderPage = (updateSearchBoxValue = true) => {
+const renderPage = (firstPaint = false) => {
     mediaContainer.className = 'media-container';
 
     if (tabInfo[mode].staticContent) {
@@ -256,7 +256,7 @@ const renderPage = (updateSearchBoxValue = true) => {
 
     back.classList[index > 0 ? 'remove' : 'add']('icon--inactive');
     forward.classList[(index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
-    if (updateSearchBoxValue) searchBox.value = results[index].filter;
+    if (firstPaint) searchBox.value = results[index].filter;
     exitSearch.classList[searchBox.value !== '' || (index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
     exitSearch[(index > 0 || index < (results.length - 1)) ? 'setAttribute' : 'removeAttribute']('exitable', 'exitable');
 
@@ -264,7 +264,11 @@ const renderPage = (updateSearchBoxValue = true) => {
         favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
     }
 
-    if (tabInfo[mode].refreshable || (results[index].endpoint && endpointList[results[index].endpoint].contentType)) {
+    // Disallow refreshing on always empty search tab
+    // and allow only when tab is refreshable or results are refreshable
+    if (!(mode === tabs.SEARCH && index === 0) &&
+        (tabInfo[mode].refreshable || (results[index].endpoint && endpointList[results[index].endpoint].contentType))
+    ) {
         refresh.classList.remove('icon--inactive');
     } else {
         refresh.classList.add('icon--inactive');
@@ -293,6 +297,7 @@ const renderPage = (updateSearchBoxValue = true) => {
     }
 
     searchBox.placeholder = getSearchBoxPlaceholderText(index);
+    if (firstPaint) contentArea.scrollTop = results[index].scroll;
 }
 
 /**
@@ -314,7 +319,7 @@ const updateTab = (newMode) => {
     }
 
     if (bp.getIndex() !== 0) {
-        return renderPage();
+        return renderPage(true);
     }
 
     const endpoint = tabInfo[mode].endpoint;
@@ -322,7 +327,7 @@ const updateTab = (newMode) => {
         return callApi(endpoint);
     }
 
-    renderPage();
+    renderPage(true);
     mediaContainer.focus();
 };
 
@@ -374,6 +379,7 @@ const initialize = () => {
 const selectTab = (e) => {
     if (e.target.classList.contains('tab') && e.target.id !== mode) {
         bp.resetResults();
+        searchBox.value = '';
         updateTab(e.target.id);
     }
 }
@@ -424,7 +430,7 @@ const initializeEvents = () => {
         if (back.classList.contains('icon--inactive')) return;
         saveTabState();
         bp.setIndex(bp.getIndex() - 1);
-        renderPage();
+        renderPage(true);
     });
 
     // Forward button
@@ -432,7 +438,7 @@ const initializeEvents = () => {
         if (forward.classList.contains('icon--inactive')) return;
         saveTabState();
         bp.setIndex(bp.getIndex() + 1);
-        renderPage();
+        renderPage(true);
     });
 
     // Search button
@@ -445,7 +451,7 @@ const initializeEvents = () => {
 
     // Search box
     searchBox.addEventListener('input', () => {
-        renderPage(false);
+        renderPage();
     });
 
     // Favorites switch
@@ -476,10 +482,10 @@ const initializeEvents = () => {
         if (searchBox.value) {
             searchBox.value = '';
 
-            return renderPage(false);
+            return renderPage();
         }
 
-        bp.resetResults();
+        bp.resetResultsToZeroIndex();
         updateTab();
     });
 
