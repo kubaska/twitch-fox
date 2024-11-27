@@ -1,7 +1,7 @@
 import {twitchClientId, endpointList, endpoints} from "../constants";
 import axios from "axios";
 import storage from "../storage";
-import {uniq} from "lodash/array";
+import {uniq} from "lodash-es/array";
 
 const _axios = axios.create({
     baseURL: 'https://api.twitch.tv/helix/',

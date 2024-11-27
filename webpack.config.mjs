@@ -1,9 +1,12 @@
-const path = require('path');
-const WebExtPlugin = require('web-ext-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import WebExtPlugin from "web-ext-plugin";
+import CopyPlugin from "copy-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
-module.exports = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default {
     mode: 'development',
     devtool: 'source-map',
 
@@ -22,6 +25,7 @@ module.exports = {
             browserConsole: true,
             startUrl: 'about:debugging#/runtime/this-firefox',
             sourceDir: path.resolve(__dirname, 'dist'),
+            selfHosted: true
         }),
         new CopyPlugin({
             patterns: [

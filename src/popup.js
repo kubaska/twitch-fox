@@ -4,7 +4,7 @@ import {endpointList, endpoints, EResultState, ERuntimeMessage, tabInfo, tabs} f
 import {makeCardTemplate, makeNoResultsMessageTemplate, makeStaticContent, UI} from "./ui";
 import utils from "./utils";
 import {html, render} from "lit-html";
-import {debounce} from "lodash";
+import {debounce} from "lodash-es";
 import './css/popup.sass';
 
 const bp = browser.extension.getBackgroundPage();

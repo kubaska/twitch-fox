@@ -1,7 +1,7 @@
 /* global browser */
 
 import _storage from './storage';
-import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash";
+import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash-es";
 import {
     endpointList,
     endpoints,
