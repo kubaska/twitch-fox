@@ -4,10 +4,6 @@ import {tabs, twitch404ThumbnailUrl} from "./constants";
 import {when} from "lit-html/directives/when.js";
 
 const UI = {
-    insertBackground: (card, url) => {
-        card.querySelector('.media-object__cover-inner').src = url;
-    },
-
     getParentElement: (element, klass) => {
         while (element && ! element.classList.contains(klass)) {
             element = element.parentElement;
@@ -15,33 +11,39 @@ const UI = {
         return element;
     },
 
-    // Supported URL formats:
-    // {width}x{height}
-    // %{width}x%{height}
-    // 52x72 (or other numbers)
+    /**
+     * Fill dimension size into image URL template.
+     * Supported URL formats:
+     *   {width}x{height}
+     *   %{width}x%{height}
+     *   52x72 (or any other value)
+     *
+     * @param url {String}
+     * @param width {int}
+     * @param height {int}
+     * @returns {String}
+     */
     getImageUrl: (url, width, height) => {
         // For some reason 404 thumbnail is only served in 320x180, despite it being served in template format
         if (url.includes('404_processing')) {
             width = 320;
             height = 180;
         }
-        return url.replace(/(%?{width}x%?{height})|(\d+x\d+)/, `${width}x${height}`);
+
+        if (url.indexOf('%{width}x%{height}') !== -1)
+            return url.replace('%{width}x%{height}', `${width}x${height}`);
+        if (url.indexOf('{width}x{height}') !== -1)
+            return url.replace('{width}x{height}', `${width}x${height}`);
+        // Leave this one last because it can incorrectly match streamer names like T2x2
+        if (url.search(/(\d+x\d+)/) !== -1)
+            return url.replace(/(\d+x\d+)/, `${width}x${height}`);
+
+        return url;
     },
 
-    setTooltip: (element, tooltip) => {
-        element.dataset['tooltip'] = tooltip;
-    },
     fillTooltip: (element, tooltip) => {
         element.dataset['tooltip'] = element.dataset['tooltip'].replace('%MSG%', tooltip);
     }
-}
-
-const handleFollowFavoriteBtns = (card, isFollowing, isFavorite) => {
-    card.querySelector('.icon__follow').classList[isFollowing ? 'add' : 'remove']('d-none');
-    card.querySelector('.icon__unfollow').classList[isFollowing ? 'remove' : 'add']('d-none');
-
-    card.querySelector('.icon__favorite')?.classList[isFavorite && isFollowing ? 'add' : 'remove']('d-none');
-    card.querySelector('.icon__unfavorite')?.classList[isFavorite && isFollowing ? 'remove' : 'add']('d-none');
 }
 
 const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
