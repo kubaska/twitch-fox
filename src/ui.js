@@ -54,7 +54,7 @@ const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
     } else if (mode === tabs.FOLLOWED_GAMES && index === 0) {
         message = "You don't follow any games!";
     } else if (mode === tabs.FOLLOWED_STREAMS && index === 0) {
-        message = 'No followed results found. Please wait for potential loading results.';
+        message = html`<h2 style="margin: 0;">No followed results found.</h2><h2>Please wait for potential loading results.</h2>`;
     } else if (mode === tabs.FOLLOWED_CHANNELS && index === 0) {
         message = "You don't follow any channels!";
     } else if (hasSearch) {
@@ -63,7 +63,7 @@ const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
         message = 'No results found.';
     }
 
-    return html`<div class="media-object__message"><h1>${message}</h1></div>`;
+    return html`<div class="media-object__message">${typeof message === 'string' ? html`<h2>${message}</h2>` : message}</div>`;
 };
 
 const makeCardTemplate = (content, type, bp, cardClickHandler) => {
@@ -260,7 +260,6 @@ const makeStaticContent = (tab) => {
     <div>
         <p class="fs-5 fw-bold">New update - Twitch Fox 5</p>
         <p class="fs-6">Hey! You are using forked version of Twitch Fox. You might have noticed that a few features are missing. The reason is that Twitch crippled their new API - many features that made this addon so awesome are now missing. I tried my best to port everything I could so Twitch Fox can still live.</p>
-        <p class="fs-6">You can help bring missing features back! Click <a href="https://github.com/kubaska/twitch-fox/blob/master/MISSING_FEATURES.md" target="_blank">here</a> to see how.</p>
         <p class="fs-5 fw-bold">New feature - Extended View</p>
         <p class="fs-6">Now you can use Twitch Fox from a separate tab. To do so, left-click the popup icon and choose the new option.</p>
     </div>

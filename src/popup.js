@@ -211,7 +211,7 @@ const renderLoading = (state = false, shouldRerender = false) => {
     if (state) {
         refresh.classList.add('thinking');
         searchBox.placeholder = 'Loading... please wait';
-        if (shouldRerender) render(html`<div class="media-object__message"><h1>Loading!</h1></div>`, mediaContainer);
+        if (shouldRerender) render(html`<div class="media-object__message"><h2>Loading!</h2></div>`, mediaContainer);
     } else {
         refresh.classList.remove('thinking');
     }
