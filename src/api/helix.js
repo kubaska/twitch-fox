@@ -20,7 +20,7 @@ _axios.interceptors.request.use(function (request) {
     }
 
     // This prevents Twitch from returning results for user region.
-    request.headers['Accept-Language'] = undefined;
+    request.headers['Accept-Language'] = '';
 
     return request;
 });
