@@ -123,6 +123,8 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
             : (type === 'video' ? utils.formattedTimeToHHMMSS(content.duration)
             : utils.secondsToMMSS(content.duration));
         const viewsOrViewers = utils.delimitNumber(type === 'stream' ? content.viewer_count : content.view_count);
+        const isFollowing = bp.isFollowing(streamerId);
+        const isFavorite = bp.isFavorite(streamerId);
 
         return html`
 <div id="${type.toUpperCase()}!${content.id}" class="media-object" @click="${cardClickHandler}" data-type="${type}" data-id="${content.id}" data-streamer-id="${streamerId}" data-name="${streamerName}" data-game-id="${content.game_id ?? ''}" data-tag="${tag}">
@@ -157,11 +159,11 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
                     <span class="btn icon icon--medium icon__popout tooltipped" data-trigger="openPopout" data-tooltip="Open content in a popout window"></span>
                     <span class="btn icon icon--medium icon__chat tooltipped ${type === 'stream' ? '' : 'd-none'}" data-trigger="openChat" data-tooltip="Open chat in a popout window"></span>
                     <span class="btn icon icon--medium icon__enlarge tooltipped" data-trigger="enlarge" data-tooltip="Enlarge the preview"></span>
-                    ${when(bp.isFavorite(streamerId),
+                    ${when(isFollowing, () => when(isFavorite,
                         () => html`<span class="btn icon icon--medium icon__unfavorite tooltipped" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>`,
                         () => html`<span class="btn icon icon--medium icon__favorite tooltipped" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>`
-                    )}
-                    ${when(bp.isFollowing(streamerId),
+                    ))}
+                    ${when(isFollowing,
                         () => html`<span class="btn icon icon--medium icon__unfollow tooltipped tooltip--follow-stream" data-trigger="unfollow" data-tooltip="Unfollow channel locally"></span>`,
                         () => html`<span class="btn icon icon--medium icon__follow tooltipped tooltip--follow-stream" data-trigger="follow" data-tooltip="Follow channel locally"></span>`
                     )}
