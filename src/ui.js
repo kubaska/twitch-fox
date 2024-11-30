@@ -124,7 +124,6 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
             : utils.secondsToMMSS(content.duration));
         const viewsOrViewers = utils.delimitNumber(type === 'stream' ? content.viewer_count : content.view_count);
         const isFollowing = bp.isFollowing(streamerId);
-        const isFavorite = bp.isFavorite(streamerId);
 
         return html`
 <div id="${type.toUpperCase()}!${content.id}" class="media-object" @click="${cardClickHandler}" data-type="${type}" data-id="${content.id}" data-streamer-id="${streamerId}" data-name="${streamerName}" data-game-id="${content.game_id ?? ''}" data-tag="${tag}">
@@ -159,7 +158,7 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
                     <span class="btn icon icon--medium icon__popout tooltipped" data-trigger="openPopout" data-tooltip="Open content in a popout window"></span>
                     <span class="btn icon icon--medium icon__chat tooltipped ${type === 'stream' ? '' : 'd-none'}" data-trigger="openChat" data-tooltip="Open chat in a popout window"></span>
                     <span class="btn icon icon--medium icon__enlarge tooltipped" data-trigger="enlarge" data-tooltip="Enlarge the preview"></span>
-                    ${when(isFollowing, () => when(isFavorite,
+                    ${when(isFollowing, () => when(bp.isFavorite(streamerId),
                         () => html`<span class="btn icon icon--medium icon__unfavorite tooltipped" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>`,
                         () => html`<span class="btn icon icon--medium icon__favorite tooltipped" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>`
                     ))}
@@ -196,6 +195,7 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
 
         const login = content.login ?? content.broadcaster_login;
         const profile_image = content.profile_image_url ?? content.thumbnail_url;
+        const isFollowing = bp.isFollowing(userId);
 
         return html`
 <div id="CHANNEL!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-streamer-id="${content.id}" data-name="${login}" data-tag="${login + content.display_name}">
@@ -226,11 +226,11 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
                 <div class="lower--controls">
                     <span class="btn icon icon--medium icon__stream tooltipped" data-tooltip="Open Twitch page" data-trigger="openStream"></span>
                     <span class="btn icon icon--medium icon__chat tooltipped" data-tooltip="Open chat in a popout window" data-trigger="openChat"></span>
-                    ${when(bp.isFavorite(userId),
+                    ${when(isFollowing, () => when(bp.isFavorite(userId),
                         () => html`<span class="btn icon icon--medium icon__unfavorite tooltipped" data-trigger="unfavorite" data-tooltip="Remove channel from favorites"></span>`,
                         () => html`<span class="btn icon icon--medium icon__favorite tooltipped" data-trigger="favorite" data-tooltip="Add channel to favorites"></span>`
-                    )}
-                    ${when(bp.isFollowing(userId),
+                    ))}
+                    ${when(isFollowing,
                         () => html`<span class="btn icon icon--medium icon__unfollow tooltipped tooltip--follow-stream" data-trigger="unfollow" data-tooltip="Unfollow channel LOCALLY"></span>`,
                         () => html`<span class="btn icon icon--medium icon__follow tooltipped tooltip--follow-stream" data-trigger="follow" data-tooltip="Follow channel LOCALLY"></span>`
                     )}
