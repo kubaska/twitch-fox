@@ -250,7 +250,7 @@ const makeStaticContent = (tab) => {
 <div id="about-page" class="about-page">
     <div class="logo-container" style="height: 120px">
         <div class="logo hw-100 bg-contain">
-            <span class="about-version fw-bold">Twitch Fox, version 5.2.2 (fork)</span>
+            <span class="about-version fw-bold">Twitch Fox, version 5.2.3 (fork)</span>
         </div>
     </div>
 
