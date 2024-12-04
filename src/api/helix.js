@@ -39,6 +39,7 @@ const request = (endpoint, options = {}, abortSignal) => {
 };
 
 const categoryCache = new Map();
+const streamerAvatarCache = new Map();
 
 export default {
     request(endpoint, options = {}, abortSignal = null) {
@@ -68,7 +69,7 @@ export default {
         }
     },
 
-    async _addCategories(data, gameIdKey) {
+    async _getCategories(data, gameIdKey = 'game_id') {
         if (! data || ! data.length) return [];
 
         if (categoryCache.size > 5000) {
@@ -81,7 +82,25 @@ export default {
             const games = await this.getGames({ id: needsFetching });
             games.data?.forEach(game => categoryCache.set(game.id, `${game.box_art_url};${game.name}`));
         }
+    },
 
+    async _getProfileAvatars(data, userIdKey) {
+        // if (! storage.get('showAvatars') && ! storage.get('showAvatarsFollowed')) return data;
+        if (! data || ! data.length) return [];
+
+        if (streamerAvatarCache.size > 5000) {
+            Array.from(streamerAvatarCache).slice(0, streamerAvatarCache.size - 5000).forEach(el => streamerAvatarCache.delete(el[0]));
+        }
+
+        const userIds = uniq(data.map(entity => entity[userIdKey])).filter(v => v);
+        const needsFetching = userIds.filter(id => ! streamerAvatarCache.has(id));
+        if (needsFetching.length) {
+            const users = await this.getUsers({ id: needsFetching });
+            users.data?.forEach(user => streamerAvatarCache.set(user.id, user.profile_image_url));
+        }
+    },
+
+    _addCategories(data, gameIdKey = 'game_id') {
         return data.map(entity => {
             const cat = categoryCache.get(entity[gameIdKey])?.split(';', 2);
             return {
@@ -89,6 +108,12 @@ export default {
                 game_thumb: cat ? cat[0] : null,
                 ...entity
             }
+        });
+    },
+
+    _addProfileAvatars(data, userIdKey) {
+        return data.map(entity => {
+            return { profile_image_url: streamerAvatarCache.get(entity[userIdKey]), ...entity };
         });
     },
 
@@ -102,8 +127,7 @@ export default {
 
     async getTopGames(options, abortSignal = null) {
         const games = await request(endpoints.GET_TOP_GAMES, options, abortSignal);
-        const data = this._addTags(games?.data, ['name']);
-        return { data, pagination: games.pagination };
+        return { data: this._addTags(games?.data, ['name']), pagination: games.pagination };
     },
 
     getGames(options, abortSignal = null) {
@@ -112,25 +136,56 @@ export default {
 
     async getStreams(options, abortSignal = null) {
         const streams = await request(endpoints.GET_STREAMS, options, abortSignal);
-        const data = await this._addCategories(streams.data, 'game_id');
-        return { data: this._addTags(data, ['title', 'user_name', 'user_login', 'game_name']), pagination: streams.pagination };
+
+        await Promise.all([
+            this._getCategories(streams?.data),
+            ...(storage.get('showAvatars') ? [this._getProfileAvatars(streams?.data, 'user_id')] : []),
+        ]);
+        const data = storage.get('showAvatars') ? this._addProfileAvatars(streams?.data, 'user_id') : streams?.data;
+
+        return {
+            data: this._addTags(this._addCategories(data), ['title', 'user_name', 'user_login', 'game_name']),
+            pagination: streams.pagination
+        };
     },
 
     async getVideos(options, abortSignal = null) {
         const videos = await request(endpoints.GET_VIDEOS, options, abortSignal);
-        return { data: this._addTags(videos?.data, ['user_login', 'title']), pagination: videos.pagination };
+
+        if (storage.get('showAvatars')) await this._getProfileAvatars(videos?.data, 'user_id');
+        const data = storage.get('showAvatars') ? this._addProfileAvatars(videos?.data, 'user_id') : videos?.data;
+
+        return { data: this._addTags(data, ['user_login', 'title']), pagination: videos.pagination };
     },
 
     async getClips(options, abortSignal = null) {
         const clips = await request(endpoints.GET_CLIPS, options, abortSignal);
-        const data = await this._addCategories(clips.data, 'game_id');
-        return { data: this._addTags(data, ['broadcaster_name', 'title']), pagination: clips.pagination };
+
+        await Promise.all([
+            this._getCategories(clips?.data),
+            ...(storage.get('showAvatars') ? [this._getProfileAvatars(clips?.data, 'broadcaster_id')] : []),
+        ]);
+        const data = storage.get('showAvatars') ? this._addProfileAvatars(clips?.data, 'broadcaster_id') : clips?.data;
+
+        return {
+            data: this._addTags(this._addCategories(data), ['broadcaster_name', 'title']),
+            pagination: clips.pagination
+        };
     },
 
     async getFollowedStreams(options) {
         const streams = await request(endpoints.GET_FOLLOWED_STREAMS, options);
-        const data = await this._addCategories(streams.data, 'game_id');
-        return { data: this._addTags(data, ['title', 'user_name', 'user_login', 'game_name']), pagination: streams.pagination };
+
+        await Promise.all([
+            this._getCategories(streams?.data),
+            ...(storage.get('showAvatarsFollowed') ? [this._getProfileAvatars(streams?.data, 'user_id')] : []),
+        ]);
+        const data = storage.get('showAvatarsFollowed') ? this._addProfileAvatars(streams?.data, 'user_id') : streams?.data;
+
+        return {
+            data: this._addTags(this._addCategories(data), ['title', 'user_name', 'user_login', 'game_name']),
+            pagination: streams.pagination
+        };
     },
 
     async searchGames(options) {

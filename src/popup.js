@@ -280,6 +280,8 @@ const renderPage = (firstPaint = false) => {
     else renderLoading(false);
 
     const streamerIdKey = results[index].type === 'channel' ? 'id' : (results[index].type === 'clip' ? 'broadcaster_id' : 'user_id');
+    const shouldRenderAvatars = (bp.getStorage('showAvatarsFollowed') && mode === tabs.FOLLOWED_STREAMS)
+                             || (bp.getStorage('showAvatars') && mode !== tabs.FOLLOWED_STREAMS);
 
     let resultsToRender = results[index].content;
     if (searchBox.value)
@@ -289,7 +291,7 @@ const renderPage = (firstPaint = false) => {
 
     if (resultsToRender.length) {
         render(
-            html`${resultsToRender.map(result => makeCardTemplate(result, results[index].type, bp, cardClickHandler))}`,
+            html`${resultsToRender.map(result => makeCardTemplate(result, results[index].type, shouldRenderAvatars, bp, cardClickHandler))}`,
             mediaContainer
         );
     } else {

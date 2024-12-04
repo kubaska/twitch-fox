@@ -115,6 +115,30 @@
 
     <div class="row">
         <div class="description">
+            <p>Display streamer avatars</p>
+            <span>Whether to show user profile picture in stream, video and clip cards.</span>
+        </div>
+
+        <div class="control">
+            <table>
+                <tr>
+                    <td class="text">Followed streams tab</td>
+                    <td class="control--input">
+                        <input type="checkbox" data-internal="showAvatarsFollowed">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text">All other tabs</td>
+                    <td class="control--input">
+                        <input type="checkbox" data-internal="showAvatars">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="description">
             <p>Language codes filter</p>
             <span>
                 <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO-639-1 compliant</a>&nbsp;<span>language codes to filter streams by (e.g. 'en' for English) or "other" for all other languages without the code; comma separated.</span>

@@ -1,13 +1,13 @@
 .media-container
     display: grid
     grid-template-rows: 1fr
-    grid-gap: 6px
+    grid-gap: 4px
     grid-template-columns: repeat(auto-fill, minmax(var(--col-size), 1fr))
-    padding: 6px
+    padding: 4px
     outline: none
 
     &.stream,&.video,&.clip
-        --col-size: 250px
+        --col-size: 265px
         --image-padding: 56.25%
     &.game
         --col-size: 125px
@@ -122,10 +122,17 @@
             display: flex
             flex-grow: 1
 
-        & > .logo
+        & > .avatar
+            width: 43px
+            height: 43px
             border-width: 2px 2px 0 0
             border-color: var(--primary-accent)
             border-style: solid
+            background-color: #000
+
+            & > img
+                height: 100%
+                width: 100%
 
         & > .category
             width: 38px

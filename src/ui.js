@@ -66,7 +66,7 @@ const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
     return html`<div class="media-object__message">${typeof message === 'string' ? html`<h2>${message}</h2>` : message}</div>`;
 };
 
-const makeCardTemplate = (content, type, bp, cardClickHandler) => {
+const makeCardTemplate = (content, type, displayAvatars, bp, cardClickHandler) => {
     if (type === 'game') {
         return html`
 <div id="GAME!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-game-id="${content.id}" data-game="${content.name}" data-tag="${content.name}">
@@ -152,7 +152,12 @@ const makeCardTemplate = (content, type, bp, cardClickHandler) => {
             </div>
 
             <div class="lower">
-                <!--                    <div class="logo" style="width: 45px; height: 45px; background-color:lightgreen;"></div>-->
+                ${when(displayAvatars && content.profile_image_url,
+                    () => html`
+                        <div class="avatar tooltipped" data-tooltip="${streamerDisplayName}'s logo">
+                            <img src="${content.profile_image_url}" />
+                        </div>`
+                )}
                 <div class="lower--controls">
                     <span class="btn icon icon--medium icon__stream tooltipped" data-trigger="openStream" data-tooltip="Open Twitch page"></span>
                     <span class="btn icon icon--medium icon__popout tooltipped" data-trigger="openPopout" data-tooltip="Open content in a popout window"></span>

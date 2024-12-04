@@ -11,6 +11,8 @@ const defaultState = {
     followedGames: [],
     favorites: [],
     favoritesMode: false,
+    showAvatars: false,
+    showAvatarsFollowed: false,
 
     // global
     darkMode: false,
