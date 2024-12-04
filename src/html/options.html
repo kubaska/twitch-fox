@@ -43,6 +43,10 @@
             align-items: center;
             justify-content: flex-end;
             padding: 6px;
+            font-size: 13px;
+        }
+        .row > .control--vertical {
+            flex-direction: column;
         }
         .control > :not(:only-child) {
             margin-left: 5px;
@@ -110,6 +114,50 @@
 
         <div class="control">
             <input type="number" min="1" max="60" size="5" data-internal="minutesBetweenCheck" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="description">
+            <p>Popup size</p>
+            <span>Adjusts the popup size.</span>
+        </div>
+
+        <div class="control control--vertical" style="align-items: end;">
+            <label>
+                Small
+                <input type="radio" name="popupSize" value="0" data-internal="popupSize">
+            </label>
+            <label>
+                Normal
+                <input type="radio" name="popupSize" value="1" data-internal="popupSize">
+            </label>
+            <label>
+                Big
+                <input type="radio" name="popupSize" value="2" data-internal="popupSize">
+            </label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="description">
+            <p>Previews quality</p>
+            <span>Adjust the thumbnail quality. Higher quality will increase loading time.</span>
+        </div>
+
+        <div class="control control--vertical" style="align-items: end;">
+            <label>
+                Normal: 640x360
+                <input type="radio" name="previewQuality" value="0" data-internal="previewQuality">
+            </label>
+            <label>
+                Big: 960x540
+                <input type="radio" name="previewQuality" value="1" data-internal="previewQuality">
+            </label>
+            <label>
+                Huge: 1280x720
+                <input type="radio" name="previewQuality" value="2" data-internal="previewQuality">
+            </label>
         </div>
     </div>
 

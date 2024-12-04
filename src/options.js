@@ -19,6 +19,10 @@ function saveOption(event) {
 
             bp.setStorage(event.target.dataset['internal'], parseInt(event.target.value));
         }
+        else if (type === 'radio') {
+            // This assumes all radio values will have numbers as values!
+            bp.setStorage(event.target.dataset['internal'], parseInt(event.target.value));
+        }
         else if (type === 'checkbox') {
             if (event.target.dataset['flag']) {
                 bp.setStorage(event.target.dataset['internal'], event.target.dataset['flag'], event.target.checked);
@@ -36,6 +40,9 @@ document.querySelectorAll('[data-internal]').forEach(control => {
     if (tagName === 'input') {
         if (type === 'text' || type === 'number') {
             control.value = bp.getStorage(control.dataset['internal']);
+        }
+        else if (type === 'radio') {
+            control.checked = control.value == bp.getStorage(control.dataset['internal']);
         }
         else if (type === 'checkbox') {
             if (control.dataset['flag']) {
@@ -178,7 +185,7 @@ document.getElementById('resetSettings').addEventListener('click', (e) => {
     resetSettingsCounter--;
 });
 
-document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm(true));
+document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm());
 document.getElementById('importFollows').addEventListener('click', () => {
     document.getElementById('importFollowsHandle').click();
 });

@@ -282,6 +282,7 @@ const renderPage = (firstPaint = false) => {
     const streamerIdKey = results[index].type === 'channel' ? 'id' : (results[index].type === 'clip' ? 'broadcaster_id' : 'user_id');
     const shouldRenderAvatars = (bp.getStorage('showAvatarsFollowed') && mode === tabs.FOLLOWED_STREAMS)
                              || (bp.getStorage('showAvatars') && mode !== tabs.FOLLOWED_STREAMS);
+    const previewQuality = bp.getStorage('previewQuality');
 
     let resultsToRender = results[index].content;
     if (searchBox.value)
@@ -291,7 +292,7 @@ const renderPage = (firstPaint = false) => {
 
     if (resultsToRender.length) {
         render(
-            html`${resultsToRender.map(result => makeCardTemplate(result, results[index].type, shouldRenderAvatars, bp, cardClickHandler))}`,
+            html`${resultsToRender.map(result => makeCardTemplate(result, results[index].type, shouldRenderAvatars, previewQuality, bp, cardClickHandler))}`,
             mediaContainer
         );
     } else {
@@ -375,6 +376,13 @@ const initialize = () => {
     if (! document.body.classList.contains('__initialized')) {
         initializeEvents();
         document.body.classList.add('__initialized');
+        if (document.location.href.endsWith('popup=true')) {
+            document.body.classList.add('is-popup');
+
+            const size = bp.getStorage('popupSize');
+            if (size === 2) document.body.classList.add('size-big');
+            if (size === 0) document.body.classList.add('size-small');
+        }
     }
 };
 

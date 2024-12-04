@@ -34,7 +34,7 @@
         "browser_style": false,
         "default_icon": "assets/twitch-fox.svg",
         "default_title": "Twitch Fox",
-        "default_popup": "html/popup.html"
+        "default_popup": "html/popup.html?popup=true"
     },
 
     "options_ui": {

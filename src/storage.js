@@ -7,6 +7,8 @@ const defaultState = {
     version: _VERSION,
     token: null,
     mode: 'about',
+    popupSize: 1,
+    previewQuality: 0,
     localFollows: [],
     followedGames: [],
     favorites: [],

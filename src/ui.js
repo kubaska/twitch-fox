@@ -2,6 +2,18 @@ import utils from "./utils";
 import {html} from "lit-html";
 import {tabs, twitch404ThumbnailUrl} from "./constants";
 import {when} from "lit-html/directives/when.js";
+import {keyed} from "lit-html/directives/keyed.js";
+
+const getPreviewQuality = (quality) => {
+    switch (quality) {
+        case 1:
+            return [960, 540];
+        case 2:
+            return [1280, 720];
+        default:
+            return [640, 360];
+    }
+};
 
 const UI = {
     getParentElement: (element, klass) => {
@@ -66,7 +78,7 @@ const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
     return html`<div class="media-object__message">${typeof message === 'string' ? html`<h2>${message}</h2>` : message}</div>`;
 };
 
-const makeCardTemplate = (content, type, displayAvatars, bp, cardClickHandler) => {
+const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, cardClickHandler) => {
     if (type === 'game') {
         return html`
 <div id="GAME!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-game-id="${content.id}" data-game="${content.name}" data-tag="${content.name}">
@@ -108,10 +120,10 @@ const makeCardTemplate = (content, type, displayAvatars, bp, cardClickHandler) =
         const tag = type === 'stream'
             ? content.game_name + content.user_login + content.user_name + content.title
             : streamerName + content.title;
-        const thumbnailUrl = type === 'stream' ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+        const thumbnailUrl = type === 'stream' ? UI.getImageUrl(content.thumbnail_url, ...getPreviewQuality(previewQuality))
             : type === 'video'
                 ? (content.thumbnail_url
-                    ? UI.getImageUrl(content.thumbnail_url, 640, 360)
+                    ? UI.getImageUrl(content.thumbnail_url, ...getPreviewQuality(previewQuality))
                     : twitch404ThumbnailUrl)
                 : content.thumbnail_url;
         // No game returned for videos, only ID returned for clips, both ID and name for streams.
@@ -130,7 +142,7 @@ const makeCardTemplate = (content, type, displayAvatars, bp, cardClickHandler) =
     <div class="media-object__cover stream">
         <div class="media-object__cover-wrap">
             <div>
-                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${thumbnailUrl}" />
+                ${keyed(thumbnailUrl, html`<img class="media-object__cover-inner" loading="lazy" decoding="async" src="${thumbnailUrl}" />`)}
             </div>
         </div>
 

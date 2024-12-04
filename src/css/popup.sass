@@ -1,8 +1,8 @@
 @use 'themes'
 
 body
-    width: 600px
-    height: 600px
+    width: 100vw
+    height: 100vh
     padding: 0
     margin: 0
     background-color: var(--primary)
@@ -12,13 +12,17 @@ body
     user-select: none
     -moz-user-select: none
 
-@media (min-width: 601px)
-    body
-        width: 100vw
-        height: 100vh
+    &.is-popup
+        width: 600px
+        height: 600px
 
-#root
-    height: 100%
+        &.size-small
+            width: 450px
+            height: 600px
+
+        &.size-big
+            width: 800px
+            height: 600px
 
 .logo
     background: url('../../assets/twitch-fox.svg') no-repeat center / 75%
