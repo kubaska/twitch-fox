@@ -838,7 +838,7 @@ browser.notifications.onClicked.addListener(() => {
     if (getStorage('notificationClick', ENotificationClickFlag.openStreamNewTab))
         utils.openStream(lastNotificationStreamName);
     if (getStorage('notificationClick', ENotificationClickFlag.openStreamPopout))
-        utils.openStreamPopout(lastNotificationStreamName);
+        utils.openPopout('channel', lastNotificationStreamName);
     if (getStorage('notificationClick', ENotificationClickFlag.openChatPopout))
         utils.openChatPopout(lastNotificationStreamName);
 
