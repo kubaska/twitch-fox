@@ -212,6 +212,7 @@ const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, car
 
         const login = content.login ?? content.broadcaster_login;
         const profile_image = content.profile_image_url ?? content.thumbnail_url;
+        const followedAt = new Date(content.followed_at);
         const isFollowing = bp.isFollowing(userId);
 
         return html`
@@ -228,6 +229,9 @@ const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, car
         <div class="on-top overlay overlay--channel">
             <div class="title">
                 <span class="status text-truncate">${login === content.display_name.toLowerCase() ? content.display_name : login}</span>
+                <div class="time tooltipped" data-tooltip="Followed at&#13;&#10;${followedAt.toLocaleString()}">
+                    <span class="icon icon--small icon__uptime"></span>
+                </div>
             </div>
 
             <div class="description">

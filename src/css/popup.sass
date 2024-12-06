@@ -92,6 +92,12 @@ body
     grid-area: content
     overflow: hidden auto
 
+.timeframe-custom
+    position: absolute
+    z-index: 10
+    width: 300px
+    height: 250px
+
 .login-container
     position: absolute
     z-index: 99
@@ -125,6 +131,9 @@ body
     &--small
         height: 18px
         width: 18px
+    &--20
+        height: 20px
+        width: 20px
     &--medium
         height: 30px
         width: 30px
@@ -136,6 +145,10 @@ body
         background-image: url(../../assets/images/forward.png)
     &__search
         background-image: url(../../assets/images/search.png)
+    &__time
+        background-image: url(../../assets/images/time.svg?inline)
+    &__sort
+        background-image: url(../../assets/images/sort.svg?inline)
     &__favorites
         background-image: url(../../assets/images/favorites.png)
     &__refresh
@@ -201,6 +214,17 @@ body
         border: 0 solid
         background-color: var(--search-bg)
         color: var(--text-primary)
+
+    select
+        border: 0 solid
+        background-color: var(--search-bg)
+        color: var(--text-primary)
+
+.control--container
+    display: flex
+    border-width: 0 1px 0 0
+    border-style: solid
+    padding: 0 4px
 
 .preview
     position: fixed

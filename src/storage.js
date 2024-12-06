@@ -1,5 +1,7 @@
 /* global browser */
 
+import {sortingType} from "./constants";
+
 const _VERSION = 1;
 
 const defaultState = {
@@ -13,6 +15,10 @@ const defaultState = {
     followedGames: [],
     favorites: [],
     favoritesMode: false,
+    followedGamesSorting: sortingType.FOLLOWED_DATE,
+    followedStreamsSorting: sortingType.VIEWERS,
+    followedVideosSorting: sortingType.NEWEST,
+    followedChannelsSorting: sortingType.FOLLOWED_DATE,
     showAvatars: false,
     showAvatarsFollowed: false,
 
@@ -31,7 +37,7 @@ const defaultState = {
     languageCodes: '',
 };
 
-const deferredSettingsKeys = ['mode'];
+const deferredSettingsKeys = ['mode', 'followedGamesSorting', 'followedStreamsSorting', 'followedVideosSorting', 'followedChannelsSorting'];
 const flagSettings = ['notifications', 'notificationClick'];
 const hugeSettings = ['localFollows', 'followedGames', 'favorites'];
 

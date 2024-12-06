@@ -62,6 +62,8 @@ const defaultResults = () => [{
     scroll: 0,
     total: 0,
     filter: '',
+    sorting: null,
+    timeframe: null,
     cursor: '',
 }];
 
@@ -150,6 +152,14 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
         opts.after = results[resultsIndex].cursor;
     }
 
+    const { __timeframe } = opts;
+    if (__timeframe) {
+        results[resultsIndex].timeframe = __timeframe;
+        if (endpoint === endpoints.GET_CLIPS) Object.assign(opts, utils.getClipDateRange(__timeframe));
+        else if (endpoint === endpoints.GET_VIDEOS) opts.period = __timeframe;
+        delete opts.__timeframe;
+    }
+
     results[resultsIndex].endpoint = endpoint;
     results[resultsIndex].state = EResultState.LOADING;
 
@@ -194,8 +204,10 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
     return request;
 };
 
-const refreshResults = async () => {
-    await callApi(results[resultsIndex].endpoint, results[resultsIndex].opts, false, true);
+const refreshResults = async (optionsOverrides = {}) => {
+    const overrides = utils.cloneObj(optionsOverrides);
+
+    await callApi(results[resultsIndex].endpoint, {...results[resultsIndex].opts, ...overrides}, false, true);
 }
 
 const setResultsToFollowedTab = (tab) => {
@@ -405,7 +417,7 @@ const follow = async (id) => {
     api.twitch.getUsers({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
-                userFollows.unshift(response.data[0]);
+                userFollows.unshift({ ...response.data[0], followed_at: utils.getISODateStringNoMs() });
                 fetchFollowedStreams();
             }
         })
@@ -422,7 +434,7 @@ const followGame = async (id) => {
     api.twitch.getGames({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
-                userFollowedGames.unshift(response.data[0]);
+                userFollowedGames.unshift({ ...response.data[0], followed_at: utils.getISODateStringNoMs() });
             }
         })
         .catch(err => { console.log(err); });
@@ -641,6 +653,11 @@ const fetchUserFollows = async () => {
     );
 
     userFollows = orderBy(finalAccounts, [(_) => new Date(followDates[_.id])], ['desc']);
+
+    // Add followed at dates
+    userFollows.forEach(user => {
+        user.followed_at = followDates[user.id];
+    });
 }
 
 const fetchFollowedGames = async () => {
@@ -657,6 +674,9 @@ const fetchFollowedGames = async () => {
     );
 
     userFollowedGames = orderBy(onlineGames, [(_) => new Date(followDates[_.id])], ['desc']);
+
+    // Add followed at dates
+    userFollowedGames.forEach(game => game.followed_at = followDates[game.id]);
 }
 
 /**

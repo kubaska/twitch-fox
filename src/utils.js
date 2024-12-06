@@ -39,6 +39,30 @@ export default {
         return JSON.parse(JSON.stringify(obj));
     },
 
+    getClipDateRange: (time) => {
+        switch (time) {
+            case 'day':
+                return { started_at: (new Date(Date.now() - 24 * 60 * 60 * 1000)).toISOString() };
+            case 'week':
+                return { started_at: (new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString() };
+            case 'month':
+                return {
+                    started_at: (new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).toISOString(),
+                    ended_at: (new Date(Date.now())).toISOString()
+                };
+            case 'year':
+                return {
+                    started_at: (new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)).toISOString(),
+                    ended_at: (new Date(Date.now())).toISOString()
+                };
+            case 'all':
+                return {
+                    started_at: (new Date(2010, 0, 1, 0, 0, 0)).toISOString(),
+                    ended_at: (new Date(Date.now())).toISOString()
+                };
+        }
+    },
+
     // Twitch stuff
     openStream: (streamer) => {
         browser.tabs.create({

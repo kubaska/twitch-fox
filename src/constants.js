@@ -40,6 +40,63 @@ export const tabs = {
     isFollowedTab: (name) => name.includes('followed')
 };
 
+export const sortingType = {
+    ALPHABETICAL: 'alphabetical',
+    ALPHABETICAL_ASC: 'alphabetical_asc',
+    FOLLOWED_DATE: 'followed_date',
+    FOLLOWED_DATE_ASC: 'followed_date_asc',
+    NEWEST: 'newest',
+    OLDEST: 'oldest_asc',
+    VIEWERS: 'viewers',
+    VIEWERS_ASC: 'viewers_asc',
+    VIEWS: 'views',
+    VIEWS_ASC: 'views_asc'
+};
+
+/**
+ * Get available sorting options for provided content type.
+ * 'doNotSort' key means that results are already ordered that way by Twitch and we should skip sorting again.
+ *
+ * @param contentType {string}
+ * @returns {Object}
+ */
+export const getSortingTypesForContentType = (contentType) => {
+    switch (contentType) {
+        case 'game':
+            return {
+                [sortingType.FOLLOWED_DATE]: { name: 'Follow date', doNotSort: true },
+                [sortingType.FOLLOWED_DATE_ASC]: { name: 'Follow date (asc)', sortKey: 'followed_at' },
+                [sortingType.ALPHABETICAL_ASC]: { name: 'Alphabetical', sortFn: (e) => e.name.toLowerCase() },
+                [sortingType.ALPHABETICAL]: { name: 'Alphabetical (desc)', sortFn: (e) => e.name.toLowerCase() },
+            };
+        case 'stream':
+            return {
+                [sortingType.VIEWERS]: { name: 'Viewers', doNotSort: true },
+                [sortingType.VIEWERS_ASC]: { name: 'Viewers (asc)', sortKey: 'viewer_count' },
+                [sortingType.ALPHABETICAL_ASC]: { name: 'Alphabetical', sortFn: (e) => e.user_name ?? e.user_login },
+                [sortingType.ALPHABETICAL]: { name: 'Alphabetical (desc)', sortFn: (e) => e.user_name ?? e.user_login },
+            };
+        case 'video':
+            return {
+                [sortingType.NEWEST]: { name: 'Newest', doNotSort: true },
+                [sortingType.OLDEST]: { name: 'Oldest', sortKey: 'published_at' },
+                [sortingType.VIEWS]: { name: 'Most views', sortKey: 'view_count' },
+                [sortingType.VIEWS_ASC]: { name: 'Least views', sortKey: 'view_count' },
+                // [sortingType.ALPHABETICAL_ASC]: { name: 'Alphabetical', sortFn: (e) => e.user_name ?? e.user_login },
+                // [sortingType.ALPHABETICAL]: { name: 'Alphabetical (desc)', sortFn: (e) => e.user_name ?? e.user_login },
+            };
+        case 'channel':
+            return {
+                [sortingType.FOLLOWED_DATE]: { name: 'Follow date', doNotSort: true },
+                [sortingType.FOLLOWED_DATE_ASC]: { name: 'Follow date (asc)', sortKey: 'followed_at' },
+                [sortingType.ALPHABETICAL]: { name: 'Alphabetical', sortFn: (e) => e.display_name.toLowerCase() },
+                [sortingType.ALPHABETICAL_ASC]: { name: 'Alphabetical (asc)', sortFn: (e) => e.display_name.toLowerCase() },
+            };
+        default:
+            return {};
+    }
+}
+
 const endpoints = {
     GET_TOP_GAMES: 'Get Top Games',
 

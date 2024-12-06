@@ -197,9 +197,8 @@ export default {
         return { data: this._addTags(channels?.data, ['broadcaster_login', 'display_name']), pagination: channels.pagination };
     },
 
-    async getUserFollows(options) {
-        const users = await request(endpoints.GET_USER_FOLLOWS, options);
-        return { data: this._addTags(users?.data, ['login', 'display_name']) };
+    getUserFollows(options) {
+        return request(endpoints.GET_USER_FOLLOWS, options);
     },
 
     async getUsers(options) {

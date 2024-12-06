@@ -16,6 +16,20 @@
             <span id="forward" class="icon icon--small icon__arrow-right tooltipped" data-tooltip="Go forward one search level"></span>
             <span id="search" class="icon icon--small icon__search tooltipped" data-tooltip="Enter text to filter results, and press this icon or the 'ENTER' key to search Twitch with your query."></span>
             <input id="searchBox" type="text" />
+            <div id="timeframeBox" class="control--container">
+                <span class="icon icon--20 icon__time tooltipped" data-tooltip="Time period for displayed clips"></span>
+                <select id="timeframe">
+                    <option value="day">Last 24 Hours</option>
+                    <option value="week">Last week</option>
+                    <option value="month">Last month</option>
+                    <option value="year">Last year</option>
+                    <option value="all">All time</option>
+                </select>
+            </div>
+            <div id="sortingBox" class="control--container">
+                <span class="icon icon--20 icon__sort tooltipped" data-tooltip="Sorting"></span>
+                <select id="sorting"></select>
+            </div>
             <span id="favorite" class="icon icon--small icon__favorites tooltipped" data-tooltip="Toggle favorites"></span>
             <span id="refresh" class="icon icon--small icon__refresh tooltipped" data-tooltip="Refresh the results"></span>
             <span id="exitSearch" class="icon icon--small icon__exit tooltipped" data-tooltip="Exit the search"></span>

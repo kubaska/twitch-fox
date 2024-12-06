@@ -172,6 +172,12 @@
         line-height: 20px
         text-align: center
 
+        & > .time
+            display: flex
+            position: absolute
+            top: 0
+            right: 0
+
     & > .description
         grid-area: description
         visibility: hidden
@@ -227,8 +233,8 @@
 
 .media-object__message
     // Subtracting 36px for top menu + 6px for each top and bottom media-container padding
-    height: calc(100vh - 36px - 12px)
-    width: calc(100vw - 36px - 12px)
+    height: calc(100vh - 36px - 8px)
+    width: calc(100vw - 36px - 8px)
     display: flex
     flex-direction: column
     justify-content: center

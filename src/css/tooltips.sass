@@ -19,6 +19,7 @@
         //display: none
         visibility: hidden
         z-index: 1
+        white-space: pre-wrap
 
     &:hover::before
         //display: block
@@ -27,7 +28,9 @@
 // Specific positioning
 .icon__arrow-left.tooltipped:before,
 .icon__arrow-right.tooltipped:before,
-.icon__search.tooltipped:before
+.icon__search.tooltipped:before,
+.icon__time:before,
+.icon__sort:before
     top: 28px
 
 .icon__favorites.tooltipped:before,
@@ -59,6 +62,10 @@
 .category.tooltipped:before
     top: 53px
     left: -100px
+
+.time.tooltipped:before
+    top: 20px
+    right: 4px
 
 .icon__stream.tooltipped:before,
 .icon__popout.tooltipped:before

@@ -1,10 +1,18 @@
 /* global browser */
 
-import {endpointList, endpoints, EResultState, ERuntimeMessage, tabInfo, tabs} from "./constants";
+import {
+    endpointList,
+    endpoints,
+    EResultState,
+    ERuntimeMessage,
+    getSortingTypesForContentType,
+    tabInfo,
+    tabs
+} from "./constants";
 import {makeCardTemplate, makeNoResultsMessageTemplate, makeStaticContent, UI} from "./ui";
 import utils from "./utils";
 import {html, render} from "lit-html";
-import {debounce} from "lodash-es";
+import {debounce, orderBy} from "lodash-es";
 import './css/popup.sass';
 
 const bp = browser.extension.getBackgroundPage();
@@ -18,6 +26,10 @@ const forward = document.getElementById('forward');
 const searchBar = document.getElementById('navigation');
 const search = document.getElementById('search');
 const searchBox = document.getElementById('searchBox');
+const timeframe = document.getElementById('timeframe');
+const timeframeBox = document.getElementById('timeframeBox');
+const sorting = document.getElementById('sorting');
+const sortingBox = document.getElementById('sortingBox');
 const favorites = document.getElementById('favorite');
 const refresh = document.getElementById('refresh');
 const exitSearch = document.getElementById('exitSearch');
@@ -102,7 +114,7 @@ const handleFollowedVideosTab = (forceRefresh = false) => {
         renderLoading(true, true);
         bp.fetchFollowedVideos().then(() => {
             bp.setResultsToFollowedTab(tabs.FOLLOWED_VIDEOS);
-            renderPage();
+            renderPage(true);
         });
     } else {
         renderPage(true);
@@ -187,22 +199,25 @@ const cardClickHandler = (e) => {
                 .then(() => { renderPage(); });
             break;
         case 'browseVideosByChannel':
-            callApi(endpoints.GET_VIDEOS, { user_id: meta.streamerId }, true);
+            callApi(endpoints.GET_VIDEOS, { __timeframe: 'all', user_id: meta.streamerId }, true);
             break;
         case 'browseClipsByChannel':
             callApi(endpoints.GET_CLIPS, {
-                broadcaster_id: meta.streamerId,
-                started_at: (new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString()
+                __timeframe: 'week',
+                broadcaster_id: meta.streamerId
             }, true);
             break;
         case 'browseGame':
             callApi(endpoints.GET_STREAMS, { game_id: meta.gameId }, true);
             break;
         case 'browseVideosByGame':
-            callApi(endpoints.GET_VIDEOS, { game_id: meta.gameId, period: 'month', sort: 'views' }, true);
+            callApi(endpoints.GET_VIDEOS, { __timeframe: 'month', game_id: meta.gameId, sort: 'views' }, true);
             break;
         case 'browseClipsByGame':
-            callApi(endpoints.GET_CLIPS, { game_id: meta.gameId }, true);
+            callApi(endpoints.GET_CLIPS, {
+                __timeframe: 'week',
+                game_id: meta.gameId
+            }, true);
             break;
     }
 }
@@ -211,6 +226,7 @@ const renderLoading = (state = false, shouldRerender = false) => {
     if (state) {
         refresh.classList.add('thinking');
         searchBox.placeholder = 'Loading... please wait';
+        sortingBox.classList.add('d-none');
         if (shouldRerender) render(html`<div class="media-object__message"><h2>Loading!</h2></div>`, mediaContainer);
     } else {
         refresh.classList.remove('thinking');
@@ -259,7 +275,23 @@ const renderPage = (firstPaint = false) => {
     if (firstPaint) searchBox.value = results[index].filter;
     exitSearch.classList[searchBox.value !== '' || (index > 0 || index < (results.length - 1)) ? 'remove' : 'add']('icon--inactive');
     exitSearch[(index > 0 || index < (results.length - 1)) ? 'setAttribute' : 'removeAttribute']('exitable', 'exitable');
+    if (results[index].timeframe) timeframe.value = results[index].timeframe;
+    // Timeframe selection will only appear when searching for clip or videos when not on followed tabs
+    // and not querying for user videos because Twitch does not bother to fix it for 6 years
+    timeframeBox.classList[(
+        results[index].type === 'clip' ||
+        (results[index].type === 'video' && ! (tabs.isFollowedTab(mode) && index === 0)) && results[index].opts.user_id === undefined
+    ) ? 'remove' : 'add']('d-none');
+    // Remove "year" option for videos, because it is not supported.
+    timeframe.querySelector('option[value="year"]').classList[results[index].type === 'clip' ? 'remove' : 'add']('d-none');
 
+    if (firstPaint && tabs.isFollowedTab(mode) && index === 0) {
+        sorting.innerHTML = Object.entries(getSortingTypesForContentType(results[index].type)).map(function ([key, value]) {
+            return `<option value="${key}">${value.name}</option>`;
+        }).join('');
+        sorting.value = bp.getStorage(mode + 'Sorting');
+    }
+    sortingBox.classList[(tabs.isFollowedTab(mode) && index === 0 && results[index].content.length !== 0) ? 'remove' : 'add']('d-none');
     if (tabInfo[mode].favorites) {
         favorites.classList[bp.getStorage('favoritesMode') ? 'remove' : 'add']('icon--faded');
     }
@@ -289,6 +321,18 @@ const renderPage = (firstPaint = false) => {
         resultsToRender = resultsToRender.filter(result => result.__tag.toLowerCase().includes(searchBox.value.toLowerCase()));
     if (favoriteMode)
         resultsToRender = resultsToRender.filter(result => bp.isFavorite(parseInt(result[streamerIdKey])));
+
+    if (tabs.isFollowedTab(mode)) {
+        const sortOption = getSortingTypesForContentType(results[index].type)[sorting.value];
+
+        if (sortOption && ! sortOption.doNotSort) {
+            resultsToRender = orderBy(
+                resultsToRender,
+                sortOption.sortFn ?? sortOption.sortKey,
+                sorting.value.endsWith('asc') ? 'asc' : 'desc'
+            );
+        }
+    }
 
     if (resultsToRender.length) {
         render(
@@ -462,6 +506,19 @@ const initializeEvents = () => {
     // Search box
     searchBox.addEventListener('input', () => {
         renderPage();
+    });
+
+    timeframe.addEventListener('change', (e) => {
+        renderLoading(true, true);
+        bp.refreshResults({ __timeframe: e.target.value })
+            .then(() => renderPage());
+    });
+
+    sorting.addEventListener('change', (e) => {
+        if (tabs.isFollowedTab(mode)) {
+            bp.setStorage(mode + 'Sorting', e.target.value);
+            renderPage();
+        }
     });
 
     // Favorites switch
