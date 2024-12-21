@@ -103,7 +103,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
         })
         .catch(error => {
             // console.log('popup callApi error', error);
-            if (error.message === 'cancelled') return;
+            if (error?.message === 'canceled') return;
             displayError(error.message);
         });
 

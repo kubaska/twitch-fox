@@ -192,6 +192,7 @@ const callApi = async (endpoint, theOpts = {}, newIndex, reset) => {
             return response;
         })
         .catch(error => {
+            if (error?.message === 'canceled') return;
             console.log(error);
             throw error;
         })
