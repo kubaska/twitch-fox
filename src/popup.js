@@ -412,6 +412,14 @@ const initialize = () => {
         document.documentElement.classList.add('__theme-dark');
     }
 
+    if (document.location.href.endsWith('popup=true')) {
+        document.body.classList.add('is-popup');
+
+        const size = bp.getStorage('popupSize');
+        if (size === 2) document.body.classList.add('size-big');
+        if (size === 0) document.body.classList.add('size-small');
+    }
+
     if (! user) {
         loginContainer.classList.remove('d-none');
         mainContainer.classList.add('overflow-hidden');
@@ -441,13 +449,6 @@ const initialize = () => {
     if (! document.body.classList.contains('__initialized')) {
         initializeEvents();
         document.body.classList.add('__initialized');
-        if (document.location.href.endsWith('popup=true')) {
-            document.body.classList.add('is-popup');
-
-            const size = bp.getStorage('popupSize');
-            if (size === 2) document.body.classList.add('size-big');
-            if (size === 0) document.body.classList.add('size-small');
-        }
     }
 };
 
