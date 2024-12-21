@@ -272,6 +272,32 @@ body
     & *
         flex: 1 1 0
 
+.error-container
+    position: fixed
+    bottom: -101px
+    max-height: 100px
+    background-color: #f8d7da
+    color: #58151c
+    width: calc(100% - 36px)
+    font-size: 16px
+    padding: 4px
+    border-top: 1px #f1aeb5 solid
+    transition: bottom 0.2s ease-in-out
+    display: -webkit-box
+    -webkit-line-clamp: 4
+    -webkit-box-orient: vertical
+    overflow: hidden
+
+    &.show
+        bottom: 0
+
+.error-title
+    margin: 0
+    font-weight: 700
+    font-size: 16px
+.error-message
+    font-size: 14px
+
 @keyframes rotate
     from
         transform: rotate(0deg)

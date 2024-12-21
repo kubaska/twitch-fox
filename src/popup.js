@@ -39,9 +39,13 @@ const mainContainer = document.getElementById('main-container');
 const loginContainer = document.getElementById('login-container');
 const contentArea = document.getElementById('content-area');
 const mediaContainer = document.getElementById('media-container');
+const errorContainer = document.getElementById('error-container');
+const errorTitle = document.getElementById('error-title');
+const errorMessage = document.getElementById('error-message');
 const previewElement = document.getElementById('preview');
 const settings = document.getElementById('settings');
 
+let errorTimeoutId = null;
 let mode;
 
 /**
@@ -100,7 +104,7 @@ const callApi = (endpoint, opts = {}, newIndex, reset) => {
         .catch(error => {
             // console.log('popup callApi error', error);
             if (error.message === 'cancelled') return;
-            // TODO show error screen
+            displayError(error.message);
         });
 
     renderPage(true);
@@ -184,11 +188,13 @@ const cardClickHandler = (e) => {
             break;
         case 'follow':
             bp.follow(meta.streamerId)
-                .then(() => { renderPage(); });
+                .then(() => { renderPage(); })
+                .catch(err => displayError(err));
             break;
         case 'unfollow':
             bp.unfollow(meta.streamerId)
-                .then(() => { renderPage(); });
+                .then(() => { renderPage(); })
+                .catch(err => displayError(err));
             break;
         case 'favorite':
             bp.favorite(meta.streamerId)
@@ -220,6 +226,21 @@ const cardClickHandler = (e) => {
             }, true);
             break;
     }
+}
+
+const displayError = (error) => {
+    if (typeof error === 'string') {
+        let [title, message] = error.split('\n', 2);
+        errorTitle.innerText = title;
+        if (message) errorMessage.innerText = message;
+    } else {
+        errorTitle.innerText = error;
+        errorMessage.innerText = '';
+    }
+
+    errorContainer.classList.add('show');
+    if (errorTimeoutId) clearTimeout(errorTimeoutId);
+    errorTimeoutId = setTimeout(() => errorContainer.classList.remove('show'), 5000);
 }
 
 const renderLoading = (state = false, shouldRerender = false) => {
