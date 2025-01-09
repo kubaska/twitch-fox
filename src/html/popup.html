@@ -17,7 +17,10 @@
             <span id="search" class="icon icon--small icon__search tooltipped" data-tooltip="Enter text to filter results, and press this icon or the 'ENTER' key to search Twitch with your query."></span>
             <input id="searchBox" type="text" size="1" />
             <div id="timeframeBox" class="control--container">
-                <span class="icon icon--20 icon__time tooltipped" data-tooltip="Time period for displayed clips"></span>
+                <span class="icon icon--20 icon__time tooltipped" data-tooltip="Time period for displayed clips">
+                    <!-- Time Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"/></svg>
+                </span>
                 <select id="timeframe">
                     <option value="day">Last 24 Hours</option>
                     <option value="week">Last week</option>
@@ -27,7 +30,10 @@
                 </select>
             </div>
             <div id="sortingBox" class="control--container">
-                <span class="icon icon--20 icon__sort tooltipped" data-tooltip="Sorting"></span>
+                <span class="icon icon--20 icon__sort tooltipped" data-tooltip="Sorting">
+                    <!-- Sort Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M19 17h3l-4 4l-4-4h3V3h2M2 17h10v2H2M6 5v2H2V5m0 6h7v2H2z"/></svg>
+                </span>
                 <select id="sorting"></select>
             </div>
             <span id="favorite" class="icon icon--small icon__favorites tooltipped" data-tooltip="Toggle favorites"></span>

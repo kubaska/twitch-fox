@@ -20,11 +20,15 @@ body
             width: 450px
             height: 600px
 
+            .navigation
+                gap: 2px
             .navigation select
-                font-size: 10px
+                font-size: 11px
                 padding-right: 0
+            .navigation input
+                font-size: 12px
             .control--container
-                padding: 0 4px
+                padding: 0
 
         &.size-big
             width: 800px
@@ -151,10 +155,6 @@ body
         background-image: url(../../assets/images/forward.png)
     &__search
         background-image: url(../../assets/images/search.png)
-    &__time
-        background-image: url(../../assets/images/time.svg?inline)
-    &__sort
-        background-image: url(../../assets/images/sort.svg?inline)
     &__favorites
         background-image: url(../../assets/images/favorites.png)
     &__refresh
@@ -220,6 +220,9 @@ body
         border: 0 solid
         background-color: var(--search-bg)
         color: var(--text-primary)
+
+        &:focus
+            outline: 0
 
     select
         border: 0 solid

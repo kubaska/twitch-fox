@@ -456,7 +456,7 @@ const baseUnfollow = (storageKey, id) => {
     // Skip unfollowing if follow is missing in storage.
     // This may happen if user tries to unfollow channel followed through their Twitch account.
     if (! find(follows, { id })) {
-        return Promise.reject('Cannot unfollow: not found in local database\nIf you follow this channel on Twitch, open channel and unfollow it there.');
+        return Promise.reject('Cannot unfollow: not found in local database\nIf you follow this channel on Twitch, open channel page and unfollow it there.');
     }
 
     pullAllBy(follows, [{ id }], 'id');
