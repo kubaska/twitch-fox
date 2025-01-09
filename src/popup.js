@@ -453,10 +453,18 @@ const initialize = () => {
 };
 
 const selectTab = (e) => {
-    if (e.target.classList.contains('tab') && e.target.id !== mode) {
-        bp.resetResults();
-        searchBox.value = '';
-        updateTab(e.target.id);
+    if (e.target.classList.contains('tab')) {
+        if (e.target.id === mode) {
+            searchBox.value = '';
+            bp.resetResultsToZeroIndex();
+            updateTab();
+            contentArea.scrollTop = 0;
+        }
+        else {
+            bp.resetResults();
+            searchBox.value = '';
+            updateTab(e.target.id);
+        }
     }
 }
 
