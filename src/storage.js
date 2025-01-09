@@ -85,6 +85,11 @@ export default {
         return setting;
     },
 
+    getAll() {
+        const { token, ...rest } = storage;
+        return rest;
+    },
+
     // set in local storage if setting exists
     // no undefineds!!
     async set(key, value, addFlag = false) {
@@ -147,8 +152,38 @@ export default {
         return true;
     },
 
+    async import(json) {
+        const settings = JSON.parse(json);
+        let settingsToSet = {};
+        let bigSettingsToSet = {};
+
+        for (const property in defaultState) {
+            if (['engine', 'version', 'token'].includes(property)) continue;
+
+            // console.log(`Trying ${property}`, typeof settings[property], typeof defaultState[property]);
+            if (settings[property] && (typeof settings[property] === typeof defaultState[property])) {
+                if (hugeSettings.includes(property)) {
+                    bigSettingsToSet[property] = settings[property];
+                } else {
+                    settingsToSet[property] = settings[property];
+                }
+            }
+        }
+
+        console.log('Importing: ', settingsToSet, bigSettingsToSet);
+        if (engine && engine === 'local') {
+            await browser.storage.local.set(bigSettingsToSet);
+            await browser.storage.sync.set(settingsToSet);
+        } else {
+            await browser.storage.sync.set({ ...settingsToSet, ...bigSettingsToSet });
+        }
+
+        storage = { ...storage, ...settingsToSet, ...bigSettingsToSet };
+    },
+
     async resetSettings() {
         await browser.storage.local.clear();
         await browser.storage.sync.clear();
+        await this.load();
     }
 }

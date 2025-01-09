@@ -63,7 +63,7 @@
         }
 
         .message {
-            font-size: 1em !important;
+            font-size: 16px !important;
         }
         .success-message {
             color: green !important;
@@ -303,30 +303,32 @@
         </div>
     </div>
 
-    <h3>Follows Settings</h3>
+    <h3>Import / Export</h3>
     <hr/>
 
     <div class="row">
         <div class="description">
-            <p>Import local follows</p>
-            <span>This will overwrite your current follows.</span>
+            <p>Import settings</p>
+            <span>This will overwrite your current settings.</span><br/>
+            <span>You can also import old follow backups here.</span>
             <p id="importFollowsMessage" class="message error-message d-none"></p>
+            <p id="importFollowsSuccessMessage" class="message success-message d-none"></p>
         </div>
 
         <div class="control">
             <input class="d-none" type="file" id="importFollowsHandle" accept="text/plain">
-            <button type="button" id="importFollows">Import follows</button>
+            <button type="button" id="importFollows">Import settings</button>
         </div>
     </div>
 
     <div class="row">
         <div class="description">
-            <p>Export local follows</p>
-            <span>Exports follows to a text file, like a backup.</span>
+            <p>Export settings</p>
+            <span>Exports settings to a text file, like a backup.</span>
         </div>
 
         <div class="control">
-            <input type="button" id="exportFollows" value="Export follows">
+            <input type="button" id="exportSettings" value="Export settings">
         </div>
     </div>
 
@@ -352,6 +354,7 @@
         <div class="description">
             <p>Reset all settings</p>
             <span>Removes all settings. Use with care!</span>
+            <p class="message d-none" id="resetSettingsMessage"></p>
         </div>
 
         <div class="control">

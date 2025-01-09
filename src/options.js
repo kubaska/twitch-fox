@@ -63,6 +63,10 @@ function showImportError(message) {
     err.classList.remove('d-none');
 }
 
+function refreshWithHint(hint) {
+    window.location = window.location.origin + window.location.pathname + '?hint=' + hint;
+}
+
 // import & export
 document.getElementById('importFollowsHandle').addEventListener('change', (e) => {
     const message = document.getElementById('importFollowsMessage');
@@ -75,6 +79,9 @@ document.getElementById('importFollowsHandle').addEventListener('change', (e) =>
 
     const reader = new FileReader();
 
+    //         4.2.3 | Array of strings
+    // 4.3.0 - 5.2.1 | Array of objects
+    //        5.3.0+ | Object
     reader.onload = () => {
         let parsed = null;
         try {
@@ -83,57 +90,68 @@ document.getElementById('importFollowsHandle').addEventListener('change', (e) =>
             return showImportError('Error parsing file: invalid file');
         }
 
-        // check if file structure is correct
-        if (! Array.isArray(parsed)) return showImportError('Invalid file structure');
-        if (parsed.length < 1) return showImportError('Invalid file structure: missing entries');
-
-        const entryType = typeof parsed[0]; // string for legacy, object for v4.3.0+
-
-        if (! (entryType === 'string' || entryType === 'object')) return showImportError('Invalid entry structure');
-
-        // check if structure is consistent
-        let result = parsed.every(element => {
-            const type = typeof element;
-
-            // check if all entries have the correct type
-            if (type !== entryType) return false;
-
-            // check if object type contains ID - required field
-            if (type === 'object' && ! element.id) return false;
-
-            return true;
-        });
-
-        if (! result) return showImportError('Inconsistent file structure: is the file corrupted?');
-
         const onError = (err) => {
-            message.textContent = `Error importing follows. Try turning off synchronization below and try again. (${err?.message ?? err})`;
+            message.textContent = `Error importing follows / settings. Try turning off synchronization below and try again. (${err?.message ?? err})`;
             message.classList.remove('d-none');
         }
 
-        if (entryType === 'string') {
-            bp.importFollowsLegacy(reader.result)
-                .catch(onError);
-        }
-        else if (entryType === 'object') {
-            bp.importFollows(reader.result)
-                .catch(onError);
-        }
+        // check if file structure is correct
+        if (Array.isArray(parsed)) {
+            if (parsed.length < 1) return showImportError('Invalid file structure: missing entries');
 
-        document.getElementById('importFollows').value = '';
+            const entryType = typeof parsed[0];
+
+            if (! (entryType === 'string' || entryType === 'object')) return showImportError('Invalid entry structure');
+
+            // check if structure is consistent
+            let result = parsed.every(element => {
+                const type = typeof element;
+
+                // check if all entries have the correct type
+                if (type !== entryType) return false;
+
+                // check if object type contains ID - required field
+                if (type === 'object' && ! element.id) return false;
+
+                return true;
+            });
+
+            if (! result) return showImportError('Inconsistent file structure: is the file corrupted?');
+
+            if (entryType === 'string') {
+                bp.importFollowsLegacy(reader.result)
+                    .then(() => bp.initializeFollows(false))
+                    .catch(onError);
+            }
+            else if (entryType === 'object') {
+                bp.importFollows(reader.result)
+                    .then(() => bp.initializeFollows(false))
+                    .catch(onError);
+            }
+            else showImportError('Invalid data structure: is the file corrupted?');
+        }
+        else if (typeof parsed === 'object') {
+            bp._storage().import(reader.result)
+                .then(() => bp.initializeFollows(false))
+                .catch(onError);
+        }
+        else showImportError('Invalid data structure: is the file corrupted?');
+
+        refreshWithHint('settingsImported');
     }
+
     reader.readAsText(file);
 });
 
-document.getElementById('exportFollows').addEventListener('click', () => {
-    const textToWrite = JSON.stringify(bp.getStorage('localFollows'));
+document.getElementById('exportSettings').addEventListener('click', () => {
+    const textToWrite = JSON.stringify(bp._storage().getAll());
     const textFileAsBlob = new Blob([textToWrite], {
         type: 'text/plain',
     });
-    const fileName = `Twitch_Fox_${new Date().toJSON().slice(0, 10)}.txt`;
+    const fileName = `Twitch_Fox_Settings_${new Date().toJSON().slice(0, 10)}.txt`;
     const downloadLink = document.createElement('a');
     downloadLink.download = fileName;
-    downloadLink.textContent = 'Save follows';
+    downloadLink.textContent = 'Save settings';
     downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
     downloadLink.style.display = 'none';
     document.body.appendChild(downloadLink);
@@ -177,7 +195,7 @@ document.getElementById('resetSettings').addEventListener('click', (e) => {
             bp._storage().resetSettings()
                 .then(() => {
                     bp.deauthorize();
-                    window.location.reload();
+                    refreshWithHint('settingsReset');
                 });
             break;
     }
@@ -189,5 +207,18 @@ document.getElementById('testAudioNotification').addEventListener('click', () =>
 document.getElementById('importFollows').addEventListener('click', () => {
     document.getElementById('importFollowsHandle').click();
 });
+if (window.location.search) {
+    if (window.location.search.endsWith('settingsImported')) {
+        const el = document.getElementById('importFollowsSuccessMessage');
+        el.textContent = 'Settings imported successfully!';
+        el.classList.remove('d-none');
+    }
+    else if (window.location.search.endsWith('settingsReset')) {
+        const el = document.getElementById('resetSettingsMessage');
+        el.textContent = 'Settings have been reset successfully!';
+        el.classList.add('success-message');
+        el.classList.remove('d-none');
+    }
+}
 
 // browser.runtime.onMessage.addListener(() => window.location.reload());

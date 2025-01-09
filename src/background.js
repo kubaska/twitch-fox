@@ -799,9 +799,9 @@ const fetchFollowedVideos = async () => {
  *
  * @return {Promise<void>}
  */
-const initializeFollows = async () => {
+const initializeFollows = async (shouldFetchUser = true) => {
     if (_storage.get('token')) {
-        await fetchCurrentUser();
+        if (shouldFetchUser) await fetchCurrentUser();
         await Promise.allSettled([fetchUserFollows(), fetchFollowedGames()])
     }
 
@@ -902,6 +902,7 @@ window.getResultsContentLength = getResultsContentLength;
 window.getStorage = getStorage;
 window.importFollows = importFollows;
 window.importFollowsLegacy = importFollowsLegacy;
+window.initializeFollows = initializeFollows;
 window.isFavorite = isFavorite;
 window.isFollowing = isFollowing;
 window.isFollowingGame = isFollowingGame;
