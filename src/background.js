@@ -286,7 +286,7 @@ const playAlarm = () => {
     Alarm.play();
 };
 
-const desktopNotification = (stream) => {
+const desktopNotification = (stream, newStreamCount) => {
     const title = `${stream.user_name || stream.user_login} streaming ${stream.game_name}`;
     const channel = find(userFollows, { id: stream.user_id });
     const logo = channel?.profile_image_url ?? '/assets/twitch-fox.svg';
@@ -297,7 +297,7 @@ const desktopNotification = (stream) => {
         type: 'basic',
         iconUrl: logo,
         title,
-        message: stream.title,
+        message: newStreamCount > 1 ? stream.title + `\n\n...and ${newStreamCount - 1} more!` : stream.title,
     });
 };
 
@@ -736,7 +736,7 @@ const fetchFollowedStreams = () => {
             // display a notification if we have new stream
             if (anyFavorites) {
                 if (_storage.get('notifications', ENotificationFlag.favoritesTextNotification)) {
-                    desktopNotification(favoritesFirst[0])
+                    desktopNotification(favoritesFirst[0], diff.length)
                         .then(() => {
                             if (_storage.get('notifications', ENotificationFlag.favoritesAudioNotification)) {
                                 Alarm.play();
@@ -749,7 +749,7 @@ const fetchFollowedStreams = () => {
                 }
             } else {
                 if (_storage.get('notifications', ENotificationFlag.textNotification)) {
-                    desktopNotification(favoritesFirst[0])
+                    desktopNotification(favoritesFirst[0], diff.length)
                         .then(() => {
                             if (_storage.get('notifications', ENotificationFlag.audioNotification)) {
                                 Alarm.play();
