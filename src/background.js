@@ -418,8 +418,8 @@ const follow = async (id) => {
     api.twitch.getUsers({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
-                userFollows.unshift({ ...response.data[0], followed_at: utils.getISODateStringNoMs() });
-                fetchFollowedStreams();
+                userFollows.unshift({ ...response.data[0], __source: 'local', followed_at: utils.getISODateStringNoMs() });
+                startFetchFollowedStreamsAlarm();
             }
         })
         .catch(err => { console.log(err); });
@@ -597,9 +597,10 @@ const fetchPaginatedResource = async (endpoint, requestOptions, limit = 100) => 
  * @param endpoint    {endpointList}
  * @param resourceKey {string}
  * @param values      {array}
+ * @param extra       {Object}  Extra data to pass to request.
  * @returns {Promise<*[]>}
  */
-const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
+const fetchArrayOfSingularResource = async (endpoint, resourceKey, values, extra = {}) => {
     if (values.length === 0) {
         return [];
     }
@@ -608,7 +609,7 @@ const fetchArrayOfSingularResource = async (endpoint, resourceKey, values) => {
 
     await Promise.allSettled(
         values.map(value => {
-            return api.twitch.request(endpoint, { [resourceKey]: value });
+            return api.twitch.request(endpoint, { [resourceKey]: value, ...extra });
         })
     ).then(allResults => {
         allResults.forEach(results => {
@@ -699,17 +700,14 @@ const fetchTwitchFollowedStreams = async () => {
  * @return {Promise<[]>}
  */
 const fetchLocalFollowedStreams = async () => {
-    const follows = chunk(_storage.get('localFollows'), 100);
-    let result = [];
+    if (! authorizedUser) return Promise.resolve([]);
 
-    for (const chunk of follows) {
-        const res = await api.twitch.getStreams(
-            { first: 100, user_id: map(chunk, 'id') }
-        )
-        result.push(...res.data);
-    }
-
-    return result;
+    return await fetchArrayOfSingularResource(
+        endpoints.GET_STREAMS,
+        'user_id',
+        chunk(_storage.get('localFollows'), 100).map(chunk => chunk.map(f => f.id)),
+        { first: 100 }
+    );
 }
 
 /**
@@ -793,6 +791,14 @@ const fetchFollowedVideos = async () => {
     );
 }
 
+const startFetchFollowedStreamsAlarm = () => {
+    browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
+        when: Date.now(),
+        // delayInMinutes: 0.02, // ~ 1-2 sec
+        periodInMinutes: _storage.get('minutesBetweenCheck'),
+    });
+}
+
 /**
  * Initialize user and associated follows.
  * Called when auth state changes
@@ -807,13 +813,8 @@ const initializeFollows = async (shouldFetchUser = true) => {
 
     rebuildFollowCache();
     rebuildFavoriteCache();
-
     sendMessageToPopup(ERuntimeMessage.INITIALIZE);
-
-    browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
-        delayInMinutes: 0.02, // ~ 1-2 sec
-        periodInMinutes: _storage.get('minutesBetweenCheck'),
-    });
+    startFetchFollowedStreamsAlarm();
 }
 
 _storage.load().then(() => {
