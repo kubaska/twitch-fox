@@ -1,7 +1,7 @@
 /* global browser */
 
 import _storage from './storage';
-import {chunk, differenceBy, find, isEmpty, map, orderBy, pull, pullAllBy, take} from "lodash-es";
+import {chunk, differenceBy, find, isEmpty, orderBy, pull, pullAllBy, take} from "lodash-es";
 import {
     endpointList,
     endpoints,
@@ -27,7 +27,6 @@ let userFollowedGames = [];
 let followedVideos = []; // Cached results of followed videos
 let pendingApiCalls = new Map();
 
-let lastNotificationStreamName = '';
 let results;
 let resultsIndex = 0;
 let popupMode = tabs.STREAMS; // default mode is streams
@@ -62,14 +61,9 @@ const defaultResults = () => [{
     scroll: 0,
     total: 0,
     filter: '',
-    sorting: null,
     timeframe: null,
     cursor: '',
 }];
-
-const setResults = (newResults) => {
-    results = newResults;
-};
 
 const setIndex = (newIndex) => {
     resultsIndex = newIndex;
@@ -104,8 +98,6 @@ const setMode = newMode => {
  */
 const getStorage = (key, flag) => _storage.get(key, flag);
 const setStorage = (key, value, addFlag) => _storage.set(key, value, addFlag);
-
-const sendMessageToPopup = (content) => browser.runtime.sendMessage({ content }).catch(err => {});
 
 /**
  * Call Twitch API from popup
@@ -291,9 +283,7 @@ const desktopNotification = (stream, newStreamCount) => {
     const channel = find(userFollows, { id: stream.user_id });
     const logo = channel?.profile_image_url ?? '/assets/twitch-fox.svg';
 
-    lastNotificationStreamName = stream.user_login;
-
-    return browser.notifications.create('follow-notification', {
+    return browser.notifications.create('follow-notification@'+stream.user_login, {
         type: 'basic',
         iconUrl: logo,
         title,
@@ -418,7 +408,7 @@ const follow = async (id) => {
     api.twitch.getUsers({ id })
         .then(response => {
             if (response?.data && response.data[0]) {
-                userFollows.unshift({ ...response.data[0], __source: 'local', followed_at: utils.getISODateStringNoMs() });
+                userFollows.unshift({ ...response.data[0], followed_at: utils.getISODateStringNoMs() });
                 startFetchFollowedStreamsAlarm();
             }
         })
@@ -760,7 +750,7 @@ const fetchFollowedStreams = () => {
                 }
             }
 
-            sendMessageToPopup(ERuntimeMessage.NEW_FOLLOWED_STREAMS);
+            utils.sendBrowserMessage(ERuntimeMessage.NEW_FOLLOWED_STREAMS);
         }
 
         // also update badge
@@ -813,7 +803,7 @@ const initializeFollows = async (shouldFetchUser = true) => {
 
     rebuildFollowCache();
     rebuildFavoriteCache();
-    sendMessageToPopup(ERuntimeMessage.INITIALIZE);
+    utils.sendBrowserMessage(ERuntimeMessage.INITIALIZE);
     startFetchFollowedStreamsAlarm();
 }
 
@@ -854,21 +844,17 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
     urls: [redirectURI+'*']
 });
 
-browser.notifications.onClicked.addListener(() => {
-    if (! lastNotificationStreamName) return;
+browser.notifications.onClicked.addListener(notificationId => {
+    const notificationIdSplit = notificationId.split('@', 2);
+    if (notificationIdSplit.length !== 2) return;
+    const streamerLogin = notificationIdSplit[1];
 
     if (getStorage('notificationClick', ENotificationClickFlag.openStreamNewTab))
-        utils.openStream(lastNotificationStreamName);
+        utils.openStream(streamerLogin);
     if (getStorage('notificationClick', ENotificationClickFlag.openStreamPopout))
-        utils.openPopout('channel', lastNotificationStreamName);
+        utils.openPopout('channel', streamerLogin);
     if (getStorage('notificationClick', ENotificationClickFlag.openChatPopout))
-        utils.openChatPopout(lastNotificationStreamName);
-
-    lastNotificationStreamName = '';
-});
-
-browser.notifications.onClosed.addListener(notificationId => {
-    lastNotificationStreamName = '';
+        utils.openChatPopout(streamerLogin);
 });
 
 browser.alarms.onAlarm.addListener(alarmInfo => {
