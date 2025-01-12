@@ -80,12 +80,14 @@ const makeNoResultsMessageTemplate = (mode, index, hasSearch) => {
 
 const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, cardClickHandler) => {
     if (type === 'game') {
+        const thumbnailUrl = UI.getImageUrl(content.box_art_url, 188, 250);
+
         return html`
 <div id="GAME!${content.id}" class="media-object" @click="${cardClickHandler}" data-id="${content.id}" data-game-id="${content.id}" data-game="${content.name}" data-tag="${content.name}">
     <div class="media-object__cover category">
         <div class="media-object__cover-wrap">
             <div>
-                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${UI.getImageUrl(content.box_art_url, 188, 250)}" />
+                ${keyed(thumbnailUrl, html`<img class="media-object__cover-inner" loading="lazy" decoding="async" src="${thumbnailUrl}" />`)}
             </div>
         </div>
 
@@ -211,7 +213,7 @@ const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, car
         // description       - (none)            - xqc desc
 
         const login = content.login ?? content.broadcaster_login;
-        const profile_image = content.profile_image_url ?? content.thumbnail_url;
+        const profileImage = content.profile_image_url ?? content.thumbnail_url ?? 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png';
         const followedAt = new Date(content.followed_at);
         const isFollowing = bp.isFollowing(userId);
 
@@ -220,7 +222,7 @@ const makeCardTemplate = (content, type, displayAvatars, previewQuality, bp, car
     <div class="media-object__cover channel">
         <div class="media-object__cover-wrap">
             <div>
-                <img class="media-object__cover-inner" loading="lazy" decoding="async" src="${profile_image ?? 'https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_300x300.png'}" />
+                ${keyed(profileImage, html`<img class="media-object__cover-inner" loading="lazy" decoding="async" src="${profileImage}" />`)}
             </div>
         </div>
 
