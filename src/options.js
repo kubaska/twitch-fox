@@ -1,5 +1,8 @@
 /* global browser */
 
+import utils from "./utils";
+import {ERuntimeMessage} from "./constants";
+
 const bp = browser.extension.getBackgroundPage();
 let resetSettingsCounter = 3;
 
@@ -206,6 +209,9 @@ document.getElementById('resetSettings').addEventListener('click', (e) => {
 document.getElementById('testAudioNotification').addEventListener('click', () => bp.playAlarm());
 document.getElementById('importFollows').addEventListener('click', () => {
     document.getElementById('importFollowsHandle').click();
+});
+document.querySelector('input[data-internal="minutesBetweenCheck"]').addEventListener('change', () => {
+    utils.sendBrowserMessage(ERuntimeMessage.OPTIONS_CHANGED);
 });
 if (window.location.search) {
     if (window.location.search.endsWith('settingsImported')) {

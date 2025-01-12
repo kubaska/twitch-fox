@@ -1,6 +1,8 @@
 /* global browser */
 
 export default {
+    sendBrowserMessage: (content) => browser.runtime.sendMessage({ content }).catch(err => {}),
+
     delimitNumber: (number = 0) => {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },

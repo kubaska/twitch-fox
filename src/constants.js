@@ -20,7 +20,8 @@ export const ENotificationClickFlag = {
 
 export const ERuntimeMessage = {
     INITIALIZE: 'initialize',
-    NEW_FOLLOWED_STREAMS: 'newFollowedStreams'
+    NEW_FOLLOWED_STREAMS: 'newFollowedStreams',
+    OPTIONS_CHANGED: 'optionsChanged'
 }
 
 export const twitch404ThumbnailUrl = 'https://vod-secure.twitch.tv/_404/404_processing_320x180.png'

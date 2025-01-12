@@ -791,9 +791,9 @@ const fetchFollowedVideos = async () => {
     );
 }
 
-const startFetchFollowedStreamsAlarm = () => {
+const startFetchFollowedStreamsAlarm = (delay = 0) => {
     browser.alarms.create(BROWSER_ALARM_TYPE.FETCH_FOLLOWED_STREAMS, {
-        when: Date.now(),
+        when: Date.now() + (delay * 1000),
         // delayInMinutes: 0.02, // ~ 1-2 sec
         periodInMinutes: _storage.get('minutesBetweenCheck'),
     });
@@ -885,6 +885,13 @@ browser.contextMenus.create({
     contexts: ['browser_action'],
     onclick: () => { browser.tabs.create({ url: 'html/popup.html' })},
     title: 'Open Extended View'
+});
+
+browser.runtime.onMessage.addListener(request => {
+    switch (request.content) {
+        case ERuntimeMessage.OPTIONS_CHANGED:
+            return startFetchFollowedStreamsAlarm(5);
+    }
 });
 
 // Exports
