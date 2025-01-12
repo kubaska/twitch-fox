@@ -343,7 +343,7 @@ const renderPage = (firstPaint = false) => {
     if (favoriteMode)
         resultsToRender = resultsToRender.filter(result => bp.isFavorite(parseInt(result[streamerIdKey])));
 
-    if (tabs.isFollowedTab(mode)) {
+    if (index === 0 && tabs.isFollowedTab(mode)) {
         const sortOption = getSortingTypesForContentType(results[index].type)[sorting.value];
 
         if (sortOption && ! sortOption.doNotSort) {
