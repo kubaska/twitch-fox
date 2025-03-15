@@ -93,10 +93,15 @@ document.getElementById('importFollowsHandle').addEventListener('change', (e) =>
             return showImportError('Error parsing file: invalid file');
         }
 
+        const onSuccess = () => {
+            bp.initializeFollows(false);
+            refreshWithHint('settingsImported');
+        };
+
         const onError = (err) => {
             message.textContent = `Error importing follows / settings. Try turning off synchronization below and try again. (${err?.message ?? err})`;
             message.classList.remove('d-none');
-        }
+        };
 
         // check if file structure is correct
         if (Array.isArray(parsed)) {
@@ -123,24 +128,22 @@ document.getElementById('importFollowsHandle').addEventListener('change', (e) =>
 
             if (entryType === 'string') {
                 bp.importFollowsLegacy(reader.result)
-                    .then(() => bp.initializeFollows(false))
+                    .then(onSuccess)
                     .catch(onError);
             }
             else if (entryType === 'object') {
                 bp.importFollows(reader.result)
-                    .then(() => bp.initializeFollows(false))
+                    .then(onSuccess)
                     .catch(onError);
             }
             else showImportError('Invalid data structure: is the file corrupted?');
         }
         else if (typeof parsed === 'object') {
             bp._storage().import(reader.result)
-                .then(() => bp.initializeFollows(false))
+                .then(onSuccess)
                 .catch(onError);
         }
         else showImportError('Invalid data structure: is the file corrupted?');
-
-        refreshWithHint('settingsImported');
     }
 
     reader.readAsText(file);
